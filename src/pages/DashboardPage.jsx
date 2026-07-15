@@ -17,7 +17,7 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-red-300">
+      <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-red-600">
         Couldn't load your data: {error}
       </p>
     )
@@ -29,7 +29,7 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-7xl px-6 py-6">
       {entries.length === 0 && (
-        <p className="mb-5 rounded-lg border border-pink-900/40 bg-pink-950/20 px-4 py-3 text-sm text-pink-300">
+        <p className="mb-5 rounded-lg border border-pink-300 bg-pink-100 px-4 py-3 text-sm text-pink-700">
           No monthly entries yet — figures below use your starting balances. Add your first month on the Data Entry page.
         </p>
       )}

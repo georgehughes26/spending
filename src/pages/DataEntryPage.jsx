@@ -31,8 +31,6 @@ function emptyForm() {
   return {
     income: 0,
     account_balances: { ...BASELINE_ACCOUNT_BALANCES },
-    house_contribution_me: 0,
-    house_contribution_partner: 0,
     notes: '',
   }
 }
@@ -83,8 +81,6 @@ export default function DataEntryPage() {
       setForm({
         income: existingEntry.income ?? 0,
         account_balances: { ...emptyForm().account_balances, ...existingEntry.account_balances },
-        house_contribution_me: existingEntry.house_contribution_me ?? 0,
-        house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
         notes: existingEntry.notes ?? '',
       })
     } else {
@@ -129,8 +125,8 @@ export default function DataEntryPage() {
       spending: { ...existingEntry.spending, [FIXED_COSTS_CATEGORY]: fixedCostsTotal },
       account_balances: existingEntry.account_balances,
       goal_contributions: existingEntry.goal_contributions ?? {},
-      house_contribution_me: existingEntry.house_contribution_me,
-      house_contribution_partner: existingEntry.house_contribution_partner,
+      house_contribution_me: existingEntry.house_contribution_me ?? 0,
+      house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
       notes: existingEntry.notes,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,8 +181,8 @@ export default function DataEntryPage() {
         goal_contributions: Object.fromEntries(
           pots.map((p) => [p.id, Number(actualSplit[p.id]) || 0]),
         ),
-        house_contribution_me: Number(form.house_contribution_me) || 0,
-        house_contribution_partner: Number(form.house_contribution_partner) || 0,
+        house_contribution_me: existingEntry?.house_contribution_me ?? 0,
+        house_contribution_partner: existingEntry?.house_contribution_partner ?? 0,
         notes: form.notes,
       })
       setSaved(true)
@@ -209,22 +205,22 @@ export default function DataEntryPage() {
     <div className="mx-auto max-w-4xl px-6 py-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-50">Monthly Data Entry</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">Monthly Data Entry</h2>
           <p className="mt-1 text-sm text-zinc-500">Enter your figures for a month to update the dashboard.</p>
         </div>
         <label className="text-sm">
-          <span className="mb-1 block text-zinc-400">Month</span>
+          <span className="mb-1 block text-zinc-500">Month</span>
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="min-h-11 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none focus:border-pink-600"
+            className="min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-pink-600"
           />
         </label>
       </div>
 
       {error && (
-        <p className="mb-4 rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+        <p className="mb-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-600">
           Couldn't load existing entries: {error}
         </p>
       )}
@@ -245,8 +241,8 @@ export default function DataEntryPage() {
             <p className="mb-3 text-sm text-zinc-500">
               Log spending week by week as you go — no need to wait until the month's over.
             </p>
-            {weeksError && <p className="mb-3 text-sm text-red-400">{weeksError}</p>}
-            {weekSaveError && <p className="mb-3 text-sm text-red-400">{weekSaveError}</p>}
+            {weeksError && <p className="mb-3 text-sm text-red-600">{weeksError}</p>}
+            {weekSaveError && <p className="mb-3 text-sm text-red-600">{weekSaveError}</p>}
             {weeksLoading ? (
               <p className="text-sm text-zinc-500">Loading…</p>
             ) : categories.length === 0 ? (
@@ -254,7 +250,7 @@ export default function DataEntryPage() {
                 No spending categories set up yet — add some in Settings first.
               </p>
             ) : (
-              <ul className="flex flex-col divide-y divide-zinc-800">
+              <ul className="flex flex-col divide-y divide-zinc-200">
                 {buckets.map((bucket) => (
                   <WeekEntryRow
                     key={bucket.weekStart}
@@ -267,9 +263,9 @@ export default function DataEntryPage() {
                 ))}
               </ul>
             )}
-            <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
-              <span className="text-zinc-400">Weekly spending total</span>
-              <span className="font-medium text-zinc-100">{formatGBP(weeklyTotal)}</span>
+            <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
+              <span className="text-zinc-500">Weekly spending total</span>
+              <span className="font-medium text-zinc-900">{formatGBP(weeklyTotal)}</span>
             </div>
           </Card>
 
@@ -281,14 +277,14 @@ export default function DataEntryPage() {
                 value={form.income}
                 onChange={(v) => setForm((prev) => ({ ...prev, income: v }))}
               />
-              <div className="mt-4 flex flex-col gap-2 border-t border-zinc-800 pt-4 text-sm">
+              <div className="mt-4 flex flex-col gap-2 border-t border-zinc-200 pt-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Total spent (weekly + fixed costs)</span>
-                  <span className="font-medium text-zinc-100">{formatGBP(totalSpending)}</span>
+                  <span className="text-zinc-500">Total spent (weekly + fixed costs)</span>
+                  <span className="font-medium text-zinc-900">{formatGBP(totalSpending)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Saved this month</span>
-                  <span className={`font-medium ${saved_ >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className="text-zinc-500">Saved this month</span>
+                  <span className={`font-medium ${saved_ >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {formatGBP(saved_)}
                   </span>
                 </div>
@@ -321,13 +317,13 @@ export default function DataEntryPage() {
                   <p className="mb-4 text-sm text-zinc-500">
                     Whatever's left after spending ({formatGBP(saved_)}) would split like this — a guide only, not what actually happened.
                   </p>
-                  <ul className="flex flex-col divide-y divide-zinc-800">
+                  <ul className="flex flex-col divide-y divide-zinc-200">
                     {pots.map((pot) => (
                       <li key={pot.id} className="flex items-center justify-between py-2 text-sm">
-                        <span className="text-zinc-300">
+                        <span className="text-zinc-700">
                           {pot.name} <span className="text-xs text-zinc-500">({Math.round(pot.percentage * 100)}%)</span>
                         </span>
-                        <span className="font-medium text-zinc-100">
+                        <span className="font-medium text-zinc-900">
                           {formatGBP(Math.max(0, saved_) * pot.percentage)}
                         </span>
                       </li>
@@ -336,7 +332,7 @@ export default function DataEntryPage() {
                 </Card>
 
                 <Card title="Actual Savings Split">
-                  <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <p className="text-sm text-zinc-500">
                       At the end of the month, enter what actually went into each pot.
                     </p>
@@ -349,7 +345,7 @@ export default function DataEntryPage() {
                           ),
                         )
                       }
-                      className="min-h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-lg border border-pink-900/40 px-3 text-sm font-medium text-pink-300 transition-colors duration-150 hover:bg-pink-950/20"
+                      className="min-h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 px-3 text-sm font-medium text-pink-700 transition-colors duration-150 hover:bg-pink-100"
                     >
                       Copy guide amounts
                     </button>
@@ -365,9 +361,9 @@ export default function DataEntryPage() {
                       />
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
-                    <span className="text-zinc-400">Total actually saved</span>
-                    <span className="font-medium text-zinc-100">
+                  <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
+                    <span className="text-zinc-500">Total actually saved</span>
+                    <span className="font-medium text-zinc-900">
                       {formatGBP(Object.values(actualSplit).reduce((t, v) => t + (Number(v) || 0), 0))}
                     </span>
                   </div>
@@ -375,35 +371,18 @@ export default function DataEntryPage() {
               </>
             )}
 
-            <Card title="House Deposit Contributions">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <NumberField
-                  id="house-me"
-                  label="My contribution"
-                  value={form.house_contribution_me}
-                  onChange={(v) => setForm((prev) => ({ ...prev, house_contribution_me: v }))}
-                />
-                <NumberField
-                  id="house-partner"
-                  label="Partner contribution"
-                  value={form.house_contribution_partner}
-                  onChange={(v) => setForm((prev) => ({ ...prev, house_contribution_partner: v }))}
-                />
-              </div>
-            </Card>
-
             <Card title="Notes">
               <textarea
                 value={form.notes}
                 onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
                 placeholder="e.g. Stayed £150 under food budget, shopping increased by £200..."
                 rows={3}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-pink-600"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-pink-600"
               />
             </Card>
 
-            {saveError && <p className="text-sm text-red-400">{saveError}</p>}
-            {saved && <p className="text-sm text-emerald-400">Saved {formatMonthYear(monthValueToDate(selectedMonth))}.</p>}
+            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+            {saved && <p className="text-sm text-emerald-600">Saved {formatMonthYear(monthValueToDate(selectedMonth))}.</p>}
 
             <div className="flex flex-wrap items-center gap-3">
               <button
@@ -417,7 +396,7 @@ export default function DataEntryPage() {
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-400 transition-colors duration-150 hover:bg-red-950/30 hover:text-red-300"
+                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 hover:text-red-600"
                 >
                   Delete this month's entry
                 </button>
@@ -434,14 +413,14 @@ export default function DataEntryPage() {
         ) : entries.length === 0 ? (
           <p className="text-sm text-zinc-500">No entries yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-800 rounded-xl border border-zinc-800">
+          <ul className="flex flex-col divide-y divide-zinc-200 rounded-xl border border-zinc-200">
             {[...entries].reverse().map((e) => (
               <li key={e.id} className="flex items-center justify-between py-1 pl-4 pr-2 text-sm">
-                <span className="text-zinc-200">{formatMonthYear(e.month)}</span>
+                <span className="text-zinc-800">{formatMonthYear(e.month)}</span>
                 <button
                   type="button"
                   onClick={() => setSelectedMonth(dateToMonthValue(e.month))}
-                  className="min-h-11 cursor-pointer rounded-lg px-3 font-medium text-pink-400 transition-colors duration-150 hover:bg-pink-950/30 hover:text-pink-300"
+                  className="min-h-11 cursor-pointer rounded-lg px-3 font-medium text-pink-600 transition-colors duration-150 hover:bg-pink-100 hover:text-pink-700"
                 >
                   Edit
                 </button>

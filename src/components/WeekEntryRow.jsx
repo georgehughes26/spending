@@ -41,18 +41,18 @@ export default function WeekEntryRow({ weekStart, weekEnd, categories, initialSp
         onClick={() => setExpanded((v) => !v)}
         className="flex min-h-11 w-full cursor-pointer items-center justify-between text-left text-sm"
       >
-        <span className="flex items-center gap-2 text-zinc-200">
+        <span className="flex items-center gap-2 text-zinc-800">
           {formatWeekRange(weekStart, weekEnd)}
           {hasData && <span className="h-1.5 w-1.5 rounded-full bg-pink-500" aria-hidden="true" />}
         </span>
         <span className="flex items-center gap-3">
-          <span className="font-medium text-zinc-100">{formatGBP(total)}</span>
+          <span className="font-medium text-zinc-900">{formatGBP(total)}</span>
           <span className="text-xs text-zinc-500">{expanded ? 'Hide' : hasData ? 'Edit' : 'Add'}</span>
         </span>
       </button>
 
       {expanded && (
-        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-950/40 p-4">
+        <div className="mt-3 rounded-lg border border-zinc-200 bg-pink-50 p-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {categories.map((category) => (
               <NumberField
@@ -64,7 +64,7 @@ export default function WeekEntryRow({ weekStart, weekEnd, categories, initialSp
               />
             ))}
           </div>
-          {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
           <button
             type="button"
             onClick={handleSave}

@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -17,14 +17,14 @@ html, body, #root {
 
 body {
   background:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(236, 72, 153, 0.16), transparent),
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(236, 72, 153, 0.12), transparent),
     radial-gradient(ellipse 700px 500px at 100% 0%, rgba(219, 39, 119, 0.10), transparent),
-    #0c0509;
-  color: #e4e4e7;
+    #fce7f3;
+  color: #27272a;
 }
 
 ::selection {
-  background: rgba(236, 72, 153, 0.35);
+  background: rgba(219, 39, 119, 0.25);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -27,34 +27,34 @@ function PotsStep({ pots, setPots }) {
       </p>
       <div className="flex flex-col gap-4">
         {pots.map((pot, i) => (
-          <div key={i} className="rounded-lg border border-zinc-800 p-4">
+          <div key={i} className="rounded-lg border border-zinc-200 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <input
                 type="text"
                 value={pot.name}
                 onChange={(e) => update(i, 'name')(e.target.value)}
                 placeholder="Pot name, e.g. LISA"
-                className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-pink-600"
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
               />
               <button
                 type="button"
                 onClick={() => setPots((prev) => prev.filter((_, idx) => idx !== i))}
-                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-400 transition-colors duration-150 hover:bg-red-950/30"
+                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
               >
                 Remove
               </button>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="text-sm">
-                <span className="mb-1 block text-zinc-400">% of leftover</span>
-                <div className="flex min-h-11 items-center rounded-lg border border-zinc-700 bg-zinc-900 px-3">
+                <span className="mb-1 block text-zinc-500">% of leftover</span>
+                <div className="flex min-h-11 items-center rounded-lg border border-zinc-300 bg-white px-3">
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={pot.percentage}
                     onChange={(e) => update(i, 'percentage')(Number(e.target.value))}
-                    className="w-full bg-transparent text-zinc-100 outline-none"
+                    className="w-full bg-transparent text-zinc-900 outline-none"
                   />
                   <span className="text-zinc-500">%</span>
                 </div>
@@ -72,12 +72,12 @@ function PotsStep({ pots, setPots }) {
                 onChange={update(i, 'target')}
               />
               <label className="text-sm">
-                <span className="mb-1 block text-zinc-400">Target date (optional)</span>
+                <span className="mb-1 block text-zinc-500">Target date (optional)</span>
                 <input
                   type="date"
                   value={pot.targetDate}
                   onChange={(e) => update(i, 'targetDate')(e.target.value)}
-                  className="min-h-11 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-pink-600"
+                  className="min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
                 />
               </label>
             </div>
@@ -88,14 +88,14 @@ function PotsStep({ pots, setPots }) {
       <button
         type="button"
         onClick={() => setPots((prev) => [...prev, emptyPot()])}
-        className="mt-4 min-h-11 cursor-pointer rounded-lg border border-pink-900/40 px-4 text-sm font-medium text-pink-300 transition-colors duration-150 hover:bg-pink-950/20"
+        className="mt-4 min-h-11 cursor-pointer rounded-lg border border-pink-300 px-4 text-sm font-medium text-pink-700 transition-colors duration-150 hover:bg-pink-100"
       >
         + Add a pot
       </button>
 
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
-        <span className="text-zinc-400">Total percentage</span>
-        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
+        <span className="text-zinc-500">Total percentage</span>
+        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-600' : 'text-amber-400'}`}>
           {totalPct}%
         </span>
       </div>
@@ -118,19 +118,19 @@ function CategoriesStep({ categories, setCategories }) {
         What categories do you want to track weekly spending against? We've suggested some common ones — edit,
         remove, or add your own.
       </p>
-      <ul className="mb-4 flex flex-col divide-y divide-zinc-800">
+      <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
         {categories.map((cat, i) => (
           <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
             <input
               type="text"
               value={cat}
               onChange={(e) => setCategories((prev) => prev.map((c, idx) => (idx === i ? e.target.value : c)))}
-              className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-zinc-100 outline-none focus:border-pink-600"
+              className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-zinc-900 outline-none focus:border-pink-600"
             />
             <button
               type="button"
               onClick={() => setCategories((prev) => prev.filter((_, idx) => idx !== i))}
-              className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-400 transition-colors duration-150 hover:bg-red-950/30"
+              className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
             >
               Remove
             </button>
@@ -144,7 +144,7 @@ function CategoriesStep({ categories, setCategories }) {
           onChange={(e) => setNewCategory(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }}
           placeholder="e.g. Gifts"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
         />
         <button
           type="button"
@@ -178,16 +178,16 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
         change something later.
       </p>
       {fixedCosts.length > 0 && (
-        <ul className="mb-4 flex flex-col divide-y divide-zinc-800">
+        <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
           {fixedCosts.map((cost, i) => (
             <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
-              <span className="text-zinc-200">{cost.name}</span>
+              <span className="text-zinc-800">{cost.name}</span>
               <div className="flex items-center gap-3">
-                <span className="font-medium text-zinc-100">{formatGBP(cost.amount)}</span>
+                <span className="font-medium text-zinc-900">{formatGBP(cost.amount)}</span>
                 <button
                   type="button"
                   onClick={() => setFixedCosts((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-400 transition-colors duration-150 hover:bg-red-950/30"
+                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
                 >
                   Remove
                 </button>
@@ -202,10 +202,10 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="e.g. Rent"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
         />
         <div className="flex items-center gap-2">
-          <div className="flex min-h-11 w-28 items-center rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm">
+          <div className="flex min-h-11 w-28 items-center rounded-lg border border-zinc-300 bg-white px-2 text-sm">
             <span className="text-zinc-500">£</span>
             <input
               type="number"
@@ -213,7 +213,7 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
               value={newAmount}
               onChange={(e) => setNewAmount(e.target.value)}
               placeholder="0"
-              className="w-full bg-transparent px-1 text-zinc-100 outline-none"
+              className="w-full bg-transparent px-1 text-zinc-900 outline-none"
             />
           </div>
           <button
@@ -225,9 +225,9 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
           </button>
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
-        <span className="text-zinc-400">Total fixed costs</span>
-        <span className="font-medium text-zinc-100">{formatGBP(total)}</span>
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
+        <span className="text-zinc-500">Total fixed costs</span>
+        <span className="font-medium text-zinc-900">{formatGBP(total)}</span>
       </div>
     </Card>
   )
@@ -291,7 +291,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="mb-1 text-lg font-semibold text-zinc-50">Welcome, {user?.name}</h1>
+      <h1 className="mb-1 text-lg font-semibold text-zinc-900">Welcome, {user?.name}</h1>
       <p className="mb-6 text-sm text-zinc-500">
         Let's set your dashboard up — step {step + 1} of {STEPS.length}.
       </p>
@@ -306,7 +306,7 @@ export default function OnboardingPage() {
             <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
               Pots ({potsTotal}%)
             </h3>
-            <ul className="text-sm text-zinc-300">
+            <ul className="text-sm text-zinc-700">
               {pots.map((p, i) => (
                 <li key={i}>
                   {p.name} — {p.percentage}% — {formatGBP(Number(p.startingBalance) || 0)} so far
@@ -316,14 +316,14 @@ export default function OnboardingPage() {
           </div>
           <div className="mb-4">
             <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Categories</h3>
-            <p className="text-sm text-zinc-300">{categories.join(', ')}</p>
+            <p className="text-sm text-zinc-700">{categories.join(', ')}</p>
           </div>
           <div>
             <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Fixed costs</h3>
             {fixedCosts.length === 0 ? (
               <p className="text-sm text-zinc-500">None added.</p>
             ) : (
-              <ul className="text-sm text-zinc-300">
+              <ul className="text-sm text-zinc-700">
                 {fixedCosts.map((c, i) => (
                   <li key={i}>{c.name} — {formatGBP(c.amount)}</li>
                 ))}
@@ -333,14 +333,14 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       <div className="mt-6 flex items-center justify-between">
         <button
           type="button"
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
-          className="min-h-11 cursor-pointer rounded-lg px-4 text-sm font-medium text-zinc-400 transition-colors duration-150 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-11 cursor-pointer rounded-lg px-4 text-sm font-medium text-zinc-500 transition-colors duration-150 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>

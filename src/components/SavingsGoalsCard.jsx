@@ -23,10 +23,10 @@ export default function SavingsGoalsCard({ goals }) {
           return (
             <li key={goal.id}>
               <div className="mb-1 flex items-baseline justify-between">
-                <span className="font-medium text-zinc-100">
+                <span className="font-medium text-zinc-900">
                   {goal.name} <span className="text-xs font-normal text-zinc-500">({Math.round(goal.percentage * 100)}%)</span>
                 </span>
-                <span className="text-sm text-zinc-400">
+                <span className="text-sm text-zinc-500">
                   {hasTarget ? `${formatGBP(goal.current)} / ${formatGBP(goal.target)}` : formatGBP(goal.current)}
                 </span>
               </div>

@@ -41,14 +41,14 @@ function PotsCard() {
       {pots.length === 0 ? (
         <p className="mb-4 text-sm text-zinc-500">No pots yet.</p>
       ) : (
-        <ul className="mb-4 flex flex-col divide-y divide-zinc-800">
+        <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
           {pots.map((pot) => (
             <PotRow key={pot.id} pot={pot} onUpdate={updatePot} onDelete={deletePot} />
           ))}
         </ul>
       )}
 
-      {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       <form onSubmit={handleAdd} className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
@@ -56,10 +56,10 @@ function PotsCard() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Pot name"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
         />
         <div className="flex items-center gap-2">
-          <div className="flex min-h-11 w-24 items-center rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm">
+          <div className="flex min-h-11 w-24 items-center rounded-lg border border-zinc-300 bg-white px-2 text-sm">
             <input
               type="number"
               min="0"
@@ -67,7 +67,7 @@ function PotsCard() {
               value={newPct}
               onChange={(e) => setNewPct(e.target.value)}
               placeholder="0"
-              className="w-full bg-transparent px-1 text-zinc-100 outline-none"
+              className="w-full bg-transparent px-1 text-zinc-900 outline-none"
             />
             <span className="text-zinc-500">%</span>
           </div>
@@ -81,9 +81,9 @@ function PotsCard() {
         </div>
       </form>
 
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
-        <span className="text-zinc-400">Total percentage</span>
-        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
+        <span className="text-zinc-500">Total percentage</span>
+        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-600' : 'text-amber-400'}`}>
           {totalPct}%
         </span>
       </div>
@@ -115,7 +115,7 @@ function CategoriesCard() {
       {categories.length === 0 ? (
         <p className="mb-4 text-sm text-zinc-500">No categories yet.</p>
       ) : (
-        <ul className="mb-4 flex flex-col divide-y divide-zinc-800">
+        <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
           {categories.map((cat) => (
             <li key={cat.id} className="flex items-center justify-between gap-3 py-2 text-sm">
               <input
@@ -124,12 +124,12 @@ function CategoriesCard() {
                 onBlur={(e) => {
                   if (e.target.value.trim() && e.target.value !== cat.name) renameCategory(cat.id, e.target.value.trim())
                 }}
-                className="min-h-11 min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-3 text-zinc-200 outline-none focus:border-pink-600 focus:bg-zinc-900"
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-3 text-zinc-800 outline-none focus:border-pink-600 focus:bg-white"
               />
               <button
                 type="button"
                 onClick={() => deleteCategory(cat.id)}
-                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-400 transition-colors duration-150 hover:bg-red-950/30"
+                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
               >
                 Delete
               </button>
@@ -143,7 +143,7 @@ function CategoriesCard() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="e.g. Gifts"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
         />
         <button
           type="submit"
@@ -164,7 +164,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-6">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-zinc-50">Settings</h2>
+        <h2 className="text-lg font-semibold text-zinc-900">Settings</h2>
         <p className="mt-1 text-sm text-zinc-500">Manage your pots, categories, and fixed costs any time.</p>
       </div>
 

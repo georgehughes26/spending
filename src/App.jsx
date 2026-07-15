@@ -9,8 +9,10 @@ import BankPage from './pages/BankPage'
 import BankCallbackPage from './pages/BankCallbackPage'
 
 const navLinkClass = ({ isActive }) =>
-  `flex min-h-11 cursor-pointer items-center rounded-lg px-3 text-sm font-medium transition-colors duration-150 ${
-    isActive ? 'bg-pink-600 text-white' : 'text-zinc-400 hover:text-pink-300'
+  `flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors duration-150 sm:justify-start sm:border-none ${
+    isActive
+      ? 'border-pink-600 bg-pink-600 text-white'
+      : 'border-pink-200 bg-white/70 text-zinc-500 hover:text-pink-700 sm:bg-transparent'
   }`
 
 function RequireAuth({ children }) {
@@ -32,15 +34,15 @@ function Shell({ children }) {
   const { user, signOut } = useAuth()
   return (
     <div className="min-h-svh">
-      <header className="border-b border-pink-900/30 px-6 py-5">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
+      <header className="border-b border-pink-200 py-4 sm:py-5">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-300">
-              Financial Command Centre
+            <h1 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-600">
+              Layla
             </h1>
-            <p className="mt-1 text-sm text-zinc-500">Your complete financial position, at a glance.</p>
+            <p className="mt-1 text-sm text-zinc-500">Smart Spending Management</p>
           </div>
-          <nav className="flex flex-wrap items-center gap-2">
+          <nav className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
             <NavLink to="/" end className={navLinkClass}>
               Dashboard
             </NavLink>
@@ -54,9 +56,9 @@ function Shell({ children }) {
               <button
                 type="button"
                 onClick={signOut}
-                className="flex min-h-11 cursor-pointer items-center rounded-lg px-3 text-sm font-medium text-zinc-400 transition-colors duration-150 hover:text-red-300"
+                className="flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-pink-200 bg-white/70 px-3 text-sm font-medium text-zinc-500 transition-colors duration-150 hover:text-red-600 sm:justify-start sm:border-none sm:bg-transparent"
               >
-                Sign out ({user.name})
+                Sign out
               </button>
             )}
           </nav>

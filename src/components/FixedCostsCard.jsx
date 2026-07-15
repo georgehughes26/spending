@@ -25,17 +25,17 @@ function FixedCostRow({ cost, onUpdate, onDelete }) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-pink-600"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-pink-600"
         />
         <div className="flex items-center gap-2">
-          <div className="flex w-28 items-center rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-2.5 focus-within:border-pink-600">
+          <div className="flex w-28 items-center rounded-lg border border-zinc-300 bg-white px-2 py-2.5 focus-within:border-pink-600">
             <span className="text-zinc-500">£</span>
             <input
               type="number"
               min="0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-transparent px-1 text-sm text-zinc-100 outline-none"
+              className="w-full bg-transparent px-1 text-sm text-zinc-900 outline-none"
             />
           </div>
           <button
@@ -49,7 +49,7 @@ function FixedCostRow({ cost, onUpdate, onDelete }) {
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="min-h-11 cursor-pointer whitespace-nowrap px-2 text-sm text-zinc-500 transition-colors duration-150 hover:text-zinc-300"
+            className="min-h-11 cursor-pointer whitespace-nowrap px-2 text-sm text-zinc-500 transition-colors duration-150 hover:text-zinc-700"
           >
             Cancel
           </button>
@@ -60,20 +60,20 @@ function FixedCostRow({ cost, onUpdate, onDelete }) {
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 text-sm">
-      <span className="text-zinc-200">{cost.name}</span>
+      <span className="text-zinc-800">{cost.name}</span>
       <div className="flex items-center gap-1">
-        <span className="mr-2 font-medium text-zinc-100">{formatGBP(cost.amount)}</span>
+        <span className="mr-2 font-medium text-zinc-900">{formatGBP(cost.amount)}</span>
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-pink-400 transition-colors duration-150 hover:bg-pink-950/30 hover:text-pink-300"
+          className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-pink-600 transition-colors duration-150 hover:bg-pink-100 hover:text-pink-700"
         >
           Edit
         </button>
         <button
           type="button"
           onClick={() => onDelete(cost.id)}
-          className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-400 transition-colors duration-150 hover:bg-red-950/30 hover:text-red-300"
+          className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 hover:text-red-600"
         >
           Delete
         </button>
@@ -109,7 +109,7 @@ export default function FixedCostsCard({ costs, total, addCost, updateCost, dele
       {costs.length === 0 ? (
         <p className="mb-4 text-sm text-zinc-500">No fixed costs added yet.</p>
       ) : (
-        <ul className="mb-4 flex flex-col divide-y divide-zinc-800">
+        <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
           {costs.map((cost) => (
             <FixedCostRow key={cost.id} cost={cost} onUpdate={updateCost} onDelete={deleteCost} />
           ))}
@@ -122,10 +122,10 @@ export default function FixedCostsCard({ costs, total, addCost, updateCost, dele
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="e.g. Rent"
-          className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-pink-600"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-pink-600"
         />
         <div className="flex items-center gap-2">
-          <div className="flex w-28 items-center rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-2.5 text-sm focus-within:border-pink-600">
+          <div className="flex w-28 items-center rounded-lg border border-zinc-300 bg-white px-2 py-2.5 text-sm focus-within:border-pink-600">
             <span className="text-zinc-500">£</span>
             <input
               type="number"
@@ -133,7 +133,7 @@ export default function FixedCostsCard({ costs, total, addCost, updateCost, dele
               value={newAmount}
               onChange={(e) => setNewAmount(e.target.value)}
               placeholder="0"
-              className="w-full bg-transparent px-1 text-zinc-100 outline-none"
+              className="w-full bg-transparent px-1 text-zinc-900 outline-none"
             />
           </div>
           <button
@@ -146,9 +146,9 @@ export default function FixedCostsCard({ costs, total, addCost, updateCost, dele
         </div>
       </form>
 
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
-        <span className="text-zinc-400">Total fixed costs</span>
-        <span className="font-medium text-zinc-100">{formatGBP(total)}</span>
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
+        <span className="text-zinc-500">Total fixed costs</span>
+        <span className="font-medium text-zinc-900">{formatGBP(total)}</span>
       </div>
     </Card>
   )
