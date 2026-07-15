@@ -16,41 +16,41 @@ function ChartTooltip({ active, payload }) {
 
 export default function TotalSavingsCard({ goals, history = [] }) {
   const total = goals.reduce((t, g) => t + g.current, 0)
+  const chartData = history.length > 0 ? history : [{ month: new Date().toISOString(), total }]
 
   return (
     <Card title="Total Savings">
       <div className="mb-4 text-3xl font-semibold text-zinc-900">{formatGBP(total)}</div>
 
-      {history.length > 1 && (
-        <div className="mb-5 h-40 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={history} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id="totalSavingsFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#db2777" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#db2777" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="month"
-                tickFormatter={(value) => new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(new Date(value))}
-                tick={{ fontSize: 11, fill: '#71717a' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis hide domain={['dataMin', 'dataMax']} />
-              <Tooltip content={<ChartTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="total"
-                stroke="#db2777"
-                strokeWidth={2}
-                fill="url(#totalSavingsFill)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <div className="mb-5 h-40 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="totalSavingsFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#db2777" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#db2777" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="month"
+              tickFormatter={(value) => new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(new Date(value))}
+              tick={{ fontSize: 11, fill: '#71717a' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis hide domain={['dataMin', 'dataMax']} />
+            <Tooltip content={<ChartTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="total"
+              stroke="#db2777"
+              strokeWidth={2}
+              fill="url(#totalSavingsFill)"
+              dot={{ r: 3, fill: '#db2777', strokeWidth: 0 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
 
       <ul className="flex flex-col divide-y divide-zinc-200">
         {goals.map((goal) => {
