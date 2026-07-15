@@ -37,11 +37,16 @@ export function deriveAssets(entries) {
 
 export function deriveMonthlyOverview(entries) {
   const latest = entries[entries.length - 1]
-  if (!latest) return { income: 0, spent: 0, saved: 0 }
+  if (!latest) return { income: 0, spent: 0, saved: 0, categories: [] }
 
   const income = Number(latest.income) || 0
-  const spent = sum(latest.spending)
-  return { income, spent, saved: income - spent }
+  const spending = latest.spending ?? {}
+  const spent = sum(spending)
+  const categories = Object.entries(spending)
+    .map(([name, amount]) => ({ name, amount: Number(amount) || 0 }))
+    .sort((a, b) => b.amount - a.amount)
+
+  return { income, spent, saved: income - spent, categories }
 }
 
 function monthlyLeftover(entry) {
@@ -102,6 +107,26 @@ export function deriveContributions(entries, pots) {
       percentage: pot.percentage,
       totalContributed,
       monthlyContribution,
+    }
+  })
+}
+
+// Total savings across all pots, as of each recorded month, using the same
+// closing-balance-is-truth rule as deriveSavingsGoals (falls back to the
+// starting balance until a pot's first closing balance is recorded).
+export function deriveTotalSavingsHistory(entries, pots) {
+  if (!pots || pots.length === 0) return []
+
+  const running = Object.fromEntries(pots.map((pot) => [pot.id, Number(pot.starting_balance) || 0]))
+
+  return entries.map((entry) => {
+    for (const pot of pots) {
+      const stored = entry.account_balances?.[pot.id]
+      if (stored !== undefined && stored !== null) running[pot.id] = Number(stored) || 0
+    }
+    return {
+      month: entry.month,
+      total: pots.reduce((t, pot) => t + running[pot.id], 0),
     }
   })
 }
