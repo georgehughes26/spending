@@ -1,0 +1,455 @@
+import { useEffect, useMemo, useState } from 'react'
+import Card from '../components/Card'
+import NumberField from '../components/NumberField'
+import WeekEntryRow from '../components/WeekEntryRow'
+import FixedCostsCard from '../components/FixedCostsCard'
+import { useAuth } from '../context/AuthContext'
+import { useMonthlyEntries } from '../hooks/useMonthlyEntries'
+import { aggregateWeeklySpending, useWeeklySpending } from '../hooks/useWeeklySpending'
+import { useFixedCosts } from '../hooks/useFixedCosts'
+import { useSavingsPots } from '../hooks/useSavingsPots'
+import { useSpendingCategories } from '../hooks/useSpendingCategories'
+import { ACCOUNTS, BASELINE_ACCOUNT_BALANCES } from '../data/config'
+import { formatGBP, formatMonthYear } from '../utils/format'
+
+const FIXED_COSTS_CATEGORY = 'Fixed Monthly Costs'
+
+function currentMonthValue() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function monthValueToDate(monthValue) {
+  return `${monthValue}-01`
+}
+
+function dateToMonthValue(dateString) {
+  return dateString.slice(0, 7)
+}
+
+function emptyForm() {
+  return {
+    income: 0,
+    account_balances: { ...BASELINE_ACCOUNT_BALANCES },
+    house_contribution_me: 0,
+    house_contribution_partner: 0,
+    notes: '',
+  }
+}
+
+function emptyGoalSplit(pots) {
+  return Object.fromEntries(pots.map((p) => [p.id, 0]))
+}
+
+function latestBalancesBefore(entries, monthValue) {
+  const prior = entries.filter((e) => dateToMonthValue(e.month) < monthValue)
+  const last = prior[prior.length - 1]
+  return last?.account_balances && Object.keys(last.account_balances).length > 0
+    ? last.account_balances
+    : BASELINE_ACCOUNT_BALANCES
+}
+
+export default function DataEntryPage() {
+  const { user } = useAuth()
+  const { entries, loading, error, saveEntry, deleteEntry } = useMonthlyEntries(user?.id)
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthValue())
+  const { buckets, weeks, loading: weeksLoading, error: weeksError, saveWeek } = useWeeklySpending(user?.id, selectedMonth)
+  const {
+    costs: fixedCosts,
+    total: fixedCostsTotal,
+    loading: fixedCostsLoading,
+    addCost: addFixedCost,
+    updateCost: updateFixedCost,
+    deleteCost: deleteFixedCost,
+  } = useFixedCosts(user?.id)
+  const { pots, loading: potsLoading } = useSavingsPots(user?.id)
+  const { categories: categoryRows, loading: categoriesLoading } = useSpendingCategories(user?.id)
+  const categories = useMemo(() => categoryRows.map((c) => c.name), [categoryRows])
+
+  const [form, setForm] = useState(emptyForm())
+  const [actualSplit, setActualSplit] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
+  const [saved, setSaved] = useState(false)
+  const [weekSaveError, setWeekSaveError] = useState(null)
+
+  const existingEntry = useMemo(
+    () => entries.find((e) => dateToMonthValue(e.month) === selectedMonth),
+    [entries, selectedMonth],
+  )
+
+  useEffect(() => {
+    if (existingEntry) {
+      setForm({
+        income: existingEntry.income ?? 0,
+        account_balances: { ...emptyForm().account_balances, ...existingEntry.account_balances },
+        house_contribution_me: existingEntry.house_contribution_me ?? 0,
+        house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
+        notes: existingEntry.notes ?? '',
+      })
+    } else {
+      setForm({
+        ...emptyForm(),
+        account_balances: latestBalancesBefore(entries, selectedMonth),
+      })
+    }
+    setActualSplit({ ...emptyGoalSplit(pots), ...existingEntry?.goal_contributions })
+    setSaved(false)
+    setSaveError(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth, existingEntry, entries, pots])
+
+  const weeksByStart = useMemo(
+    () => Object.fromEntries(weeks.map((w) => [w.week_start, w])),
+    [weeks],
+  )
+
+  const weeklyTotal = useMemo(() => {
+    const totals = aggregateWeeklySpending(weeks)
+    return Object.values(totals).reduce((t, v) => t + v, 0)
+  }, [weeks])
+
+  const totalSpending = weeklyTotal + fixedCostsTotal
+  const saved_ = (Number(form.income) || 0) - totalSpending
+
+  // Keeps the already-saved month's spending total in sync whenever the
+  // fixed costs list changes, without needing a separate save action.
+  useEffect(() => {
+    // Wait until fixed costs have actually finished loading — otherwise
+    // fixedCostsTotal briefly reads as 0 on first mount and this would fire
+    // a spurious save that wipes the real total.
+    if (!existingEntry || fixedCostsLoading) return
+    const storedFixed = Number(existingEntry.spending?.[FIXED_COSTS_CATEGORY]) || 0
+    if (storedFixed === fixedCostsTotal) return
+
+    saveEntry({
+      id: existingEntry.id,
+      month: existingEntry.month,
+      income: existingEntry.income,
+      spending: { ...existingEntry.spending, [FIXED_COSTS_CATEGORY]: fixedCostsTotal },
+      account_balances: existingEntry.account_balances,
+      goal_contributions: existingEntry.goal_contributions ?? {},
+      house_contribution_me: existingEntry.house_contribution_me,
+      house_contribution_partner: existingEntry.house_contribution_partner,
+      notes: existingEntry.notes,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixedCostsTotal, fixedCostsLoading, existingEntry])
+
+  const update = (section, key) => (value) => {
+    setForm((prev) => ({ ...prev, [section]: { ...prev[section], [key]: value } }))
+  }
+
+  // Saving a week only touches weekly_spending + the aggregate spending total
+  // synced onto monthly_entries — it never overwrites income/balances/notes
+  // with whatever's currently sitting in the form (those need "Update month").
+  const handleWeekSave = async (weekStart, weekEnd, spendingForWeek) => {
+    setWeekSaveError(null)
+    try {
+      await saveWeek(weekStart, weekEnd, spendingForWeek)
+      const updatedWeeks = [
+        ...weeks.filter((w) => w.week_start !== weekStart),
+        { week_start: weekStart, spending: spendingForWeek },
+      ]
+      const totals = { ...aggregateWeeklySpending(updatedWeeks), [FIXED_COSTS_CATEGORY]: fixedCostsTotal }
+
+      await saveEntry({
+        ...(existingEntry ? { id: existingEntry.id } : {}),
+        month: monthValueToDate(selectedMonth),
+        income: existingEntry?.income ?? 0,
+        spending: totals,
+        account_balances: existingEntry?.account_balances ?? latestBalancesBefore(entries, selectedMonth),
+        goal_contributions: existingEntry?.goal_contributions ?? {},
+        house_contribution_me: existingEntry?.house_contribution_me ?? 0,
+        house_contribution_partner: existingEntry?.house_contribution_partner ?? 0,
+        notes: existingEntry?.notes ?? '',
+      })
+    } catch (err) {
+      setWeekSaveError(err.message)
+      throw err
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveError(null)
+    setSaved(false)
+    try {
+      await saveEntry({
+        ...(existingEntry ? { id: existingEntry.id } : {}),
+        month: monthValueToDate(selectedMonth),
+        income: Number(form.income) || 0,
+        spending: existingEntry?.spending ?? {},
+        account_balances: form.account_balances,
+        goal_contributions: Object.fromEntries(
+          pots.map((p) => [p.id, Number(actualSplit[p.id]) || 0]),
+        ),
+        house_contribution_me: Number(form.house_contribution_me) || 0,
+        house_contribution_partner: Number(form.house_contribution_partner) || 0,
+        notes: form.notes,
+      })
+      setSaved(true)
+    } catch (err) {
+      setSaveError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!existingEntry) return
+    if (!window.confirm(`Delete the entry for ${formatMonthYear(existingEntry.month)}?`)) return
+    await deleteEntry(existingEntry.id)
+  }
+
+  const dataLoading = potsLoading || categoriesLoading
+
+  return (
+    <div className="mx-auto max-w-4xl px-6 py-6">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-50">Monthly Data Entry</h2>
+          <p className="mt-1 text-sm text-zinc-500">Enter your figures for a month to update the dashboard.</p>
+        </div>
+        <label className="text-sm">
+          <span className="mb-1 block text-zinc-400">Month</span>
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="min-h-11 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none focus:border-pink-600"
+          />
+        </label>
+      </div>
+
+      {error && (
+        <p className="mb-4 rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+          Couldn't load existing entries: {error}
+        </p>
+      )}
+
+      {dataLoading ? (
+        <p className="text-sm text-zinc-500">Loading your setup…</p>
+      ) : (
+        <>
+          <FixedCostsCard
+            costs={fixedCosts}
+            total={fixedCostsTotal}
+            addCost={addFixedCost}
+            updateCost={updateFixedCost}
+            deleteCost={deleteFixedCost}
+          />
+
+          <Card title="Weekly Spending" className="mb-5">
+            <p className="mb-3 text-sm text-zinc-500">
+              Log spending week by week as you go — no need to wait until the month's over.
+            </p>
+            {weeksError && <p className="mb-3 text-sm text-red-400">{weeksError}</p>}
+            {weekSaveError && <p className="mb-3 text-sm text-red-400">{weekSaveError}</p>}
+            {weeksLoading ? (
+              <p className="text-sm text-zinc-500">Loading…</p>
+            ) : categories.length === 0 ? (
+              <p className="text-sm text-zinc-500">
+                No spending categories set up yet — add some in Settings first.
+              </p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-zinc-800">
+                {buckets.map((bucket) => (
+                  <WeekEntryRow
+                    key={bucket.weekStart}
+                    weekStart={bucket.weekStart}
+                    weekEnd={bucket.weekEnd}
+                    categories={categories}
+                    initialSpending={weeksByStart[bucket.weekStart]?.spending}
+                    onSave={handleWeekSave}
+                  />
+                ))}
+              </ul>
+            )}
+            <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
+              <span className="text-zinc-400">Weekly spending total</span>
+              <span className="font-medium text-zinc-100">{formatGBP(weeklyTotal)}</span>
+            </div>
+          </Card>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <Card title="Income">
+              <NumberField
+                id="income"
+                label="Income"
+                value={form.income}
+                onChange={(v) => setForm((prev) => ({ ...prev, income: v }))}
+              />
+              <div className="mt-4 flex flex-col gap-2 border-t border-zinc-800 pt-4 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">Total spent (weekly + fixed costs)</span>
+                  <span className="font-medium text-zinc-100">{formatGBP(totalSpending)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">Saved this month</span>
+                  <span className={`font-medium ${saved_ >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {formatGBP(saved_)}
+                  </span>
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Account Balances (end of month)">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {ACCOUNTS.map((account) => (
+                  <NumberField
+                    key={account.key}
+                    id={`account-${account.key}`}
+                    label={account.label}
+                    value={form.account_balances[account.key] ?? 0}
+                    onChange={update('account_balances', account.key)}
+                  />
+                ))}
+              </div>
+            </Card>
+
+            {pots.length === 0 ? (
+              <Card title="Savings Split">
+                <p className="text-sm text-zinc-500">
+                  No savings pots set up yet — add some in Settings first.
+                </p>
+              </Card>
+            ) : (
+              <>
+                <Card title="Savings Split (guide)">
+                  <p className="mb-4 text-sm text-zinc-500">
+                    Whatever's left after spending ({formatGBP(saved_)}) would split like this — a guide only, not what actually happened.
+                  </p>
+                  <ul className="flex flex-col divide-y divide-zinc-800">
+                    {pots.map((pot) => (
+                      <li key={pot.id} className="flex items-center justify-between py-2 text-sm">
+                        <span className="text-zinc-300">
+                          {pot.name} <span className="text-xs text-zinc-500">({Math.round(pot.percentage * 100)}%)</span>
+                        </span>
+                        <span className="font-medium text-zinc-100">
+                          {formatGBP(Math.max(0, saved_) * pot.percentage)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+
+                <Card title="Actual Savings Split">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <p className="text-sm text-zinc-500">
+                      At the end of the month, enter what actually went into each pot.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActualSplit(
+                          Object.fromEntries(
+                            pots.map((p) => [p.id, Math.round(Math.max(0, saved_) * p.percentage)]),
+                          ),
+                        )
+                      }
+                      className="min-h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-lg border border-pink-900/40 px-3 text-sm font-medium text-pink-300 transition-colors duration-150 hover:bg-pink-950/20"
+                    >
+                      Copy guide amounts
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {pots.map((pot) => (
+                      <NumberField
+                        key={pot.id}
+                        id={`actual-${pot.id}`}
+                        label={pot.name}
+                        value={actualSplit[pot.id] ?? 0}
+                        onChange={(v) => setActualSplit((prev) => ({ ...prev, [pot.id]: v }))}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
+                    <span className="text-zinc-400">Total actually saved</span>
+                    <span className="font-medium text-zinc-100">
+                      {formatGBP(Object.values(actualSplit).reduce((t, v) => t + (Number(v) || 0), 0))}
+                    </span>
+                  </div>
+                </Card>
+              </>
+            )}
+
+            <Card title="House Deposit Contributions">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <NumberField
+                  id="house-me"
+                  label="My contribution"
+                  value={form.house_contribution_me}
+                  onChange={(v) => setForm((prev) => ({ ...prev, house_contribution_me: v }))}
+                />
+                <NumberField
+                  id="house-partner"
+                  label="Partner contribution"
+                  value={form.house_contribution_partner}
+                  onChange={(v) => setForm((prev) => ({ ...prev, house_contribution_partner: v }))}
+                />
+              </div>
+            </Card>
+
+            <Card title="Notes">
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="e.g. Stayed £150 under food budget, shopping increased by £200..."
+                rows={3}
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-pink-600"
+              />
+            </Card>
+
+            {saveError && <p className="text-sm text-red-400">{saveError}</p>}
+            {saved && <p className="text-sm text-emerald-400">Saved {formatMonthYear(monthValueToDate(selectedMonth))}.</p>}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                disabled={saving || loading}
+                className="min-h-11 cursor-pointer rounded-lg bg-pink-600 px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : existingEntry ? 'Update month' : 'Save month'}
+              </button>
+              {existingEntry && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-400 transition-colors duration-150 hover:bg-red-950/30 hover:text-red-300"
+                >
+                  Delete this month's entry
+                </button>
+              )}
+            </div>
+          </form>
+        </>
+      )}
+
+      <div className="mt-8">
+        <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500">Past entries</h3>
+        {loading ? (
+          <p className="text-sm text-zinc-500">Loading…</p>
+        ) : entries.length === 0 ? (
+          <p className="text-sm text-zinc-500">No entries yet.</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-zinc-800 rounded-xl border border-zinc-800">
+            {[...entries].reverse().map((e) => (
+              <li key={e.id} className="flex items-center justify-between py-1 pl-4 pr-2 text-sm">
+                <span className="text-zinc-200">{formatMonthYear(e.month)}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonth(dateToMonthValue(e.month))}
+                  className="min-h-11 cursor-pointer rounded-lg px-3 font-medium text-pink-400 transition-colors duration-150 hover:bg-pink-950/30 hover:text-pink-300"
+                >
+                  Edit
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+}
