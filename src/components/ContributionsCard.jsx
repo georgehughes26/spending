@@ -7,7 +7,7 @@ export default function ContributionsCard({ contributions }) {
   return (
     <Card title="Contributions">
       <p className="mb-4 text-sm text-zinc-500">
-        How much you've actually put into each pot — separate from what it's worth now, since growth or loss
+        How much you've actually put into each pot. Separate from what it's worth now, since growth or loss
         moves the balance on its own.
       </p>
       <div className="mb-4 text-3xl font-semibold text-zinc-900">{formatGBP(total)}</div>

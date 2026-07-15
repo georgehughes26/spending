@@ -22,10 +22,12 @@ function PotsStep({ pots, setPots }) {
   return (
     <Card title="Your savings pots">
       <p className="mb-4 text-sm text-zinc-500">
-        What pots do you save into (LISA, cash, investments, etc.)? For each, how much do you currently have,
-        and what % of your monthly leftover should go into it. Percentages should add up to 100%. Each month
-        you'll enter the pot's real closing balance, so growth or loss shows up automatically — contributions
-        are tracked separately as their own dashboard stat.
+        List the pots you save into (LISA, cash, investments, whatever you've got), how much is in each right
+        now, and what % of your monthly leftover should go into it. Percentages need to add up to 100%.
+      </p>
+      <p className="mb-4 text-sm text-zinc-500">
+        Each month you'll enter the pot's real closing balance, so growth or loss shows up automatically.
+        Contributions get tracked separately as their own dashboard stat.
       </p>
       <div className="flex flex-col gap-4">
         {pots.map((pot, i) => (
@@ -117,7 +119,7 @@ function CategoriesStep({ categories, setCategories }) {
   return (
     <Card title="Your spending categories">
       <p className="mb-4 text-sm text-zinc-500">
-        What categories do you want to track weekly spending against? We've suggested some common ones — edit,
+        Pick the categories you want to track weekly spending against. We've suggested some common ones. Edit,
         remove, or add your own.
       </p>
       <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
@@ -295,7 +297,7 @@ export default function OnboardingPage() {
     <div className="mx-auto max-w-2xl px-6 py-10">
       <h1 className="mb-1 text-lg font-semibold text-zinc-900">Welcome, {user?.name}</h1>
       <p className="mb-6 text-sm text-zinc-500">
-        Let's set your dashboard up — step {step + 1} of {STEPS.length}.
+        Let's set up your dashboard. Step {step + 1} of {STEPS.length}.
       </p>
 
       {step === 0 && <PotsStep pots={pots} setPots={setPots} />}
@@ -303,7 +305,7 @@ export default function OnboardingPage() {
       {step === 2 && <FixedCostsStep fixedCosts={fixedCosts} setFixedCosts={setFixedCosts} />}
       {step === 3 && (
         <Card title="Review">
-          <p className="mb-4 text-sm text-zinc-500">Here's what we'll set up for you.</p>
+          <p className="mb-4 text-sm text-zinc-500">This is what we'll create.</p>
           <div className="mb-4">
             <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
               Pots ({potsTotal}%)
@@ -311,7 +313,7 @@ export default function OnboardingPage() {
             <ul className="text-sm text-zinc-700">
               {pots.map((p, i) => (
                 <li key={i}>
-                  {p.name} — {p.percentage}% — {formatGBP(Number(p.startingBalance) || 0)} so far
+                  {p.name}: {p.percentage}%, {formatGBP(Number(p.startingBalance) || 0)} so far
                 </li>
               ))}
             </ul>
@@ -327,7 +329,7 @@ export default function OnboardingPage() {
             ) : (
               <ul className="text-sm text-zinc-700">
                 {fixedCosts.map((c, i) => (
-                  <li key={i}>{c.name} — {formatGBP(c.amount)}</li>
+                  <li key={i}>{c.name}: {formatGBP(c.amount)}</li>
                 ))}
               </ul>
             )}

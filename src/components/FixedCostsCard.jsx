@@ -103,7 +103,8 @@ export default function FixedCostsCard({ costs, total, addCost, updateCost, dele
   return (
     <Card title="Fixed Monthly Costs" className="mb-5">
       <p className="mb-3 text-sm text-zinc-500">
-        Recurring costs like rent, subscriptions, or council tax — the same total applies every month until you change something here.
+        Recurring costs like rent, subscriptions, or council tax. The same total applies every month until you
+        change something here.
       </p>
 
       {costs.length === 0 ? (

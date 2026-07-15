@@ -240,7 +240,7 @@ export default function DataEntryPage() {
 
           <Card title="Weekly Spending" className="mb-5">
             <p className="mb-3 text-sm text-zinc-500">
-              Log spending week by week as you go — no need to wait until the month's over.
+              Log spending week by week. No need to wait until the month's over.
             </p>
             {weeksError && <p className="mb-3 text-sm text-red-600">{weeksError}</p>}
             {weekSaveError && <p className="mb-3 text-sm text-red-600">{weekSaveError}</p>}
@@ -248,7 +248,7 @@ export default function DataEntryPage() {
               <p className="text-sm text-zinc-500">Loading…</p>
             ) : categories.length === 0 ? (
               <p className="text-sm text-zinc-500">
-                No spending categories set up yet — add some in Settings first.
+                No spending categories yet. Add some in Settings first.
               </p>
             ) : (
               <ul className="flex flex-col divide-y divide-zinc-200">
@@ -295,8 +295,8 @@ export default function DataEntryPage() {
             {pots.length > 0 && (
               <Card title="Pot Closing Balances (end of month)">
                 <p className="mb-4 text-sm text-zinc-500">
-                  Enter each pot's real closing balance from wherever it's held — this is what drives Total
-                  Savings and the Goal Tracker, so growth or loss shows up automatically.
+                  Enter each pot's real closing balance from wherever it's held. This drives Total Savings and
+                  the Goal Tracker, so growth or loss shows up automatically.
                 </p>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {pots.map((pot) => (
@@ -315,14 +315,15 @@ export default function DataEntryPage() {
             {pots.length === 0 ? (
               <Card title="Savings Split">
                 <p className="text-sm text-zinc-500">
-                  No savings pots set up yet — add some in Settings first.
+                  No savings pots yet. Add some in Settings first.
                 </p>
               </Card>
             ) : (
               <>
                 <Card title="Savings Split (guide)">
                   <p className="mb-4 text-sm text-zinc-500">
-                    Whatever's left after spending ({formatGBP(saved_)}) would split like this — a guide only, not what actually happened.
+                    Whatever's left after spending ({formatGBP(saved_)}) would split like this. It's a guide,
+                    not what actually happened.
                   </p>
                   <ul className="flex flex-col divide-y divide-zinc-200">
                     {pots.map((pot) => (
@@ -342,7 +343,7 @@ export default function DataEntryPage() {
                   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <p className="text-sm text-zinc-500">
                       At the end of the month, enter what actually went into each pot. This feeds the
-                      Contributions total on your dashboard — it doesn't affect the pot's balance, which comes
+                      Contributions total on your dashboard. It doesn't affect the pot's balance, which comes
                       from the closing balance above.
                     </p>
                     <button

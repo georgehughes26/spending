@@ -32,7 +32,7 @@ export default function DashboardPage() {
     <main className="mx-auto max-w-7xl px-6 py-6">
       {entries.length === 0 && (
         <p className="mb-5 rounded-lg border border-pink-300 bg-pink-100 px-4 py-3 text-sm text-pink-700">
-          No monthly entries yet — figures below use your starting balances. Add your first month on the Data Entry page.
+          No monthly entries yet. Figures below use your starting balances. Add your first month on the Data Entry page.
         </p>
       )}
 

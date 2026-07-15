@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
       .select('id')
       .ilike('name', trimmed)
       .maybeSingle()
-    if (existing) throw new Error('That name is already signed up — try signing in instead')
+    if (existing) throw new Error('That name is already signed up. Try signing in instead')
 
     const pin_hash = await hashPin(trimmed, pin)
     const { data, error } = await supabase
@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
       .ilike('name', trimmed)
       .maybeSingle()
     if (error) throw new Error(error.message)
-    if (!data) throw new Error('No account with that name — sign up instead')
+    if (!data) throw new Error('No account with that name. Sign up instead')
 
     const pin_hash = await hashPin(trimmed, pin)
     if (pin_hash !== data.pin_hash) throw new Error('Incorrect PIN')
