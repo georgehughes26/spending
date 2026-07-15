@@ -12,11 +12,25 @@ function estimateCompletion(goal) {
   return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(eta)
 }
 
+// Goals with a target come first (largest target first), then the rest
+// ordered by current balance (largest first).
+function sortGoals(goals) {
+  return [...goals].sort((a, b) => {
+    const aHasTarget = a.target != null
+    const bHasTarget = b.target != null
+    if (aHasTarget && bHasTarget) return b.target - a.target
+    if (aHasTarget !== bHasTarget) return aHasTarget ? -1 : 1
+    return b.current - a.current
+  })
+}
+
 export default function SavingsGoalsCard({ goals }) {
+  const sortedGoals = sortGoals(goals)
+
   return (
     <Card title="Savings Goal Tracker">
       <ul className="flex flex-col gap-5">
-        {goals.map((goal) => {
+        {sortedGoals.map((goal) => {
           const hasTarget = goal.target != null
           const progress = hasTarget ? (goal.current / goal.target) * 100 : 0
 

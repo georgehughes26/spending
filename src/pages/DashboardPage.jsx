@@ -1,10 +1,11 @@
 import MonthlyOverviewCard from '../components/MonthlyOverviewCard'
 import TotalSavingsCard from '../components/TotalSavingsCard'
 import SavingsGoalsCard from '../components/SavingsGoalsCard'
+import ContributionsCard from '../components/ContributionsCard'
 import { useAuth } from '../context/AuthContext'
 import { useMonthlyEntries } from '../hooks/useMonthlyEntries'
 import { useSavingsPots } from '../hooks/useSavingsPots'
-import { deriveMonthlyOverview, deriveSavingsGoals } from '../data/derive'
+import { deriveContributions, deriveMonthlyOverview, deriveSavingsGoals } from '../data/derive'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -25,6 +26,7 @@ export default function DashboardPage() {
 
   const monthlyOverview = deriveMonthlyOverview(entries)
   const savingsGoals = deriveSavingsGoals(entries, pots)
+  const contributions = deriveContributions(entries, pots)
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-6">
@@ -39,8 +41,9 @@ export default function DashboardPage() {
         <TotalSavingsCard goals={savingsGoals} />
       </section>
 
-      <section className="mt-5">
+      <section className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <SavingsGoalsCard goals={savingsGoals} />
+        <ContributionsCard contributions={contributions} />
       </section>
     </main>
   )

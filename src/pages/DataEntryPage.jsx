@@ -9,7 +9,6 @@ import { aggregateWeeklySpending, useWeeklySpending } from '../hooks/useWeeklySp
 import { useFixedCosts } from '../hooks/useFixedCosts'
 import { useSavingsPots } from '../hooks/useSavingsPots'
 import { useSpendingCategories } from '../hooks/useSpendingCategories'
-import { ACCOUNTS, BASELINE_ACCOUNT_BALANCES } from '../data/config'
 import { formatGBP, formatMonthYear } from '../utils/format'
 
 const FIXED_COSTS_CATEGORY = 'Fixed Monthly Costs'
@@ -30,7 +29,6 @@ function dateToMonthValue(dateString) {
 function emptyForm() {
   return {
     income: 0,
-    account_balances: { ...BASELINE_ACCOUNT_BALANCES },
     notes: '',
   }
 }
@@ -39,12 +37,18 @@ function emptyGoalSplit(pots) {
   return Object.fromEntries(pots.map((p) => [p.id, 0]))
 }
 
-function latestBalancesBefore(entries, monthValue) {
+function emptyClosingBalances(pots) {
+  return Object.fromEntries(pots.map((p) => [p.id, Number(p.starting_balance) || 0]))
+}
+
+// Closing balances carry forward from whatever was last entered for each
+// pot, falling back to its starting balance if nothing's been entered yet.
+function latestClosingBalances(entries, pots, monthValue) {
   const prior = entries.filter((e) => dateToMonthValue(e.month) < monthValue)
   const last = prior[prior.length - 1]
-  return last?.account_balances && Object.keys(last.account_balances).length > 0
-    ? last.account_balances
-    : BASELINE_ACCOUNT_BALANCES
+  return Object.fromEntries(
+    pots.map((pot) => [pot.id, last?.account_balances?.[pot.id] ?? (Number(pot.starting_balance) || 0)]),
+  )
 }
 
 export default function DataEntryPage() {
@@ -65,6 +69,7 @@ export default function DataEntryPage() {
   const categories = useMemo(() => categoryRows.map((c) => c.name), [categoryRows])
 
   const [form, setForm] = useState(emptyForm())
+  const [closingBalances, setClosingBalances] = useState({})
   const [actualSplit, setActualSplit] = useState({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
@@ -80,14 +85,12 @@ export default function DataEntryPage() {
     if (existingEntry) {
       setForm({
         income: existingEntry.income ?? 0,
-        account_balances: { ...emptyForm().account_balances, ...existingEntry.account_balances },
         notes: existingEntry.notes ?? '',
       })
+      setClosingBalances({ ...emptyClosingBalances(pots), ...existingEntry.account_balances })
     } else {
-      setForm({
-        ...emptyForm(),
-        account_balances: latestBalancesBefore(entries, selectedMonth),
-      })
+      setForm(emptyForm())
+      setClosingBalances(latestClosingBalances(entries, pots, selectedMonth))
     }
     setActualSplit({ ...emptyGoalSplit(pots), ...existingEntry?.goal_contributions })
     setSaved(false)
@@ -123,7 +126,7 @@ export default function DataEntryPage() {
       month: existingEntry.month,
       income: existingEntry.income,
       spending: { ...existingEntry.spending, [FIXED_COSTS_CATEGORY]: fixedCostsTotal },
-      account_balances: existingEntry.account_balances,
+      account_balances: existingEntry.account_balances ?? {},
       goal_contributions: existingEntry.goal_contributions ?? {},
       house_contribution_me: existingEntry.house_contribution_me ?? 0,
       house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
@@ -131,10 +134,6 @@ export default function DataEntryPage() {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixedCostsTotal, fixedCostsLoading, existingEntry])
-
-  const update = (section, key) => (value) => {
-    setForm((prev) => ({ ...prev, [section]: { ...prev[section], [key]: value } }))
-  }
 
   // Saving a week only touches weekly_spending + the aggregate spending total
   // synced onto monthly_entries — it never overwrites income/balances/notes
@@ -154,7 +153,7 @@ export default function DataEntryPage() {
         month: monthValueToDate(selectedMonth),
         income: existingEntry?.income ?? 0,
         spending: totals,
-        account_balances: existingEntry?.account_balances ?? latestBalancesBefore(entries, selectedMonth),
+        account_balances: existingEntry?.account_balances ?? latestClosingBalances(entries, pots, selectedMonth),
         goal_contributions: existingEntry?.goal_contributions ?? {},
         house_contribution_me: existingEntry?.house_contribution_me ?? 0,
         house_contribution_partner: existingEntry?.house_contribution_partner ?? 0,
@@ -177,7 +176,9 @@ export default function DataEntryPage() {
         month: monthValueToDate(selectedMonth),
         income: Number(form.income) || 0,
         spending: existingEntry?.spending ?? {},
-        account_balances: form.account_balances,
+        account_balances: Object.fromEntries(
+          pots.map((p) => [p.id, Number(closingBalances[p.id]) || 0]),
+        ),
         goal_contributions: Object.fromEntries(
           pots.map((p) => [p.id, Number(actualSplit[p.id]) || 0]),
         ),
@@ -291,19 +292,25 @@ export default function DataEntryPage() {
               </div>
             </Card>
 
-            <Card title="Account Balances (end of month)">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {ACCOUNTS.map((account) => (
-                  <NumberField
-                    key={account.key}
-                    id={`account-${account.key}`}
-                    label={account.label}
-                    value={form.account_balances[account.key] ?? 0}
-                    onChange={update('account_balances', account.key)}
-                  />
-                ))}
-              </div>
-            </Card>
+            {pots.length > 0 && (
+              <Card title="Pot Closing Balances (end of month)">
+                <p className="mb-4 text-sm text-zinc-500">
+                  Enter each pot's real closing balance from wherever it's held — this is what drives Total
+                  Savings and the Goal Tracker, so growth or loss shows up automatically.
+                </p>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {pots.map((pot) => (
+                    <NumberField
+                      key={pot.id}
+                      id={`closing-${pot.id}`}
+                      label={pot.name}
+                      value={closingBalances[pot.id] ?? 0}
+                      onChange={(v) => setClosingBalances((prev) => ({ ...prev, [pot.id]: v }))}
+                    />
+                  ))}
+                </div>
+              </Card>
+            )}
 
             {pots.length === 0 ? (
               <Card title="Savings Split">
@@ -334,7 +341,9 @@ export default function DataEntryPage() {
                 <Card title="Actual Savings Split">
                   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <p className="text-sm text-zinc-500">
-                      At the end of the month, enter what actually went into each pot.
+                      At the end of the month, enter what actually went into each pot. This feeds the
+                      Contributions total on your dashboard — it doesn't affect the pot's balance, which comes
+                      from the closing balance above.
                     </p>
                     <button
                       type="button"

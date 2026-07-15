@@ -37,6 +37,7 @@ export function useSavingsPots(userId) {
       starting_balance: pot.startingBalance ?? 0,
       target: pot.target ?? null,
       target_date: pot.targetDate ?? null,
+      tracking_mode: pot.trackingMode ?? 'contributions',
       sort_order: pots.length,
     })
     if (insertError) throw new Error(insertError.message)
@@ -52,6 +53,7 @@ export function useSavingsPots(userId) {
         starting_balance: pot.startingBalance,
         target: pot.target,
         target_date: pot.targetDate,
+        tracking_mode: pot.trackingMode,
       })
       .eq('id', id)
     if (updateError) throw new Error(updateError.message)

@@ -23,7 +23,9 @@ function PotsStep({ pots, setPots }) {
     <Card title="Your savings pots">
       <p className="mb-4 text-sm text-zinc-500">
         What pots do you save into (LISA, cash, investments, etc.)? For each, how much do you currently have,
-        and what % of your monthly leftover should go into it. Percentages should add up to 100%.
+        and what % of your monthly leftover should go into it. Percentages should add up to 100%. Each month
+        you'll enter the pot's real closing balance, so growth or loss shows up automatically — contributions
+        are tracked separately as their own dashboard stat.
       </p>
       <div className="flex flex-col gap-4">
         {pots.map((pot, i) => (

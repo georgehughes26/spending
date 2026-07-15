@@ -59,9 +59,20 @@ function potContributionForEntry(entry, pot) {
   return monthlyLeftover(entry) * pot.percentage
 }
 
+// A pot's value always comes from the closing balance you actually enter —
+// never derived from contributions, since growth/loss/fees mean a pound in
+// doesn't always mean a pound there. Falls back to the starting balance
+// until the first closing balance is recorded.
+function latestPotBalance(entries, pot) {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const stored = entries[i].account_balances?.[pot.id]
+    if (stored !== undefined && stored !== null) return Number(stored) || 0
+  }
+  return Number(pot.starting_balance) || 0
+}
+
 export function deriveSavingsGoals(entries, pots) {
   return (pots ?? []).map((pot) => {
-    const contributed = entries.reduce((total, e) => total + potContributionForEntry(e, pot), 0)
     const latest = entries[entries.length - 1]
     const monthlyContribution = latest ? potContributionForEntry(latest, pot) : 0
 
@@ -71,7 +82,25 @@ export function deriveSavingsGoals(entries, pots) {
       percentage: pot.percentage,
       target: pot.target,
       targetDate: pot.target_date,
-      current: (Number(pot.starting_balance) || 0) + contributed,
+      current: latestPotBalance(entries, pot),
+      monthlyContribution,
+    }
+  })
+}
+
+// Contributions are tracked separately from the pot's actual balance — this
+// is "how much you've put in" (cash flow), not "what it's worth now".
+export function deriveContributions(entries, pots) {
+  return (pots ?? []).map((pot) => {
+    const totalContributed = entries.reduce((total, e) => total + potContributionForEntry(e, pot), 0)
+    const latest = entries[entries.length - 1]
+    const monthlyContribution = latest ? potContributionForEntry(latest, pot) : 0
+
+    return {
+      id: pot.id,
+      name: pot.name,
+      percentage: pot.percentage,
+      totalContributed,
       monthlyContribution,
     }
   })
