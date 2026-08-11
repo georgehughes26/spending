@@ -57,13 +57,13 @@ export default function DataEntryPage() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonthValue())
   const { buckets, weeks, loading: weeksLoading, error: weeksError, saveWeek } = useWeeklySpending(user?.id, selectedMonth)
   const {
-    costs: fixedCosts,
+    activeCosts: fixedCosts,
     total: fixedCostsTotal,
     loading: fixedCostsLoading,
     addCost: addFixedCost,
     updateCost: updateFixedCost,
-    deleteCost: deleteFixedCost,
-  } = useFixedCosts(user?.id)
+    endCost: endFixedCost,
+  } = useFixedCosts(user?.id, selectedMonth)
   const { pots, loading: potsLoading } = useSavingsPots(user?.id)
   const { categories: categoryRows, loading: categoriesLoading } = useSpendingCategories(user?.id)
   const categories = useMemo(() => categoryRows.map((c) => c.name), [categoryRows])
@@ -235,7 +235,11 @@ export default function DataEntryPage() {
             total={fixedCostsTotal}
             addCost={addFixedCost}
             updateCost={updateFixedCost}
-            deleteCost={deleteFixedCost}
+            onRemove={endFixedCost}
+            removeLabel={`Remove from ${formatMonthYear(monthValueToDate(selectedMonth))}`}
+            showRange
+            description="Recurring costs like rent, subscriptions, or council tax. Adding one here applies it from this month onward and leaves earlier months untouched. Removing it stops it from this month onward too."
+            emptyLabel="No fixed costs for this month yet."
           />
 
           <Card title="Weekly Spending" className="mb-5">

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import Card from './Card'
-import { formatGBP } from '../utils/format'
+import { formatGBP, formatMonthYear } from '../utils/format'
 
-function FixedCostRow({ cost, onUpdate, onDelete }) {
+function FixedCostRow({ cost, onUpdate, onRemove, removeLabel, showRange }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(cost.name)
   const [amount, setAmount] = useState(cost.amount)
@@ -60,7 +60,16 @@ function FixedCostRow({ cost, onUpdate, onDelete }) {
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 text-sm">
-      <span className="text-zinc-800">{cost.name}</span>
+      <div>
+        <span className="text-zinc-800">{cost.name}</span>
+        {showRange && (
+          <div className="text-xs text-zinc-500">
+            {cost.end_month
+              ? `${formatMonthYear(cost.start_month)} – ${formatMonthYear(cost.end_month)}`
+              : `Since ${formatMonthYear(cost.start_month)}`}
+          </div>
+        )}
+      </div>
       <div className="flex items-center gap-1">
         <span className="mr-2 font-medium text-zinc-900">{formatGBP(cost.amount)}</span>
         <button
@@ -72,17 +81,27 @@ function FixedCostRow({ cost, onUpdate, onDelete }) {
         </button>
         <button
           type="button"
-          onClick={() => onDelete(cost.id)}
-          className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 hover:text-red-600"
+          onClick={() => onRemove(cost.id)}
+          className="min-h-11 cursor-pointer whitespace-nowrap rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 hover:text-red-600"
         >
-          Delete
+          {removeLabel}
         </button>
       </div>
     </li>
   )
 }
 
-export default function FixedCostsCard({ costs, total, addCost, updateCost, deleteCost }) {
+export default function FixedCostsCard({
+  costs,
+  total,
+  addCost,
+  updateCost,
+  onRemove,
+  removeLabel = 'Delete',
+  showRange = false,
+  description = 'Recurring costs like rent, subscriptions, or council tax. The same total applies every month until you change something here.',
+  emptyLabel = 'No fixed costs added yet.',
+}) {
   const [newName, setNewName] = useState('')
   const [newAmount, setNewAmount] = useState('')
   const [adding, setAdding] = useState(false)
@@ -102,17 +121,21 @@ export default function FixedCostsCard({ costs, total, addCost, updateCost, dele
 
   return (
     <Card title="Fixed Monthly Costs" className="mb-5">
-      <p className="mb-3 text-sm text-zinc-500">
-        Recurring costs like rent, subscriptions, or council tax. The same total applies every month until you
-        change something here.
-      </p>
+      <p className="mb-3 text-sm text-zinc-500">{description}</p>
 
       {costs.length === 0 ? (
-        <p className="mb-4 text-sm text-zinc-500">No fixed costs added yet.</p>
+        <p className="mb-4 text-sm text-zinc-500">{emptyLabel}</p>
       ) : (
         <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
           {costs.map((cost) => (
-            <FixedCostRow key={cost.id} cost={cost} onUpdate={updateCost} onDelete={deleteCost} />
+            <FixedCostRow
+              key={cost.id}
+              cost={cost}
+              onUpdate={updateCost}
+              onRemove={onRemove}
+              removeLabel={removeLabel}
+              showRange={showRange}
+            />
           ))}
         </ul>
       )}

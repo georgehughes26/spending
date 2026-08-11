@@ -159,7 +159,9 @@ function CategoriesCard() {
 
 export default function SettingsPage() {
   const { user } = useAuth()
-  const { costs, total, addCost, updateCost, deleteCost } = useFixedCosts(user?.id)
+  const { costs, addCost, updateCost, deleteCost } = useFixedCosts(user?.id)
+  const ongoingCosts = costs.filter((c) => !c.end_month)
+  const ongoingTotal = ongoingCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-6">
@@ -170,7 +172,17 @@ export default function SettingsPage() {
 
       <PotsCard />
       <CategoriesCard />
-      <FixedCostsCard costs={costs} total={total} addCost={addCost} updateCost={updateCost} deleteCost={deleteCost} />
+      <FixedCostsCard
+        costs={ongoingCosts}
+        total={ongoingTotal}
+        addCost={addCost}
+        updateCost={updateCost}
+        onRemove={deleteCost}
+        removeLabel="Delete"
+        showRange
+        description="Costs still applying each month. New ones start from this month onward. Deleting here removes a cost completely, including past months, so use it only to fix a mistake."
+        emptyLabel="No ongoing fixed costs."
+      />
     </div>
   )
 }
