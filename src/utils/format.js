@@ -8,7 +8,9 @@ export function formatGBP(value, { showSign = false } = {}) {
 }
 
 export function formatMonthYear(dateString) {
-  return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(new Date(dateString))
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(date)
 }
 
 export function monthsBetween(from, to) {

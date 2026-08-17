@@ -63,7 +63,7 @@ function FixedCostRow({ cost, onUpdate, onRemove, removeLabel, showRange }) {
     <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 text-sm">
       <div>
         <span className="text-zinc-800 dark:text-zinc-200">{cost.name}</span>
-        {showRange && (
+        {showRange && cost.start_month && (
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
             {cost.end_month
               ? `${formatMonthYear(cost.start_month)} – ${formatMonthYear(cost.end_month)}`

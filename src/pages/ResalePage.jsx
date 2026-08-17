@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import Card from '../components/Card'
 import ResaleItemRow from '../components/ResaleItemRow'
+import ResaleTimeSeriesChart from '../components/ResaleTimeSeriesChart'
 import { useAuth } from '../context/AuthContext'
 import { useResaleItems } from '../hooks/useResaleItems'
-import { deriveResaleSummary } from '../data/deriveResale'
+import { deriveResaleSummary, deriveResaleTimeSeries } from '../data/deriveResale'
 import { formatGBP } from '../utils/format'
 
 const STAGES = [
@@ -91,15 +92,16 @@ function AddItemCard({ onAdd }) {
 
 function SummaryCards({ summary }) {
   const stats = [
-    { label: 'Realized Profit', value: formatGBP(summary.realizedProfit, { showSign: true }), tone: summary.realizedProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' },
+    { label: 'Cost in Stock', value: formatGBP(summary.costInStock), tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Total Sales', value: formatGBP(summary.totalSales), tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Total Profit', value: formatGBP(summary.totalProfit, { showSign: true }), tone: summary.totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' },
     { label: 'Potential Profit', value: formatGBP(summary.potentialProfit, { showSign: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Invested in Stock', value: formatGBP(summary.investedInStock), tone: 'text-zinc-900 dark:text-zinc-100' },
     { label: 'Awaiting Payment', value: formatGBP(summary.awaitingPayment), tone: 'text-amber-600 dark:text-amber-300' },
   ]
 
   return (
     <Card title="Performance" className="mb-5">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         {stats.map((s) => (
           <div key={s.label}>
             <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{s.label}</div>
@@ -136,8 +138,10 @@ export default function ResalePage() {
     deleteItemCost,
   } = useResaleItems(user?.id)
   const [filter, setFilter] = useState('all')
+  const [granularity, setGranularity] = useState('month')
 
   const summary = useMemo(() => deriveResaleSummary(items), [items])
+  const timeSeries = useMemo(() => deriveResaleTimeSeries(items, granularity), [items, granularity])
   const filteredItems = filter === 'all' ? items : items.filter((i) => i.status === filter)
   const initialLoading = loading && items.length === 0
 
@@ -161,6 +165,9 @@ export default function ResalePage() {
       ) : (
         <>
           <SummaryCards summary={summary} />
+          <div className="mb-5">
+            <ResaleTimeSeriesChart data={timeSeries} granularity={granularity} onGranularityChange={setGranularity} />
+          </div>
           <AddItemCard onAdd={addItem} />
 
           <Card title="Stock">
