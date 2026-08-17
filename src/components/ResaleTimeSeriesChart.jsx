@@ -17,7 +17,7 @@ function ChartTooltip({ active, payload, label }) {
       {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4 text-zinc-500 dark:text-zinc-400">
           <span style={{ color: p.color }}>{p.name}</span>
-          <span className="text-zinc-900 dark:text-zinc-100">{formatGBP(p.value)}</span>
+          <span className="text-zinc-900 dark:text-zinc-100">{formatGBP(p.value, { pence: true })}</span>
         </div>
       ))}
     </div>

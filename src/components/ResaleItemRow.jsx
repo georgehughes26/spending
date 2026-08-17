@@ -23,7 +23,8 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
   const [costPrice, setCostPrice] = useState(item.cost_price)
   const [targetPrice, setTargetPrice] = useState(item.target_price ?? '')
   const [notes, setNotes] = useState(item.notes ?? '')
-  const [soldPrice, setSoldPrice] = useState(item.target_price ?? item.cost_price ?? '')
+  const [soldPrice, setSoldPrice] = useState(item.sold_price ?? item.target_price ?? item.cost_price ?? '')
+  const [soldDate, setSoldDate] = useState(item.sold_date ?? new Date().toISOString().slice(0, 10))
   const [newCostLabel, setNewCostLabel] = useState('')
   const [newCostAmount, setNewCostAmount] = useState('')
   const [saving, setSaving] = useState(false)
@@ -55,13 +56,16 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
         cost_price: Number(costPrice) || 0,
         target_price: targetPrice === '' ? null : Number(targetPrice),
         notes: notes.trim() || null,
+        ...(item.status === 'sold'
+          ? { sold_price: Number(soldPrice) || 0, sold_date: soldDate || null }
+          : {}),
       })
       setEditing(false)
     })
 
   const handleMarkSold = () =>
     run(async () => {
-      await onMarkSold(item.id, Number(soldPrice) || 0)
+      await onMarkSold(item.id, Number(soldPrice) || 0, soldDate)
     })
 
   const handleAddCost = (e) => {
@@ -81,32 +85,39 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
         onClick={() => setExpanded((v) => !v)}
         className="flex min-h-11 w-full cursor-pointer flex-wrap items-center justify-between gap-2 text-left text-sm"
       >
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="font-medium text-zinc-900 dark:text-zinc-100">{item.name}</span>
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[item.status]}`}>
-            {STATUS_LABELS[item.status]}
-          </span>
-          {item.status === 'sold' && (
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                item.payment_status === 'paid'
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
-                  : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
-              }`}
-            >
-              {item.payment_status === 'paid' ? 'Paid' : 'Awaiting payment'}
+        <span className="flex flex-col gap-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">{item.name}</span>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[item.status]}`}>
+              {STATUS_LABELS[item.status]}
             </span>
-          )}
+            {item.status === 'sold' && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  item.payment_status === 'paid'
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                }`}
+              >
+                {item.payment_status === 'paid' ? 'Paid' : 'Awaiting payment'}
+              </span>
+            )}
+          </span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Bought for {formatGBP(item.cost_price, { pence: true })}
+            {item.status === 'sold' && item.sold_price != null && ` · Sold for ${formatGBP(item.sold_price, { pence: true })}`}
+            {item.status !== 'sold' && item.target_price != null && ` · Target ${formatGBP(item.target_price, { pence: true })}`}
+          </span>
         </span>
         <span className="flex items-center gap-3">
           {profit != null && (
             <span className={`font-medium ${profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-              {formatGBP(profit, { showSign: true })}
+              {formatGBP(profit, { pence: true, showSign: true })}
             </span>
           )}
           {profit == null && potentialProfit != null && (
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              est. {formatGBP(potentialProfit, { showSign: true })}
+              est. {formatGBP(potentialProfit, { pence: true, showSign: true })}
             </span>
           )}
           <span className="text-xs text-zinc-500 dark:text-zinc-400">{expanded ? 'Hide' : 'Details'}</span>
@@ -131,6 +142,18 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                   <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Target sell price</span>
                   <input type="number" min="0" step="0.01" value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} className={inputClass} />
                 </label>
+                {item.status === 'sold' && (
+                  <>
+                    <label className="text-sm">
+                      <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold price</span>
+                      <input type="number" min="0" step="0.01" value={soldPrice} onChange={(e) => setSoldPrice(e.target.value)} className={inputClass} />
+                    </label>
+                    <label className="text-sm">
+                      <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold date</span>
+                      <input type="date" value={soldDate} onChange={(e) => setSoldDate(e.target.value)} className={inputClass} />
+                    </label>
+                  </>
+                )}
               </div>
               <textarea
                 value={notes}
@@ -161,19 +184,19 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
             <div className="mb-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <div>
                 <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Cost price</div>
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(item.cost_price)}</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(item.cost_price, { pence: true })}</div>
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Target price</div>
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.target_price != null ? formatGBP(item.target_price) : '—'}</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.target_price != null ? formatGBP(item.target_price, { pence: true }) : '—'}</div>
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Sold price</div>
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.sold_price != null ? formatGBP(item.sold_price) : '—'}</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.sold_price != null ? formatGBP(item.sold_price, { pence: true }) : '—'}</div>
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">All-in cost</div>
-                <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(allInCost)}</div>
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(allInCost, { pence: true })}</div>
               </div>
               {(item.category || item.platform) && (
                 <div className="col-span-2 text-xs text-zinc-500 dark:text-zinc-400 sm:col-span-4">
@@ -187,7 +210,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
           <div className="mb-4 border-t border-zinc-200 dark:border-white/10 pt-3">
             <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               <span>Additional costs</span>
-              <span>{formatGBP(extra)}</span>
+              <span>{formatGBP(extra, { pence: true })}</span>
             </div>
             {item.resale_item_costs?.length > 0 && (
               <ul className="mb-2 flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
@@ -195,7 +218,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                   <li key={cost.id} className="flex items-center justify-between py-1.5 text-sm">
                     <span className="text-zinc-700 dark:text-zinc-300">{cost.label}</span>
                     <span className="flex items-center gap-2">
-                      <span className="text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount)}</span>
+                      <span className="text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount, { pence: true })}</span>
                       <button
                         type="button"
                         onClick={() => run(() => onDeleteCost(cost.id))}
@@ -249,7 +272,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
               </button>
             )}
             {item.status === 'listed' && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="flex h-11 w-28 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
                   <span className="text-zinc-500 dark:text-zinc-400">£</span>
                   <input
@@ -261,6 +284,12 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                     className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
                   />
                 </div>
+                <input
+                  type="date"
+                  value={soldDate}
+                  onChange={(e) => setSoldDate(e.target.value)}
+                  className="h-11 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
+                />
                 <button type="button" onClick={handleMarkSold} disabled={saving} className="min-h-11 cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:opacity-50">
                   Mark sold
                 </button>

@@ -92,11 +92,11 @@ function AddItemCard({ onAdd }) {
 
 function SummaryCards({ summary }) {
   const stats = [
-    { label: 'Cost in Stock', value: formatGBP(summary.costInStock), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Total Sales', value: formatGBP(summary.totalSales), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Total Profit', value: formatGBP(summary.totalProfit, { showSign: true }), tone: summary.totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' },
-    { label: 'Potential Profit', value: formatGBP(summary.potentialProfit, { showSign: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Awaiting Payment', value: formatGBP(summary.awaitingPayment), tone: 'text-amber-600 dark:text-amber-300' },
+    { label: 'Cost in Stock', value: formatGBP(summary.costInStock, { pence: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Total Sales', value: formatGBP(summary.totalSales, { pence: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Total Profit', value: formatGBP(summary.totalProfit, { pence: true, showSign: true }), tone: summary.totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' },
+    { label: 'Potential Profit', value: formatGBP(summary.potentialProfit, { pence: true, showSign: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Awaiting Payment', value: formatGBP(summary.awaitingPayment, { pence: true }), tone: 'text-amber-600 dark:text-amber-300' },
   ]
 
   return (

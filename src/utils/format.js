@@ -1,9 +1,10 @@
-export function formatGBP(value, { showSign = false } = {}) {
+export function formatGBP(value, { showSign = false, pence = false } = {}) {
   const sign = showSign && value > 0 ? '+' : ''
   return sign + new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'GBP',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: pence ? 2 : 0,
+    maximumFractionDigits: pence ? 2 : 0,
   }).format(value)
 }
 
