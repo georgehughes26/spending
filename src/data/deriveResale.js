@@ -37,10 +37,12 @@ export function deriveResaleSummary(items) {
   return { costInStock, totalSales, totalProfit, potentialProfit, awaitingPayment, stageCounts, itemCount: items.length }
 }
 
+// UTC throughout -- local-time date arithmetic drifts by a day once the
+// increments cross a DST change (BST <-> GMT), and UTC has no DST.
 function startOfWeek(dateString) {
   const d = new Date(dateString)
-  const day = (d.getDay() + 6) % 7 // Monday = 0
-  d.setDate(d.getDate() - day)
+  const day = (d.getUTCDay() + 6) % 7 // Monday = 0
+  d.setUTCDate(d.getUTCDate() - day)
   return d.toISOString().slice(0, 10)
 }
 
@@ -56,23 +58,78 @@ function periodLabel(key, granularity) {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(key))
 }
 
+// Every period key from start to end (inclusive), so gaps with no sales show
+// up as zero bars instead of vanishing -- keeps the timeline continuous.
+function enumeratePeriods(startKey, endKey, granularity) {
+  const keys = []
+
+  if (granularity === 'year') {
+    for (let y = Number(startKey); y <= Number(endKey); y++) keys.push(String(y))
+    return keys
+  }
+
+  if (granularity === 'month') {
+    let [y, m] = startKey.split('-').map(Number)
+    const [endY, endM] = endKey.split('-').map(Number)
+    while (y < endY || (y === endY && m <= endM)) {
+      keys.push(`${y}-${String(m).padStart(2, '0')}`)
+      m += 1
+      if (m > 12) { m = 1; y += 1 }
+    }
+    return keys
+  }
+
+  let cursor = new Date(startKey)
+  const end = new Date(endKey)
+  while (cursor <= end) {
+    keys.push(cursor.toISOString().slice(0, 10))
+    cursor.setUTCDate(cursor.getUTCDate() + 7)
+  }
+  return keys
+}
+
 // Buckets realized performance by sale date -- costs/sales/profit only
 // become real once an item actually sells, so that's what's plotted here,
 // not purchase date. Separate from deriveResaleSummary's lifetime totals.
+// Spans every period from the first sale through today, filling in zero
+// bars for periods with no sales so the timeline reads continuously.
 export function deriveResaleTimeSeries(items, granularity) {
   const sold = items.filter((i) => i.status === 'sold' && i.sold_date)
-  const buckets = new Map()
+  if (sold.length === 0) return []
 
+  const totals = new Map()
   for (const item of sold) {
     const key = periodKey(item.sold_date, granularity)
-    const bucket = buckets.get(key) ?? { key, label: periodLabel(key, granularity), totalCost: 0, totalSales: 0, totalProfit: 0 }
+    const bucket = totals.get(key) ?? { totalCost: 0, totalSales: 0, totalProfit: 0 }
     const cost = itemAllInCost(item)
     const sales = Number(item.sold_price) || 0
     bucket.totalCost += cost
     bucket.totalSales += sales
     bucket.totalProfit += sales - cost
-    buckets.set(key, bucket)
+    totals.set(key, bucket)
   }
 
-  return [...buckets.values()].sort((a, b) => a.key.localeCompare(b.key))
+  const soldDates = sold.map((i) => i.sold_date).sort()
+  const startKey = periodKey(soldDates[0], granularity)
+  const latestSoldKey = periodKey(soldDates[soldDates.length - 1], granularity)
+  const todayKey = periodKey(new Date().toISOString().slice(0, 10), granularity)
+  const endKey = todayKey > latestSoldKey ? todayKey : latestSoldKey
+
+  // Gaps within the data get filled with zero bars so the timeline reads
+  // continuously, but a trailing window keeps a rare huge gap (e.g. a
+  // year-long break between sales) from stretching the chart into dozens
+  // of empty periods -- caps are generous enough to rarely bite.
+  const TRAILING_WINDOW = { week: 16, month: 12, year: 8 }
+  let periods = enumeratePeriods(startKey, endKey, granularity)
+  const cap = TRAILING_WINDOW[granularity]
+  if (periods.length > cap) periods = periods.slice(-cap)
+
+  return periods.map((key) => ({
+    key,
+    label: periodLabel(key, granularity),
+    totalCost: 0,
+    totalSales: 0,
+    totalProfit: 0,
+    ...totals.get(key),
+  }))
 }

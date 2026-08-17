@@ -62,7 +62,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
               <CartesianGrid stroke={gridColor} vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} width={48} />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }} />
               <Legend wrapperStyle={{ fontSize: 12, color: axisColor }} />
