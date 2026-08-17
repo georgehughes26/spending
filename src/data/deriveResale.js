@@ -88,32 +88,34 @@ function enumeratePeriods(startKey, endKey, granularity) {
   return keys
 }
 
-// Buckets realized performance by sale date -- costs/sales/profit only
-// become real once an item actually sells, so that's what's plotted here,
-// not purchase date. Separate from deriveResaleSummary's lifetime totals.
-// Spans every period from the first sale through today, filling in zero
-// bars for periods with no sales so the timeline reads continuously.
+// A proper cash-flow timeline: a cost lands in the period an item was
+// bought, a sale lands in the period it was sold -- the same item can
+// contribute to two different bars if those periods differ. Unsold items
+// still show up as a cost in their purchase period. Spans every period from
+// the earliest activity through today, filling zero bars for gaps so the
+// timeline reads continuously. Separate from deriveResaleSummary's lifetime
+// totals, which stay item-matched rather than date-split.
 export function deriveResaleTimeSeries(items, granularity) {
-  const sold = items.filter((i) => i.status === 'sold' && i.sold_date)
-  if (sold.length === 0) return []
+  if (items.length === 0) return []
 
   const totals = new Map()
-  for (const item of sold) {
-    const key = periodKey(item.sold_date, granularity)
-    const bucket = totals.get(key) ?? { totalCost: 0, totalSales: 0, totalProfit: 0 }
-    const cost = itemAllInCost(item)
-    const sales = Number(item.sold_price) || 0
-    bucket.totalCost += cost
-    bucket.totalSales += sales
-    bucket.totalProfit += sales - cost
+  const addTo = (key, field, amount) => {
+    const bucket = totals.get(key) ?? { totalCost: 0, totalSales: 0 }
+    bucket[field] += amount
     totals.set(key, bucket)
   }
 
-  const soldDates = sold.map((i) => i.sold_date).sort()
-  const startKey = periodKey(soldDates[0], granularity)
-  const latestSoldKey = periodKey(soldDates[soldDates.length - 1], granularity)
+  for (const item of items) {
+    if (item.purchased_date) addTo(periodKey(item.purchased_date, granularity), 'totalCost', itemAllInCost(item))
+    if (item.status === 'sold' && item.sold_date) addTo(periodKey(item.sold_date, granularity), 'totalSales', Number(item.sold_price) || 0)
+  }
+
+  const activityDates = items.flatMap((i) => [i.purchased_date, i.sold_date]).filter(Boolean).sort()
+  if (activityDates.length === 0) return []
+  const startKey = periodKey(activityDates[0], granularity)
+  const latestActivityKey = periodKey(activityDates[activityDates.length - 1], granularity)
   const todayKey = periodKey(new Date().toISOString().slice(0, 10), granularity)
-  const endKey = todayKey > latestSoldKey ? todayKey : latestSoldKey
+  const endKey = todayKey > latestActivityKey ? todayKey : latestActivityKey
 
   // Gaps within the data get filled with zero bars so the timeline reads
   // continuously, but a trailing window keeps a rare huge gap (e.g. a
@@ -124,12 +126,14 @@ export function deriveResaleTimeSeries(items, granularity) {
   const cap = TRAILING_WINDOW[granularity]
   if (periods.length > cap) periods = periods.slice(-cap)
 
-  return periods.map((key) => ({
-    key,
-    label: periodLabel(key, granularity),
-    totalCost: 0,
-    totalSales: 0,
-    totalProfit: 0,
-    ...totals.get(key),
-  }))
+  return periods.map((key) => {
+    const bucket = totals.get(key) ?? { totalCost: 0, totalSales: 0 }
+    return {
+      key,
+      label: periodLabel(key, granularity),
+      totalCost: bucket.totalCost,
+      totalSales: bucket.totalSales,
+      totalProfit: bucket.totalSales - bucket.totalCost,
+    }
+  })
 }

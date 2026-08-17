@@ -36,7 +36,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
   return (
     <Card title="Performance Over Time">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Realized costs, sales, and profit by when items sold.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Costs land when you bought, sales land when you sold.</p>
         <div className="flex gap-2">
           {GRANULARITIES.map((g) => (
             <button
@@ -56,7 +56,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
       </div>
 
       {data.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No sales in this view yet.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">No stock activity in this view yet.</p>
       ) : (
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
