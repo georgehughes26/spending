@@ -21,46 +21,46 @@ function PotsStep({ pots, setPots }) {
 
   return (
     <Card title="Your savings pots">
-      <p className="mb-4 text-sm text-zinc-500">
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
         List the pots you save into (LISA, cash, investments, whatever you've got), how much is in each right
         now, and what % of your monthly leftover should go into it. Percentages need to add up to 100%.
       </p>
-      <p className="mb-4 text-sm text-zinc-500">
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
         Each month you'll enter the pot's real closing balance, so growth or loss shows up automatically.
         Contributions get tracked separately as their own dashboard stat.
       </p>
       <div className="flex flex-col gap-4">
         {pots.map((pot, i) => (
-          <div key={i} className="rounded-lg border border-zinc-200 p-4">
+          <div key={i} className="rounded-lg border border-zinc-200 dark:border-white/10 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <input
                 type="text"
                 value={pot.name}
                 onChange={(e) => update(i, 'name')(e.target.value)}
                 placeholder="Pot name, e.g. LISA"
-                className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
               />
               <button
                 type="button"
                 onClick={() => setPots((prev) => prev.filter((_, idx) => idx !== i))}
-                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
+                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
               >
                 Remove
               </button>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="text-sm">
-                <span className="mb-1 block text-zinc-500">% of leftover</span>
-                <div className="flex min-h-11 items-center rounded-lg border border-zinc-300 bg-white px-3">
+                <span className="mb-1 block text-zinc-500 dark:text-zinc-400">% of leftover</span>
+                <div className="flex min-h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3">
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={pot.percentage}
                     onChange={(e) => update(i, 'percentage')(Number(e.target.value))}
-                    className="w-full bg-transparent text-zinc-900 outline-none"
+                    className="w-full bg-transparent text-zinc-900 dark:text-zinc-100 outline-none"
                   />
-                  <span className="text-zinc-500">%</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">%</span>
                 </div>
               </label>
               <NumberField
@@ -76,12 +76,12 @@ function PotsStep({ pots, setPots }) {
                 onChange={update(i, 'target')}
               />
               <label className="text-sm">
-                <span className="mb-1 block text-zinc-500">Target date (optional)</span>
+                <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Target date (optional)</span>
                 <input
                   type="date"
                   value={pot.targetDate}
                   onChange={(e) => update(i, 'targetDate')(e.target.value)}
-                  className="min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
+                  className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
                 />
               </label>
             </div>
@@ -92,14 +92,14 @@ function PotsStep({ pots, setPots }) {
       <button
         type="button"
         onClick={() => setPots((prev) => [...prev, emptyPot()])}
-        className="mt-4 min-h-11 cursor-pointer rounded-lg border border-pink-300 px-4 text-sm font-medium text-pink-700 transition-colors duration-150 hover:bg-pink-100"
+        className="mt-4 min-h-11 cursor-pointer rounded-lg border border-pink-300 dark:border-emerald-500/40 px-4 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10"
       >
         + Add a pot
       </button>
 
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
-        <span className="text-zinc-500">Total percentage</span>
-        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-600' : 'text-amber-400'}`}>
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
+        <span className="text-zinc-500 dark:text-zinc-400">Total percentage</span>
+        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-400 dark:text-amber-300'}`}>
           {totalPct}%
         </span>
       </div>
@@ -118,23 +118,23 @@ function CategoriesStep({ categories, setCategories }) {
 
   return (
     <Card title="Your spending categories">
-      <p className="mb-4 text-sm text-zinc-500">
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
         Pick the categories you want to track weekly spending against. We've suggested some common ones. Edit,
         remove, or add your own.
       </p>
-      <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
+      <ul className="mb-4 flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
         {categories.map((cat, i) => (
           <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
             <input
               type="text"
               value={cat}
               onChange={(e) => setCategories((prev) => prev.map((c, idx) => (idx === i ? e.target.value : c)))}
-              className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-zinc-900 outline-none focus:border-pink-600"
+              className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
             />
             <button
               type="button"
               onClick={() => setCategories((prev) => prev.filter((_, idx) => idx !== i))}
-              className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
+              className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
             >
               Remove
             </button>
@@ -148,12 +148,12 @@ function CategoriesStep({ categories, setCategories }) {
           onChange={(e) => setNewCategory(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }}
           placeholder="e.g. Gifts"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
         <button
           type="button"
           onClick={add}
-          className="min-h-11 cursor-pointer rounded-lg bg-pink-600 px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500"
+          className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300"
         >
           Add
         </button>
@@ -177,21 +177,21 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
 
   return (
     <Card title="Your fixed monthly costs">
-      <p className="mb-4 text-sm text-zinc-500">
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
         Recurring costs like rent, subscriptions, or council tax. The same total applies every month until you
         change something later.
       </p>
       {fixedCosts.length > 0 && (
-        <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
+        <ul className="mb-4 flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
           {fixedCosts.map((cost, i) => (
             <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
-              <span className="text-zinc-800">{cost.name}</span>
+              <span className="text-zinc-800 dark:text-zinc-200">{cost.name}</span>
               <div className="flex items-center gap-3">
-                <span className="font-medium text-zinc-900">{formatGBP(cost.amount)}</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount)}</span>
                 <button
                   type="button"
                   onClick={() => setFixedCosts((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
+                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
                 >
                   Remove
                 </button>
@@ -206,32 +206,33 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="e.g. Rent"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
         <div className="flex items-center gap-2">
-          <div className="flex min-h-11 w-28 items-center rounded-lg border border-zinc-300 bg-white px-2 text-sm">
-            <span className="text-zinc-500">£</span>
+          <div className="flex min-h-11 w-28 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
+            <span className="text-zinc-500 dark:text-zinc-400">£</span>
             <input
               type="number"
               min="0"
+              step="0.01"
               value={newAmount}
               onChange={(e) => setNewAmount(e.target.value)}
               placeholder="0"
-              className="w-full bg-transparent px-1 text-zinc-900 outline-none"
+              className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
             />
           </div>
           <button
             type="button"
             onClick={add}
-            className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 sm:flex-none"
+            className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 sm:flex-none"
           >
             Add
           </button>
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
-        <span className="text-zinc-500">Total fixed costs</span>
-        <span className="font-medium text-zinc-900">{formatGBP(total)}</span>
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
+        <span className="text-zinc-500 dark:text-zinc-400">Total fixed costs</span>
+        <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(total)}</span>
       </div>
     </Card>
   )
@@ -295,8 +296,8 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="mb-1 text-lg font-semibold text-zinc-900">Welcome, {user?.name}</h1>
-      <p className="mb-6 text-sm text-zinc-500">
+      <h1 className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">Welcome, {user?.name}</h1>
+      <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
         Let's set up your dashboard. Step {step + 1} of {STEPS.length}.
       </p>
 
@@ -305,12 +306,12 @@ export default function OnboardingPage() {
       {step === 2 && <FixedCostsStep fixedCosts={fixedCosts} setFixedCosts={setFixedCosts} />}
       {step === 3 && (
         <Card title="Review">
-          <p className="mb-4 text-sm text-zinc-500">This is what we'll create.</p>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">This is what we'll create.</p>
           <div className="mb-4">
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Pots ({potsTotal}%)
             </h3>
-            <ul className="text-sm text-zinc-700">
+            <ul className="text-sm text-zinc-700 dark:text-zinc-300">
               {pots.map((p, i) => (
                 <li key={i}>
                   {p.name}: {p.percentage}%, {formatGBP(Number(p.startingBalance) || 0)} so far
@@ -319,15 +320,15 @@ export default function OnboardingPage() {
             </ul>
           </div>
           <div className="mb-4">
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Categories</h3>
-            <p className="text-sm text-zinc-700">{categories.join(', ')}</p>
+            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Categories</h3>
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">{categories.join(', ')}</p>
           </div>
           <div>
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Fixed costs</h3>
+            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Fixed costs</h3>
             {fixedCosts.length === 0 ? (
-              <p className="text-sm text-zinc-500">None added.</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">None added.</p>
             ) : (
-              <ul className="text-sm text-zinc-700">
+              <ul className="text-sm text-zinc-700 dark:text-zinc-300">
                 {fixedCosts.map((c, i) => (
                   <li key={i}>{c.name}: {formatGBP(c.amount)}</li>
                 ))}
@@ -337,14 +338,14 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <div className="mt-6 flex items-center justify-between">
         <button
           type="button"
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
-          className="min-h-11 cursor-pointer rounded-lg px-4 text-sm font-medium text-zinc-500 transition-colors duration-150 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-11 cursor-pointer rounded-lg px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400 transition-colors duration-150 hover:text-zinc-800 dark:hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>
@@ -354,7 +355,7 @@ export default function OnboardingPage() {
             type="button"
             onClick={() => setStep((s) => s + 1)}
             disabled={!canGoNext}
-            className="min-h-11 cursor-pointer rounded-lg bg-pink-600 px-5 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
           </button>
@@ -363,7 +364,7 @@ export default function OnboardingPage() {
             type="button"
             onClick={handleFinish}
             disabled={submitting}
-            className="min-h-11 cursor-pointer rounded-lg bg-pink-600 px-5 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Setting up…' : 'Finish setup'}
           </button>

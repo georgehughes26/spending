@@ -206,28 +206,28 @@ export default function DataEntryPage() {
     <div className="mx-auto max-w-4xl px-6 py-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">Monthly Data Entry</h2>
-          <p className="mt-1 text-sm text-zinc-500">Enter your figures for a month to update the dashboard.</p>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Monthly Data Entry</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Enter your figures for a month to update the dashboard.</p>
         </div>
         <label className="text-sm">
-          <span className="mb-1 block text-zinc-500">Month</span>
+          <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Month</span>
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-pink-600"
+            className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
           />
         </label>
       </div>
 
       {error && (
-        <p className="mb-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-600">
+        <p className="mb-4 rounded-lg border border-red-300 dark:border-red-500/30 bg-red-100 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
           Couldn't load existing entries: {error}
         </p>
       )}
 
       {dataLoading ? (
-        <p className="text-sm text-zinc-500">Loading your setup…</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading your setup…</p>
       ) : (
         <>
           <FixedCostsCard
@@ -243,19 +243,19 @@ export default function DataEntryPage() {
           />
 
           <Card title="Weekly Spending" className="mb-5">
-            <p className="mb-3 text-sm text-zinc-500">
+            <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
               Log spending week by week. No need to wait until the month's over.
             </p>
-            {weeksError && <p className="mb-3 text-sm text-red-600">{weeksError}</p>}
-            {weekSaveError && <p className="mb-3 text-sm text-red-600">{weekSaveError}</p>}
+            {weeksError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{weeksError}</p>}
+            {weekSaveError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{weekSaveError}</p>}
             {weeksLoading ? (
-              <p className="text-sm text-zinc-500">Loading…</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
             ) : categories.length === 0 ? (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 No spending categories yet. Add some in Settings first.
               </p>
             ) : (
-              <ul className="flex flex-col divide-y divide-zinc-200">
+              <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
                 {buckets.map((bucket) => (
                   <WeekEntryRow
                     key={bucket.weekStart}
@@ -268,9 +268,9 @@ export default function DataEntryPage() {
                 ))}
               </ul>
             )}
-            <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
-              <span className="text-zinc-500">Weekly spending total</span>
-              <span className="font-medium text-zinc-900">{formatGBP(weeklyTotal)}</span>
+            <div className="mt-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
+              <span className="text-zinc-500 dark:text-zinc-400">Weekly spending total</span>
+              <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(weeklyTotal)}</span>
             </div>
           </Card>
 
@@ -282,14 +282,14 @@ export default function DataEntryPage() {
                 value={form.income}
                 onChange={(v) => setForm((prev) => ({ ...prev, income: v }))}
               />
-              <div className="mt-4 flex flex-col gap-2 border-t border-zinc-200 pt-4 text-sm">
+              <div className="mt-4 flex flex-col gap-2 border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-500">Total spent (weekly + fixed costs)</span>
-                  <span className="font-medium text-zinc-900">{formatGBP(totalSpending)}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">Total spent (weekly + fixed costs)</span>
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(totalSpending)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-500">Saved this month</span>
-                  <span className={`font-medium ${saved_ >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span className="text-zinc-500 dark:text-zinc-400">Saved this month</span>
+                  <span className={`font-medium ${saved_ >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     {formatGBP(saved_)}
                   </span>
                 </div>
@@ -298,7 +298,7 @@ export default function DataEntryPage() {
 
             {pots.length > 0 && (
               <Card title="Pot Closing Balances (end of month)">
-                <p className="mb-4 text-sm text-zinc-500">
+                <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
                   Enter each pot's real closing balance from wherever it's held. This drives Total Savings and
                   the Goal Tracker, so growth or loss shows up automatically.
                 </p>
@@ -318,24 +318,24 @@ export default function DataEntryPage() {
 
             {pots.length === 0 ? (
               <Card title="Savings Split">
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   No savings pots yet. Add some in Settings first.
                 </p>
               </Card>
             ) : (
               <>
                 <Card title="Savings Split (guide)">
-                  <p className="mb-4 text-sm text-zinc-500">
+                  <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
                     Whatever's left after spending ({formatGBP(saved_)}) would split like this. It's a guide,
                     not what actually happened.
                   </p>
-                  <ul className="flex flex-col divide-y divide-zinc-200">
+                  <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
                     {pots.map((pot) => (
                       <li key={pot.id} className="flex items-center justify-between py-2 text-sm">
-                        <span className="text-zinc-700">
-                          {pot.name} <span className="text-xs text-zinc-500">({Math.round(pot.percentage * 100)}%)</span>
+                        <span className="text-zinc-700 dark:text-zinc-300">
+                          {pot.name} <span className="text-xs text-zinc-500 dark:text-zinc-400">({Math.round(pot.percentage * 100)}%)</span>
                         </span>
-                        <span className="font-medium text-zinc-900">
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
                           {formatGBP(Math.max(0, saved_) * pot.percentage)}
                         </span>
                       </li>
@@ -345,7 +345,7 @@ export default function DataEntryPage() {
 
                 <Card title="Actual Savings Split">
                   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
                       At the end of the month, enter what actually went into each pot. This feeds the
                       Contributions total on your dashboard. It doesn't affect the pot's balance, which comes
                       from the closing balance above.
@@ -359,7 +359,7 @@ export default function DataEntryPage() {
                           ),
                         )
                       }
-                      className="min-h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 px-3 text-sm font-medium text-pink-700 transition-colors duration-150 hover:bg-pink-100"
+                      className="min-h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 dark:border-emerald-500/40 px-3 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10"
                     >
                       Copy guide amounts
                     </button>
@@ -375,9 +375,9 @@ export default function DataEntryPage() {
                       />
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
-                    <span className="text-zinc-500">Total actually saved</span>
-                    <span className="font-medium text-zinc-900">
+                  <div className="mt-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
+                    <span className="text-zinc-500 dark:text-zinc-400">Total actually saved</span>
+                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
                       {formatGBP(Object.values(actualSplit).reduce((t, v) => t + (Number(v) || 0), 0))}
                     </span>
                   </div>
@@ -391,18 +391,18 @@ export default function DataEntryPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
                 placeholder="e.g. Stayed £150 under food budget, shopping increased by £200..."
                 rows={3}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-pink-600"
+                className="w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
               />
             </Card>
 
-            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
-            {saved && <p className="text-sm text-emerald-600">Saved {formatMonthYear(monthValueToDate(selectedMonth))}.</p>}
+            {saveError && <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>}
+            {saved && <p className="text-sm text-emerald-600 dark:text-emerald-400">Saved {formatMonthYear(monthValueToDate(selectedMonth))}.</p>}
 
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="submit"
                 disabled={saving || loading}
-                className="min-h-11 cursor-pointer rounded-lg bg-pink-600 px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-5 py-2.5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? 'Saving…' : existingEntry ? 'Update month' : 'Save month'}
               </button>
@@ -410,7 +410,7 @@ export default function DataEntryPage() {
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 hover:text-red-600"
+                  className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
                 >
                   Delete this month's entry
                 </button>
@@ -421,20 +421,20 @@ export default function DataEntryPage() {
       )}
 
       <div className="mt-8">
-        <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500">Past entries</h3>
+        <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Past entries</h3>
         {loading ? (
-          <p className="text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
         ) : entries.length === 0 ? (
-          <p className="text-sm text-zinc-500">No entries yet.</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">No entries yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-200 rounded-xl border border-zinc-200">
+          <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10 rounded-xl border border-zinc-200 dark:border-white/10">
             {[...entries].reverse().map((e) => (
               <li key={e.id} className="flex items-center justify-between py-1 pl-4 pr-2 text-sm">
-                <span className="text-zinc-800">{formatMonthYear(e.month)}</span>
+                <span className="text-zinc-800 dark:text-zinc-200">{formatMonthYear(e.month)}</span>
                 <button
                   type="button"
                   onClick={() => setSelectedMonth(dateToMonthValue(e.month))}
-                  className="min-h-11 cursor-pointer rounded-lg px-3 font-medium text-pink-600 transition-colors duration-150 hover:bg-pink-100 hover:text-pink-700"
+                  className="min-h-11 cursor-pointer rounded-lg px-3 font-medium text-pink-600 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10 hover:text-pink-700 dark:hover:text-emerald-400"
                 >
                   Edit
                 </button>

@@ -37,15 +37,15 @@ export default function SavingsGoalsCard({ goals }) {
           return (
             <li key={goal.id}>
               <div className="mb-1 flex items-baseline justify-between">
-                <span className="font-medium text-zinc-900">
-                  {goal.name} <span className="text-xs font-normal text-zinc-500">({Math.round(goal.percentage * 100)}%)</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {goal.name} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">({Math.round(goal.percentage * 100)}%)</span>
                 </span>
-                <span className="text-sm text-zinc-500">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
                   {hasTarget ? `${formatGBP(goal.current)} / ${formatGBP(goal.target)}` : formatGBP(goal.current)}
                 </span>
               </div>
               {hasTarget && <ProgressBar value={progress} className="mb-2" />}
-              <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-zinc-500">
+              <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
                 {hasTarget ? (
                   <>
                     <span>{goal.targetDate ? `Target: ${formatMonthYear(goal.targetDate)}` : 'No deadline'}</span>

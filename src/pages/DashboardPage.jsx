@@ -18,12 +18,12 @@ export default function DashboardPage() {
   const { pots, loading: potsLoading } = useSavingsPots(user?.id)
 
   if (loading || potsLoading) {
-    return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500">Loading your data…</p>
+    return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading your data…</p>
   }
 
   if (error) {
     return (
-      <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-red-600">
+      <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-red-600 dark:text-red-400">
         Couldn't load your data: {error}
       </p>
     )
@@ -37,7 +37,7 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-7xl px-6 py-6">
       {entries.length === 0 && (
-        <p className="mb-5 rounded-lg border border-pink-300 bg-pink-100 px-4 py-3 text-sm text-pink-700">
+        <p className="mb-5 rounded-lg border border-pink-300 dark:border-emerald-500/40 bg-pink-100 dark:bg-emerald-500/10 px-4 py-3 text-sm text-pink-700 dark:text-emerald-400">
           No monthly entries yet. Figures below use your starting balances. Add your first month on the Data Entry page.
         </p>
       )}

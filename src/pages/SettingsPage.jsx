@@ -7,6 +7,38 @@ import { useSavingsPots } from '../hooks/useSavingsPots'
 import { useSpendingCategories } from '../hooks/useSpendingCategories'
 import { useFixedCosts } from '../hooks/useFixedCosts'
 
+function AppearanceCard() {
+  const { theme, setTheme } = useAuth()
+
+  const options = [
+    { value: 'pink', label: 'Pink', swatch: 'bg-gradient-to-r from-pink-500 to-rose-400' },
+    { value: 'dark', label: 'Dark', swatch: 'bg-gradient-to-r from-zinc-900 to-emerald-500' },
+  ]
+
+  return (
+    <Card title="Appearance" className="mb-5">
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Choose the theme for your account.</p>
+      <div className="flex gap-3">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setTheme(opt.value)}
+            className={`flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition-colors duration-150 ${
+              theme === opt.value
+                ? 'border-pink-600 dark:border-emerald-400 text-pink-700 dark:text-emerald-400'
+                : 'border-zinc-300 dark:border-white/15 text-zinc-500 dark:text-zinc-400'
+            }`}
+          >
+            <span className={`h-3 w-3 rounded-full ${opt.swatch}`} aria-hidden="true" />
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 function PotsCard() {
   const { user } = useAuth()
   const { pots, addPot, updatePot, deletePot } = useSavingsPots(user?.id)
@@ -35,20 +67,20 @@ function PotsCard() {
 
   return (
     <Card title="Savings Pots" className="mb-5">
-      <p className="mb-4 text-sm text-zinc-500">
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
         These are the pots your monthly leftover splits into. Percentages should add up to 100%.
       </p>
       {pots.length === 0 ? (
-        <p className="mb-4 text-sm text-zinc-500">No pots yet.</p>
+        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">No pots yet.</p>
       ) : (
-        <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
+        <ul className="mb-4 flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
           {pots.map((pot) => (
             <PotRow key={pot.id} pot={pot} onUpdate={updatePot} onDelete={deletePot} />
           ))}
         </ul>
       )}
 
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <form onSubmit={handleAdd} className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
@@ -56,10 +88,10 @@ function PotsCard() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Pot name"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
         <div className="flex items-center gap-2">
-          <div className="flex min-h-11 w-24 items-center rounded-lg border border-zinc-300 bg-white px-2 text-sm">
+          <div className="flex min-h-11 w-24 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
             <input
               type="number"
               min="0"
@@ -67,23 +99,23 @@ function PotsCard() {
               value={newPct}
               onChange={(e) => setNewPct(e.target.value)}
               placeholder="0"
-              className="w-full bg-transparent px-1 text-zinc-900 outline-none"
+              className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
             />
-            <span className="text-zinc-500">%</span>
+            <span className="text-zinc-500 dark:text-zinc-400">%</span>
           </div>
           <button
             type="submit"
             disabled={adding || !newName.trim()}
-            className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+            className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
           >
             Add
           </button>
         </div>
       </form>
 
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
-        <span className="text-zinc-500">Total percentage</span>
-        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-600' : 'text-amber-400'}`}>
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
+        <span className="text-zinc-500 dark:text-zinc-400">Total percentage</span>
+        <span className={`font-medium ${totalPct === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-400 dark:text-amber-300'}`}>
           {totalPct}%
         </span>
       </div>
@@ -111,11 +143,11 @@ function CategoriesCard() {
 
   return (
     <Card title="Spending Categories" className="mb-5">
-      <p className="mb-4 text-sm text-zinc-500">The categories you log weekly spending against.</p>
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">The categories you log weekly spending against.</p>
       {categories.length === 0 ? (
-        <p className="mb-4 text-sm text-zinc-500">No categories yet.</p>
+        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">No categories yet.</p>
       ) : (
-        <ul className="mb-4 flex flex-col divide-y divide-zinc-200">
+        <ul className="mb-4 flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
           {categories.map((cat) => (
             <li key={cat.id} className="flex items-center justify-between gap-3 py-2 text-sm">
               <input
@@ -124,12 +156,12 @@ function CategoriesCard() {
                 onBlur={(e) => {
                   if (e.target.value.trim() && e.target.value !== cat.name) renameCategory(cat.id, e.target.value.trim())
                 }}
-                className="min-h-11 min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-3 text-zinc-800 outline-none focus:border-pink-600 focus:bg-white"
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-3 text-zinc-800 dark:text-zinc-200 outline-none focus:border-pink-600 dark:focus:border-emerald-400 focus:bg-white dark:focus:bg-[var(--surface-dark)]"
               />
               <button
                 type="button"
                 onClick={() => deleteCategory(cat.id)}
-                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100"
+                className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
               >
                 Delete
               </button>
@@ -143,12 +175,12 @@ function CategoriesCard() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="e.g. Gifts"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-pink-600"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
         <button
           type="submit"
           disabled={adding || !newName.trim()}
-          className="min-h-11 cursor-pointer rounded-lg bg-pink-600 px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Add
         </button>
@@ -166,10 +198,11 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-6">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-zinc-900">Settings</h2>
-        <p className="mt-1 text-sm text-zinc-500">Manage your pots, categories, and fixed costs any time.</p>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Settings</h2>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Manage your pots, categories, and fixed costs any time.</p>
       </div>
 
+      <AppearanceCard />
       <PotsCard />
       <CategoriesCard />
       <FixedCostsCard

@@ -41,18 +41,18 @@ export default function WeekEntryRow({ weekStart, weekEnd, categories, initialSp
         onClick={() => setExpanded((v) => !v)}
         className="flex min-h-11 w-full cursor-pointer items-center justify-between text-left text-sm"
       >
-        <span className="flex items-center gap-2 text-zinc-800">
+        <span className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
           {formatWeekRange(weekStart, weekEnd)}
-          {hasData && <span className="h-1.5 w-1.5 rounded-full bg-pink-500" aria-hidden="true" />}
+          {hasData && <span className="h-1.5 w-1.5 rounded-full bg-pink-500 dark:bg-emerald-400" aria-hidden="true" />}
         </span>
         <span className="flex items-center gap-3">
-          <span className="font-medium text-zinc-900">{formatGBP(total)}</span>
-          <span className="text-xs text-zinc-500">{expanded ? 'Hide' : hasData ? 'Edit' : 'Add'}</span>
+          <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(total)}</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{expanded ? 'Hide' : hasData ? 'Edit' : 'Add'}</span>
         </span>
       </button>
 
       {expanded && (
-        <div className="mt-3 rounded-lg border border-zinc-200 bg-pink-50 p-4">
+        <div className="mt-3 rounded-lg border border-zinc-200 dark:border-white/10 bg-pink-50 dark:bg-white/5 p-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {categories.map((category) => (
               <NumberField
@@ -64,12 +64,12 @@ export default function WeekEntryRow({ weekStart, weekEnd, categories, initialSp
               />
             ))}
           </div>
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="mt-4 min-h-11 cursor-pointer rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-4 min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 py-2 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save week'}
           </button>
