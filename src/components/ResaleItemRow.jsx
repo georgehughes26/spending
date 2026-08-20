@@ -18,8 +18,6 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
-  const [category, setCategory] = useState(item.category ?? '')
-  const [platform, setPlatform] = useState(item.platform ?? '')
   const [costPrice, setCostPrice] = useState(item.cost_price)
   const [targetPrice, setTargetPrice] = useState(item.target_price ?? '')
   const [notes, setNotes] = useState(item.notes ?? '')
@@ -51,8 +49,6 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
     run(async () => {
       await onUpdate(item.id, {
         name,
-        category: category.trim() || null,
-        platform: platform.trim() || null,
         cost_price: Number(costPrice) || 0,
         target_price: targetPrice === '' ? null : Number(targetPrice),
         notes: notes.trim() || null,
@@ -132,8 +128,6 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
             <div className="mb-4 flex flex-col gap-3">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Item name" className={inputClass} />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category (optional)" className={inputClass} />
-                <input value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="Platform (optional)" className={inputClass} />
                 <label className="text-sm">
                   <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Cost price</span>
                   <input type="number" min="0" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className={inputClass} />
@@ -198,11 +192,6 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                 <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">All-in cost</div>
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(allInCost, { pence: true })}</div>
               </div>
-              {(item.category || item.platform) && (
-                <div className="col-span-2 text-xs text-zinc-500 dark:text-zinc-400 sm:col-span-4">
-                  {[item.category, item.platform].filter(Boolean).join(' · ')}
-                </div>
-              )}
               {item.notes && <div className="col-span-2 text-xs text-zinc-500 dark:text-zinc-400 sm:col-span-4">{item.notes}</div>}
             </div>
           )}

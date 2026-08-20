@@ -19,7 +19,7 @@ const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
 function emptyForm() {
-  return { name: '', category: '', platform: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
+  return { name: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
 }
 
 function AddItemCard({ onAdd }) {
@@ -37,8 +37,8 @@ function AddItemCard({ onAdd }) {
     try {
       await onAdd({
         name: form.name.trim(),
-        category: form.category.trim() || null,
-        platform: form.platform.trim() || null,
+        category: null,
+        platform: null,
         cost_price: Number(form.costPrice) || 0,
         target_price: form.targetPrice === '' ? null : Number(form.targetPrice),
         purchased_date: form.purchasedDate,
@@ -56,8 +56,6 @@ function AddItemCard({ onAdd }) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input value={form.name} onChange={set('name')} placeholder="Item name" className={inputClass} />
-          <input value={form.category} onChange={set('category')} placeholder="Category (optional)" className={`hidden sm:block ${inputClass}`} />
-          <input value={form.platform} onChange={set('platform')} placeholder="Platform (optional)" className={`hidden sm:block ${inputClass}`} />
           <label className="text-sm">
             <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
             <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={`max-w-[200px] sm:max-w-none ${inputClass}`} />
