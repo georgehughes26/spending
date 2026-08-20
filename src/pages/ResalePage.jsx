@@ -56,11 +56,11 @@ function AddItemCard({ onAdd }) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input value={form.name} onChange={set('name')} placeholder="Item name" className={inputClass} />
-          <input value={form.category} onChange={set('category')} placeholder="Category (optional)" className={inputClass} />
-          <input value={form.platform} onChange={set('platform')} placeholder="Platform (optional)" className={inputClass} />
+          <input value={form.category} onChange={set('category')} placeholder="Category (optional)" className={`hidden sm:block ${inputClass}`} />
+          <input value={form.platform} onChange={set('platform')} placeholder="Platform (optional)" className={`hidden sm:block ${inputClass}`} />
           <label className="text-sm">
             <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
-            <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={inputClass} />
+            <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={`max-w-[200px] sm:max-w-none ${inputClass}`} />
           </label>
           <label className="text-sm">
             <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Cost price</span>
@@ -142,6 +142,9 @@ export default function ResalePage() {
   const summary = useMemo(() => deriveResaleSummary(items), [items])
   const timeSeries = useMemo(() => deriveResaleTimeSeries(items, granularity), [items, granularity])
   const filteredItems = filter === 'all' ? items : items.filter((i) => i.status === filter)
+  const isCompleted = (item) => item.status === 'sold' && item.payment_status === 'paid'
+  const activeItems = filteredItems.filter((i) => !isCompleted(i))
+  const completedItems = filteredItems.filter(isCompleted)
   const initialLoading = loading && items.length === 0
 
   return (
@@ -192,22 +195,50 @@ export default function ResalePage() {
                 {items.length === 0 ? 'No stock added yet. Use the form above to add your first item.' : 'Nothing at this stage.'}
               </p>
             ) : (
-              <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
-                {filteredItems.map((item) => (
-                  <ResaleItemRow
-                    key={item.id}
-                    item={item}
-                    onUpdate={updateItem}
-                    onDelete={deleteItem}
-                    onMarkArrived={markArrived}
-                    onMarkListed={markListed}
-                    onMarkSold={markSold}
-                    onMarkPaid={markPaid}
-                    onAddCost={addItemCost}
-                    onDeleteCost={deleteItemCost}
-                  />
-                ))}
-              </ul>
+              <>
+                {activeItems.length > 0 && (
+                  <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
+                    {activeItems.map((item) => (
+                      <ResaleItemRow
+                        key={item.id}
+                        item={item}
+                        onUpdate={updateItem}
+                        onDelete={deleteItem}
+                        onMarkArrived={markArrived}
+                        onMarkListed={markListed}
+                        onMarkSold={markSold}
+                        onMarkPaid={markPaid}
+                        onAddCost={addItemCost}
+                        onDeleteCost={deleteItemCost}
+                      />
+                    ))}
+                  </ul>
+                )}
+
+                {completedItems.length > 0 && (
+                  <div className={activeItems.length > 0 ? 'mt-6' : ''}>
+                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      Completed
+                    </h3>
+                    <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10 opacity-50">
+                      {completedItems.map((item) => (
+                        <ResaleItemRow
+                          key={item.id}
+                          item={item}
+                          onUpdate={updateItem}
+                          onDelete={deleteItem}
+                          onMarkArrived={markArrived}
+                          onMarkListed={markListed}
+                          onMarkSold={markSold}
+                          onMarkPaid={markPaid}
+                          onAddCost={addItemCost}
+                          onDeleteCost={deleteItemCost}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
             )}
           </Card>
         </>

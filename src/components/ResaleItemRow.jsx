@@ -83,7 +83,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex min-h-11 w-full cursor-pointer flex-wrap items-center justify-between gap-2 text-left text-sm"
+        className="flex min-h-11 w-full cursor-pointer flex-col items-start gap-2 text-left text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
       >
         <span className="flex flex-col gap-1">
           <span className="flex flex-wrap items-center gap-2">
