@@ -16,25 +16,24 @@ export function itemPotentialProfit(item) {
   return Number(item.target_price) - itemAllInCost(item)
 }
 
-// Lifetime totals, unaffected by any time-period filter.
+// Lifetime totals, unaffected by any time-period filter. totalCost is every
+// item's all-in cost regardless of status -- it doesn't drop an item just
+// because it's since sold, so it reads as "money spent on stock overall".
 export function deriveResaleSummary(items) {
   const sold = items.filter((i) => i.status === 'sold')
   const active = items.filter((i) => i.status !== 'sold')
 
-  const costInStock = active.reduce((t, i) => t + itemAllInCost(i), 0)
+  const totalCost = items.reduce((t, i) => t + itemAllInCost(i), 0)
   const totalSales = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
   const totalProfit = sold.reduce((t, i) => t + itemProfit(i), 0)
   const potentialProfit = active
     .filter((i) => i.target_price != null)
     .reduce((t, i) => t + itemPotentialProfit(i), 0)
-  const awaitingPayment = sold
-    .filter((i) => i.payment_status === 'awaiting_payment')
-    .reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
 
   const stageCounts = { purchased: 0, arrived: 0, listed: 0, sold: 0 }
   for (const item of items) stageCounts[item.status] = (stageCounts[item.status] ?? 0) + 1
 
-  return { costInStock, totalSales, totalProfit, potentialProfit, awaitingPayment, stageCounts, itemCount: items.length }
+  return { totalCost, totalSales, totalProfit, potentialProfit, stageCounts, itemCount: items.length }
 }
 
 // UTC throughout -- local-time date arithmetic drifts by a day once the

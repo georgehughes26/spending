@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import Card from './Card'
 import { useAuth } from '../context/AuthContext'
 import { formatGBP } from '../utils/format'
@@ -9,15 +9,26 @@ const GRANULARITIES = [
   { value: 'year', label: 'Year' },
 ]
 
-function ChartTooltip({ active, payload, label }) {
+function ChartTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
+  const point = payload[0].payload
+  const rows = [
+    { label: 'Total Cost', value: point.totalCost, tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Total Sales', value: point.totalSales, tone: 'text-zinc-900 dark:text-zinc-100' },
+    {
+      label: 'Total Profit',
+      value: point.totalProfit,
+      tone: point.totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
+      showSign: true,
+    },
+  ]
   return (
     <div className="rounded-lg border border-pink-200 dark:border-[var(--border-dark)] bg-white dark:bg-[var(--surface-dark)] px-3 py-2 text-xs shadow-sm">
-      <div className="mb-1 font-medium text-zinc-900 dark:text-zinc-100">{label}</div>
-      {payload.map((p) => (
-        <div key={p.dataKey} className="flex items-center justify-between gap-4 text-zinc-500 dark:text-zinc-400">
-          <span style={{ color: p.color }}>{p.name}</span>
-          <span className="text-zinc-900 dark:text-zinc-100">{formatGBP(p.value, { pence: true })}</span>
+      <div className="mb-1 font-medium text-zinc-900 dark:text-zinc-100">{point.label}</div>
+      {rows.map((r) => (
+        <div key={r.label} className="flex items-center justify-between gap-4 text-zinc-500 dark:text-zinc-400">
+          <span>{r.label}</span>
+          <span className={r.tone}>{formatGBP(r.value, { pence: true, showSign: r.showSign })}</span>
         </div>
       ))}
     </div>
@@ -29,9 +40,8 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
   const isDark = theme === 'dark'
   const axisColor = isDark ? '#a1a1aa' : '#71717a'
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : '#e4e4e7'
-  const costColor = isDark ? '#f87171' : '#dc2626'
-  const salesColor = isDark ? '#38bdf8' : '#0284c7'
-  const profitColor = isDark ? '#34d399' : '#db2777'
+  const profitPositiveColor = isDark ? '#34d399' : '#db2777'
+  const profitNegativeColor = isDark ? '#f87171' : '#dc2626'
 
   return (
     <Card title="Performance Over Time">
@@ -65,10 +75,11 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} width={48} />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }} />
-              <Legend wrapperStyle={{ fontSize: 12, color: axisColor }} />
-              <Bar dataKey="totalCost" name="Total Costs" fill={costColor} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="totalSales" name="Total Sales" fill={salesColor} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="totalProfit" name="Total Profit" fill={profitColor} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="totalProfit" name="Total Profit" radius={[4, 4, 4, 4]}>
+                {data.map((d) => (
+                  <Cell key={d.key} fill={d.totalProfit >= 0 ? profitPositiveColor : profitNegativeColor} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

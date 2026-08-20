@@ -92,20 +92,19 @@ function AddItemCard({ onAdd }) {
 
 function SummaryCards({ summary }) {
   const stats = [
-    { label: 'Cost in Stock', value: formatGBP(summary.costInStock, { pence: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Total Cost', value: formatGBP(summary.totalCost, { pence: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
     { label: 'Total Sales', value: formatGBP(summary.totalSales, { pence: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
     { label: 'Total Profit', value: formatGBP(summary.totalProfit, { pence: true, showSign: true }), tone: summary.totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' },
     { label: 'Potential Profit', value: formatGBP(summary.potentialProfit, { pence: true, showSign: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Awaiting Payment', value: formatGBP(summary.awaitingPayment, { pence: true }), tone: 'text-amber-600 dark:text-amber-300' },
   ]
 
   return (
     <Card title="Performance" className="mb-5">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label}>
-            <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{s.label}</div>
-            <div className={`mt-1 text-lg font-semibold ${s.tone}`}>{s.value}</div>
+          <div key={s.label} className="min-w-0">
+            <div className="truncate text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{s.label}</div>
+            <div className={`mt-1 truncate text-lg font-semibold ${s.tone}`}>{s.value}</div>
           </div>
         ))}
       </div>

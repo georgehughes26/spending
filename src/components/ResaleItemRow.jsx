@@ -231,7 +231,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                 ))}
               </ul>
             )}
-            <form onSubmit={handleAddCost} className="flex items-center gap-2">
+            <form onSubmit={handleAddCost} className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <input
                 type="text"
                 value={newCostLabel}
@@ -239,24 +239,26 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                 placeholder="e.g. Vinted bump"
                 className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
               />
-              <div className="flex h-11 w-24 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
-                <span className="text-zinc-500 dark:text-zinc-400">£</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newCostAmount}
-                  onChange={(e) => setNewCostAmount(e.target.value)}
-                  placeholder="0"
-                  className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
-                />
+              <div className="flex items-center gap-2">
+                <div className="flex h-11 w-24 shrink-0 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
+                  <span className="text-zinc-500 dark:text-zinc-400">£</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newCostAmount}
+                    onChange={(e) => setNewCostAmount(e.target.value)}
+                    placeholder="0"
+                    className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="min-h-11 flex-1 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 dark:border-emerald-500/40 px-3 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10 sm:flex-none"
+                >
+                  Add
+                </button>
               </div>
-              <button
-                type="submit"
-                className="min-h-11 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 dark:border-emerald-500/40 px-3 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10"
-              >
-                Add
-              </button>
             </form>
           </div>
 
@@ -272,25 +274,27 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
               </button>
             )}
             {item.status === 'listed' && (
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex h-11 w-28 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
-                  <span className="text-zinc-500 dark:text-zinc-400">£</span>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-11 w-24 shrink-0 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
+                    <span className="text-zinc-500 dark:text-zinc-400">£</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={soldPrice}
+                      onChange={(e) => setSoldPrice(e.target.value)}
+                      className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
+                    />
+                  </div>
                   <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={soldPrice}
-                    onChange={(e) => setSoldPrice(e.target.value)}
-                    className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
+                    type="date"
+                    value={soldDate}
+                    onChange={(e) => setSoldDate(e.target.value)}
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400 sm:flex-none"
                   />
                 </div>
-                <input
-                  type="date"
-                  value={soldDate}
-                  onChange={(e) => setSoldDate(e.target.value)}
-                  className="h-11 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
-                />
-                <button type="button" onClick={handleMarkSold} disabled={saving} className="min-h-11 cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:opacity-50">
+                <button type="button" onClick={handleMarkSold} disabled={saving} className="min-h-11 w-full cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:opacity-50 sm:w-auto">
                   Mark sold
                 </button>
               </div>
