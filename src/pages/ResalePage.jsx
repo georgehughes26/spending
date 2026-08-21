@@ -18,6 +18,35 @@ const STAGES = [
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
+// UTC to match deriveResale.js's week bucketing -- local-time arithmetic
+// drifts a day across DST changes.
+function startOfWeekUTC(dateString) {
+  const d = new Date(dateString)
+  const day = (d.getUTCDay() + 6) % 7 // Monday = 0
+  d.setUTCDate(d.getUTCDate() - day)
+  return d.toISOString().slice(0, 10)
+}
+
+function weekLabel(weekKey) {
+  return `WC ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(weekKey))}`
+}
+
+function groupByWeek(items) {
+  const groups = []
+  const byKey = new Map()
+  for (const item of items) {
+    const key = item.purchased_date ? startOfWeekUTC(item.purchased_date) : 'unknown'
+    let group = byKey.get(key)
+    if (!group) {
+      group = { key, items: [] }
+      byKey.set(key, group)
+      groups.push(group)
+    }
+    group.items.push(item)
+  }
+  return groups
+}
+
 function emptyForm() {
   return { name: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
 }
@@ -139,7 +168,9 @@ export default function ResalePage() {
 
   const summary = useMemo(() => deriveResaleSummary(items), [items])
   const timeSeries = useMemo(() => deriveResaleTimeSeries(items, granularity), [items, granularity])
-  const filteredItems = filter === 'all' ? items : items.filter((i) => i.status === filter)
+  const filteredItems = (filter === 'all' ? items : items.filter((i) => i.status === filter))
+    .slice()
+    .sort((a, b) => (b.purchased_date ?? '').localeCompare(a.purchased_date ?? ''))
   const isCompleted = (item) => item.status === 'sold' && item.payment_status === 'paid'
   const activeItems = filteredItems.filter((i) => !isCompleted(i))
   const completedItems = filteredItems.filter(isCompleted)
@@ -195,22 +226,31 @@ export default function ResalePage() {
             ) : (
               <>
                 {activeItems.length > 0 && (
-                  <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
-                    {activeItems.map((item) => (
-                      <ResaleItemRow
-                        key={item.id}
-                        item={item}
-                        onUpdate={updateItem}
-                        onDelete={deleteItem}
-                        onMarkArrived={markArrived}
-                        onMarkListed={markListed}
-                        onMarkSold={markSold}
-                        onMarkPaid={markPaid}
-                        onAddCost={addItemCost}
-                        onDeleteCost={deleteItemCost}
-                      />
+                  <div className="flex flex-col gap-5">
+                    {groupByWeek(activeItems).map((group) => (
+                      <div key={group.key}>
+                        <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                          {group.key === 'unknown' ? 'No date' : weekLabel(group.key)}
+                        </h3>
+                        <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
+                          {group.items.map((item) => (
+                            <ResaleItemRow
+                              key={item.id}
+                              item={item}
+                              onUpdate={updateItem}
+                              onDelete={deleteItem}
+                              onMarkArrived={markArrived}
+                              onMarkListed={markListed}
+                              onMarkSold={markSold}
+                              onMarkPaid={markPaid}
+                              onAddCost={addItemCost}
+                              onDeleteCost={deleteItemCost}
+                            />
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
 
                 {completedItems.length > 0 && (
