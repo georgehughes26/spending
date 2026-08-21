@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatGBP, formatMonthYear } from '../utils/format'
+import { formatDDMM, formatGBP, formatMonthYear } from '../utils/format'
 import { itemAllInCost, itemPotentialProfit, itemProfit } from '../data/deriveResale'
 
 const STATUS_STYLES = {
@@ -27,6 +27,8 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
   const [newCostAmount, setNewCostAmount] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+
+  const stageDate = { purchased: item.purchased_date, listed: item.listed_date, sold: item.sold_date }[item.status]
 
   const extra = (item.resale_item_costs ?? []).reduce((t, c) => t + (Number(c.amount) || 0), 0)
   const allInCost = itemAllInCost(item)
@@ -85,7 +87,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
           <span className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-zinc-900 dark:text-zinc-100">{item.name}</span>
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[item.status]}`}>
-              {STATUS_LABELS[item.status]}
+              {STATUS_LABELS[item.status]}{stageDate && ` · ${formatDDMM(stageDate)}`}
             </span>
             {item.status === 'sold' && (
               <span

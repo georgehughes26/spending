@@ -75,7 +75,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} width={48} />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }} />
-              <Bar dataKey="totalProfit" name="Total Profit" radius={[4, 4, 4, 4]}>
+              <Bar dataKey="totalProfit" name="Total Profit" radius={[4, 4, 4, 4]} maxBarSize={56}>
                 {data.map((d) => (
                   <Cell key={d.key} fill={d.totalProfit >= 0 ? profitPositiveColor : profitNegativeColor} />
                 ))}
