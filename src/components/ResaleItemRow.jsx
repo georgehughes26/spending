@@ -18,6 +18,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
+  const [sku, setSku] = useState(item.sku ?? '')
   const [costPrice, setCostPrice] = useState(item.cost_price)
   const [targetPrice, setTargetPrice] = useState(item.target_price ?? '')
   const [notes, setNotes] = useState(item.notes ?? '')
@@ -51,6 +52,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
     run(async () => {
       await onUpdate(item.id, {
         name,
+        sku: sku.trim() || null,
         cost_price: Number(costPrice) || 0,
         target_price: targetPrice === '' ? null : Number(targetPrice),
         notes: notes.trim() || null,
@@ -102,6 +104,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
             )}
           </span>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {item.sku && `#${item.sku} · `}
             Bought for {formatGBP(item.cost_price, { pence: true })}
             {item.status === 'sold' && item.sold_price != null && ` · Sold for ${formatGBP(item.sold_price, { pence: true })}`}
             {item.status !== 'sold' && item.target_price != null && ` · Target ${formatGBP(item.target_price, { pence: true })}`}
@@ -129,6 +132,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
           {editing ? (
             <div className="mb-4 flex flex-col gap-3">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Item name" className={inputClass} />
+              <input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="# (optional)" className={inputClass} />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="text-sm">
                   <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Cost price</span>

@@ -51,10 +51,22 @@ function emptyForm() {
   return { name: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
 }
 
-function AddItemCard({ onAdd }) {
+// Parcel numbers are auto-generated, not typed in -- the next one is always
+// one higher than the highest number handed out so far, so deleting an item
+// never causes a later item to reuse its number.
+function nextParcelNumber(items) {
+  const highest = items.reduce((max, item) => {
+    const n = Number.parseInt(item.sku, 10)
+    return Number.isFinite(n) && n > max ? n : max
+  }, 0)
+  return highest + 1
+}
+
+function AddItemCard({ items, onAdd }) {
   const [form, setForm] = useState(emptyForm())
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState(null)
+  const parcelNumber = nextParcelNumber(items)
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
@@ -66,6 +78,7 @@ function AddItemCard({ onAdd }) {
     try {
       await onAdd({
         name: form.name.trim(),
+        sku: String(parcelNumber),
         category: null,
         platform: null,
         cost_price: Number(form.costPrice) || 0,
@@ -85,6 +98,9 @@ function AddItemCard({ onAdd }) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input value={form.name} onChange={set('name')} placeholder="Item name" className={inputClass} />
+          <div className="flex h-11 items-center rounded-lg border border-dashed border-zinc-300 dark:border-white/15 px-3 text-sm text-zinc-500 dark:text-zinc-400">
+            #{parcelNumber} <span className="ml-1 text-xs">(auto)</span>
+          </div>
           <label className="text-sm">
             <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
             <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={`max-w-[200px] sm:max-w-none ${inputClass}`} />
@@ -199,7 +215,7 @@ export default function ResalePage() {
           <div className="mb-5">
             <ResaleTimeSeriesChart data={timeSeries} granularity={granularity} onGranularityChange={setGranularity} />
           </div>
-          <AddItemCard onAdd={addItem} />
+          <AddItemCard items={items} onAdd={addItem} />
 
           <Card title="Stock">
             <div className="mb-4 flex flex-wrap gap-2">
