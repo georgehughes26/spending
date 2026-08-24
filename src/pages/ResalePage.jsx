@@ -79,8 +79,6 @@ function AddItemCard({ items, onAdd }) {
       await onAdd({
         name: form.name.trim(),
         sku: String(parcelNumber),
-        category: null,
-        platform: null,
         cost_price: Number(form.costPrice) || 0,
         target_price: form.targetPrice === '' ? null : Number(form.targetPrice),
         purchased_date: form.purchasedDate,
