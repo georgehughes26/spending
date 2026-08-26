@@ -18,15 +18,13 @@ function ArrowIcon({ up }) {
 // Spending more than the same point last month is bad (red, up); spending
 // less is good (green, down) -- mirrors the language the user asked for.
 function ChangeBadge({ change }) {
-  if (change == null) return null
-  const rounded = Math.round(Math.abs(change))
-  if (rounded === 0) return null
+  if (change == null || Math.round(Math.abs(change)) === 0) return null
   const up = change > 0
   const tone = up ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
   return (
     <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${tone}`}>
       <ArrowIcon up={up} />
-      {rounded}%
+      {formatGBP(Math.abs(change))}
     </span>
   )
 }

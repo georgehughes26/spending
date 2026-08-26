@@ -35,15 +35,19 @@ export function deriveAssets(entries) {
   return ACCOUNTS.map((a) => ({ label: a.label, value: balances[a.key] ?? 0 }))
 }
 
+// Income is only ever entered once, at month-end -- until then an entry
+// sits at 0, so fall back to the previous entry's income as a working
+// estimate rather than showing a misleading £0.
+function effectiveIncome(entries, index) {
+  return Number(entries[index]?.income) || Number(entries[index - 1]?.income) || 0
+}
+
 export function deriveMonthlyOverview(entries) {
-  const latest = entries[entries.length - 1]
+  const index = entries.length - 1
+  const latest = entries[index]
   if (!latest) return { income: 0, spent: 0, saved: 0, categories: [] }
 
-  const previous = entries[entries.length - 2]
-  // Income is only ever entered once, at month-end -- until then this
-  // month's entry sits at 0, so fall back to last month's as a working
-  // estimate rather than showing a misleading £0.
-  const income = Number(latest.income) || Number(previous?.income) || 0
+  const income = effectiveIncome(entries, index)
   const spending = latest.spending ?? {}
   const spent = sum(spending)
   const categories = Object.entries(spending)
@@ -68,6 +72,8 @@ function aggregateSpending(weeks) {
 // since the current month is usually still mid-way through. Weeks come in
 // ascending week_start order already; only variable weekly spending is
 // compared, not fixed costs, since those don't really "pace" week to week.
+// Change is a £ amount: positive means spent more than the same point last
+// month, negative means spent less.
 export function deriveMonthlyComparison(currentWeeks, previousWeeks) {
   if (currentWeeks.length === 0 || previousWeeks.length === 0) return null
 
@@ -77,33 +83,30 @@ export function deriveMonthlyComparison(currentWeeks, previousWeeks) {
   const currentTotals = aggregateSpending(currentWeeks)
   const priorTotals = aggregateSpending(priorToPoint)
 
-  const currentOverall = sum(currentTotals)
-  const priorOverall = sum(priorTotals)
-  const overallChange = priorOverall > 0 ? ((currentOverall - priorOverall) / priorOverall) * 100 : null
+  const overallChange = sum(currentTotals) - sum(priorTotals)
 
   const names = new Set([...Object.keys(currentTotals), ...Object.keys(priorTotals)])
-  const categories = [...names].map((name) => {
-    const current = currentTotals[name] ?? 0
-    const prior = priorTotals[name] ?? 0
-    return { name, change: prior > 0 ? ((current - prior) / prior) * 100 : null }
-  })
+  const categories = [...names].map((name) => ({
+    name,
+    change: (currentTotals[name] ?? 0) - (priorTotals[name] ?? 0),
+  }))
 
   return { overallChange, categories }
 }
 
-function monthlyLeftover(entry) {
-  const income = Number(entry.income) || 0
-  const spent = sum(entry.spending)
+function monthlyLeftover(entries, index) {
+  const income = effectiveIncome(entries, index)
+  const spent = sum(entries[index].spending)
   return Math.max(0, income - spent)
 }
 
 // Each pot is guided by a fixed % of whatever's left over (income - spending)
 // that month, but the actual amount transferred (entered at month-end) always
 // wins once it's recorded — the % split is just a suggestion until then.
-function potContributionForEntry(entry, pot) {
-  const stored = entry.goal_contributions?.[pot.id]
+function potContributionForEntry(entries, index, pot) {
+  const stored = entries[index].goal_contributions?.[pot.id]
   if (stored !== undefined && stored !== null) return Number(stored) || 0
-  return monthlyLeftover(entry) * pot.percentage
+  return monthlyLeftover(entries, index) * pot.percentage
 }
 
 // A pot's value always comes from the closing balance you actually enter —
@@ -120,8 +123,8 @@ function latestPotBalance(entries, pot) {
 
 export function deriveSavingsGoals(entries, pots) {
   return (pots ?? []).map((pot) => {
-    const latest = entries[entries.length - 1]
-    const monthlyContribution = latest ? potContributionForEntry(latest, pot) : 0
+    const latestIndex = entries.length - 1
+    const monthlyContribution = latestIndex >= 0 ? potContributionForEntry(entries, latestIndex, pot) : 0
 
     return {
       id: pot.id,
@@ -139,9 +142,9 @@ export function deriveSavingsGoals(entries, pots) {
 // is "how much you've put in" (cash flow), not "what it's worth now".
 export function deriveContributions(entries, pots) {
   return (pots ?? []).map((pot) => {
-    const totalContributed = entries.reduce((total, e) => total + potContributionForEntry(e, pot), 0)
-    const latest = entries[entries.length - 1]
-    const monthlyContribution = latest ? potContributionForEntry(latest, pot) : 0
+    const totalContributed = entries.reduce((total, e, i) => total + potContributionForEntry(entries, i, pot), 0)
+    const latestIndex = entries.length - 1
+    const monthlyContribution = latestIndex >= 0 ? potContributionForEntry(entries, latestIndex, pot) : 0
 
     return {
       id: pot.id,
