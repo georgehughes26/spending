@@ -110,6 +110,33 @@
         ],
         "createdAt": "2026-08-26T09:32:40.050Z",
         "reason": "same cross-theme false positive as this session's other buttons: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against the light-theme bg-pink-600 in the same ternary/template string"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-500 on bg-pink-600",
+        "files": [
+          "src/components/ResaleTimeSeriesChart.jsx"
+        ],
+        "createdAt": "2026-08-26T09:44:20.703Z",
+        "reason": "granularity toggle: gray text is the inactive-button branch of a ternary, never rendered against the active pink-600/emerald-400 background in the same string"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/components/ResaleTimeSeriesChart.jsx"
+        ],
+        "createdAt": "2026-08-26T09:44:48.830Z",
+        "reason": "same cross-theme false positive as other buttons this session: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against the light-theme bg-pink-600 in the same ternary/template string"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/components/ResaleCard.jsx"
+        ],
+        "createdAt": "2026-08-26T10:15:55.292Z",
+        "reason": "explicitly discussed with user: asked whether to fill the whole card with the stage colour vs a border, recommended a left-border accent to avoid clashing with the profit/cost text already colour-coded on the card, user proceeded with it after seeing screenshots in both themes"
       }
     ]
   }

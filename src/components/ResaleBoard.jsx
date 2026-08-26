@@ -2,18 +2,18 @@ import { useState } from 'react'
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
-import ResaleCard, { ResaleCardVisual } from './ResaleCard'
+import ResaleCard, { ResaleCardVisual, STAGE_META } from './ResaleCard'
 import ResaleDetailModal from './ResaleDetailModal'
 import { tapScale } from './motion'
 import { itemAllInCost } from '../data/deriveResale'
 import { formatGBP } from '../utils/format'
 
 const COLUMNS = [
-  { status: 'purchased', label: 'Purchased', dot: 'bg-zinc-400' },
-  { status: 'arrived', label: 'Arrived', dot: 'bg-sky-500' },
-  { status: 'listed', label: 'Listed', dot: 'bg-amber-500' },
-  { status: 'sold', label: 'Sold', dot: 'bg-emerald-500' },
-  { status: 'completed', label: 'Completed', dot: 'bg-violet-500' },
+  { status: 'purchased', label: 'Purchased' },
+  { status: 'arrived', label: 'Arrived' },
+  { status: 'listed', label: 'Listed' },
+  { status: 'sold', label: 'Sold' },
+  { status: 'completed', label: 'Completed' },
 ]
 
 const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
@@ -47,8 +47,9 @@ function fireConfetti() {
   })
 }
 
-function Column({ status, label, dot, items, onOpen, itemCount }) {
+function Column({ status, label, items, onOpen, itemCount }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
+  const box = STAGE_META[status]?.box ?? STAGE_META.purchased.box
   return (
     <div
       ref={setNodeRef}
@@ -57,7 +58,7 @@ function Column({ status, label, dot, items, onOpen, itemCount }) {
       }`}
     >
       <div className="mb-3 flex items-center gap-2 px-1">
-        <span className={`h-2 w-2 rounded-full ${dot}`} />
+        <span className={`h-3 w-3 rounded-[3px] ${box}`} />
         <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{label}</span>
         <span className="ml-auto rounded-full bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-500 dark:bg-white/10 dark:text-zinc-400">
           {itemCount}
@@ -195,9 +196,13 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
       return
     }
 
-    // purchased / arrived / listed -- both directions go through here
+    // purchased / arrived / listed -- both directions go through here.
+    // listed_date is stamped the moment a card lands in Listed and cleared
+    // if it's dragged back out, since that's the only place it's set --
+    // it's what "average days to sell" is measured from.
     onUpdate(item.id, {
       status: toColumn,
+      listed_date: toColumn === 'listed' ? new Date().toISOString().slice(0, 10) : null,
       sold_price: null,
       sold_date: null,
       payment_status: null,
@@ -229,7 +234,6 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
                 key={col.status}
                 status={col.status}
                 label={col.label}
-                dot={col.dot}
                 itemCount={colItems.length}
                 items={colItems}
                 onOpen={setOpenItem}

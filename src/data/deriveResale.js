@@ -37,21 +37,56 @@ export function deriveResaleSummary(items, generalCosts = []) {
   return { totalCost, totalSales, totalProfit, potentialProfit, stageCounts, itemCount: items.length, generalCostsTotal }
 }
 
-// Operational health of the resale side-business: what's still to post, how
-// fast stock actually sells, and which courier carries most of it.
+// Item names are shirt listings like "Liverpool Home 23/24" or "Man Utd
+// Away Shirt L" -- the team name is whatever word repeats across sold
+// items once the kit-type words and size letters are stripped out. Numbers
+// (season years, "23/24") are dropped too since they're never a team name.
+const KIT_STOPWORDS = new Set(['home', 'away', 'third', 'fourth', 'kit', 'shirt', 'jersey'])
+const SIZE_TOKENS = new Set(['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', '2xl', '3xl'])
+
+function mostSoldTeam(sold) {
+  const counts = new Map()
+  for (const item of sold) {
+    if (!item.name) continue
+    const wordsInName = new Set()
+    for (const word of item.name.split(/[^a-zA-Z]+/).filter(Boolean)) {
+      const lower = word.toLowerCase()
+      if (lower.length < 3 || KIT_STOPWORDS.has(lower) || SIZE_TOKENS.has(lower)) continue
+      wordsInName.add(lower)
+    }
+    for (const lower of wordsInName) {
+      const entry = counts.get(lower)
+      if (entry) entry.count += 1
+      else counts.set(lower, { count: 1, original: item.name.match(new RegExp(lower, 'i'))?.[0] ?? lower })
+    }
+  }
+
+  let best = null
+  for (const entry of counts.values()) {
+    if (!best || entry.count > best.count) best = entry
+  }
+  // A count of 1 means nothing actually repeated -- not a "most sold team".
+  return best && best.count > 1 ? best : null
+}
+
+// How profitable a typical sale is, which team's shirts move the most, and
+// which courier carries most of the outgoing parcels.
 export function deriveResaleLogistics(items) {
   const sold = items.filter((i) => i.status === 'sold')
-  const awaitingShipment = sold.filter((i) => i.shipping_status !== 'shipped').length
 
-  const withDates = sold.filter((i) => i.purchased_date && i.sold_date)
-  const avgDaysToSell = withDates.length > 0
-    ? Math.round(
-        withDates.reduce((t, i) => t + (new Date(i.sold_date) - new Date(i.purchased_date)) / 86400000, 0) /
-          withDates.length,
-      )
-    : null
+  const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
+  const soldProfit = sold.reduce((t, i) => t + itemProfit(i), 0)
+  const avgProfitPerItem = sold.length > 0 ? soldProfit / sold.length : null
+  const avgSalePrice = sold.length > 0 ? sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0) / sold.length : null
+  const roiPercent = soldCost > 0 ? Math.round((soldProfit / soldCost) * 100) : null
+  const totalItemsSold = sold.length
 
-  const sellThroughRate = items.length > 0 ? Math.round((sold.length / items.length) * 100) : 0
+  const highestProfitItem = sold.reduce((best, item) => {
+    const profit = itemProfit(item)
+    return !best || profit > best.profit ? { name: item.name, profit } : best
+  }, null)
+
+  const topTeam = mostSoldTeam(sold)
 
   const courierCounts = {}
   for (const i of sold) {
@@ -61,7 +96,15 @@ export function deriveResaleLogistics(items) {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
 
-  return { awaitingShipment, avgDaysToSell, sellThroughRate, courierSplit }
+  return {
+    avgProfitPerItem,
+    avgSalePrice,
+    roiPercent,
+    totalItemsSold,
+    highestProfitItem,
+    topTeam,
+    courierSplit,
+  }
 }
 
 // UTC throughout -- local-time date arithmetic drifts by a day once the
@@ -148,7 +191,7 @@ export function deriveResaleTimeSeries(items, granularity) {
   // continuously, but a trailing window keeps a rare huge gap (e.g. a
   // year-long break between sales) from stretching the chart into dozens
   // of empty periods -- caps are generous enough to rarely bite.
-  const TRAILING_WINDOW = { week: 16, month: 12, year: 8 }
+  const TRAILING_WINDOW = { week: 4, month: 12, year: 8 }
   let periods = enumeratePeriods(startKey, endKey, granularity)
   const cap = TRAILING_WINDOW[granularity]
   if (periods.length > cap) periods = periods.slice(-cap)

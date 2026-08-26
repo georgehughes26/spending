@@ -5,18 +5,42 @@ import { formatDDMM, formatGBP } from '../utils/format'
 
 const COURIER_INITIAL = { Evri: 'E', InPost: 'I', 'Royal Mail': 'R' }
 
+// One colour-coded stage per item, replacing the old scatter of tiny dots
+// (one for payment, one for shipping) with a single box that reads at a
+// glance. Sold items get split further by how far post-sale they've come --
+// shipped is a deeper green than a fresh sale, and only fully paid *and*
+// shipped counts as done (darkest, faded out).
+export const STAGE_META = {
+  purchased: { label: 'Purchased', box: 'bg-zinc-300 dark:bg-zinc-600', border: 'border-l-zinc-300 dark:border-l-zinc-600' },
+  arrived: { label: 'Arrived', box: 'bg-sky-300 dark:bg-sky-500', border: 'border-l-sky-400 dark:border-l-sky-500' },
+  listed: { label: 'Listed', box: 'bg-amber-400 dark:bg-amber-500', border: 'border-l-amber-400 dark:border-l-amber-500' },
+  sold: { label: 'Sold', box: 'bg-emerald-300 dark:bg-emerald-500/60', border: 'border-l-emerald-300 dark:border-l-emerald-500/60' },
+  shipped: { label: 'Shipped', box: 'bg-emerald-500 dark:bg-emerald-500', border: 'border-l-emerald-500 dark:border-l-emerald-500' },
+  completed: { label: 'Completed', box: 'bg-emerald-800 opacity-50 dark:bg-emerald-700 dark:opacity-60', border: 'border-l-emerald-800/50 dark:border-l-emerald-700/60' },
+}
+
+export function cardStage(item) {
+  if (item.status !== 'sold') return item.status
+  if (item.payment_status === 'paid' && item.shipping_status === 'shipped') return 'completed'
+  if (item.shipping_status === 'shipped') return 'shipped'
+  return 'sold'
+}
+
 // Pure presentation, no drag hooks -- shared by the draggable card in the
 // column and the DragOverlay clone that follows the cursor while dragging.
 export function ResaleCardVisual({ item, dragging = false }) {
   const profit = itemProfit(item)
   const potentialProfit = itemPotentialProfit(item)
   const allInCost = itemAllInCost(item)
-  const completed = item.status === 'sold' && item.payment_status === 'paid'
+  const stage = cardStage(item)
+  const completed = stage === 'completed'
   const dateLabel = { purchased: item.purchased_date, listed: item.listed_date, sold: item.sold_date }[item.status]
+
+  const stageBorder = STAGE_META[stage]?.border ?? STAGE_META.purchased.border
 
   return (
     <div
-      className={`group rounded-xl border p-3 text-left shadow-sm transition-shadow duration-150 ${
+      className={`group rounded-xl border border-l-4 p-3 text-left shadow-sm transition-shadow duration-150 ${stageBorder} ${
         dragging ? 'rotate-2 cursor-grabbing shadow-xl' : 'cursor-grab hover:shadow-md active:cursor-grabbing'
       } ${
         completed
@@ -50,16 +74,11 @@ export function ResaleCardVisual({ item, dragging = false }) {
         )}
       </div>
 
-      {item.status === 'sold' && (
+      {(item.status === 'sold' || item.shipping_out) && (
         <div className="mt-2 flex items-center gap-1.5">
-          <span
-            title={item.payment_status === 'paid' ? 'Paid' : 'Awaiting payment'}
-            className={`h-1.5 w-1.5 rounded-full ${item.payment_status === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'}`}
-          />
-          <span
-            title={item.shipping_status === 'shipped' ? 'Shipped' : 'Not shipped'}
-            className={`h-1.5 w-1.5 rounded-full ${item.shipping_status === 'shipped' ? 'bg-sky-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
-          />
+          {item.status === 'sold' && (
+            <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">{STAGE_META[stage]?.label}</span>
+          )}
           {item.shipping_out && (
             <span className="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-zinc-100 text-[9px] font-bold text-zinc-500 dark:bg-white/10 dark:text-zinc-400">
               {COURIER_INITIAL[item.shipping_out] ?? '?'}

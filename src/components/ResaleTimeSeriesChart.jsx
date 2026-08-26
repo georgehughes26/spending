@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import Card from './Card'
 import { useAuth } from '../context/AuthContext'
 import { formatGBP } from '../utils/format'
@@ -10,6 +10,24 @@ const GRANULARITIES = [
   { value: 'month', label: 'Month' },
   { value: 'year', label: 'Year' },
 ]
+
+function BarValueLabel({ x, y, width, height, value, isDark }) {
+  const positive = value >= 0
+  const fill = positive ? (isDark ? '#34d399' : '#db2777') : isDark ? '#f87171' : '#dc2626'
+  const label = formatGBP(value, { pence: true, showSign: true })
+  // Recharts gives negative bars a negative height, with y as the *bottom*
+  // edge (farthest from zero) rather than the top -- min/max sorts that out
+  // so positive bars label above their top and negative bars label below
+  // their bottom, regardless of which edge y actually points at.
+  const top = Math.min(y, y + height)
+  const bottom = Math.max(y, y + height)
+  const labelY = positive ? top - 8 : bottom + 14
+  return (
+    <text x={x + width / 2} y={labelY} textAnchor="middle" fontSize={12} fontWeight={600} fill={fill}>
+      {label}
+    </text>
+  )
+}
 
 function ChartTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
@@ -72,15 +90,19 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
       ) : (
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+            <BarChart data={data} margin={{ top: 24, right: 8, bottom: 8, left: 8 }}>
               <CartesianGrid stroke={gridColor} vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 11, fill: axisColor }} axisLine={false} tickLine={false} width={48} />
+              <XAxis dataKey="label" tick={{ fontSize: 12, fontWeight: 500, fill: axisColor }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+              <YAxis
+                hide
+                domain={[(dataMin) => Math.min(dataMin * 1.3, 0), (dataMax) => Math.max(dataMax * 1.3, 0)]}
+              />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }} />
-              <Bar dataKey="totalProfit" name="Total Profit" radius={[4, 4, 4, 4]} maxBarSize={56}>
+              <Bar dataKey="totalProfit" name="Total Profit" radius={[8, 8, 8, 8]} maxBarSize={data.length <= 4 ? 88 : 56}>
                 {data.map((d) => (
                   <Cell key={d.key} fill={d.totalProfit >= 0 ? profitPositiveColor : profitNegativeColor} />
                 ))}
+                <LabelList dataKey="totalProfit" content={(props) => <BarValueLabel {...props} isDark={isDark} />} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
