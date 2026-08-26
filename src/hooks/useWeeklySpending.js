@@ -20,7 +20,7 @@ export function useWeeklySpending(userId, monthValue, periodStart, periodEnd) {
   const buckets = useMemo(() => computeWeekBuckets(periodStart, periodEnd), [periodStart, periodEnd])
 
   const refresh = useCallback(async () => {
-    if (!userId) {
+    if (!userId || !monthValue) {
       setWeeks([])
       setLoading(false)
       return

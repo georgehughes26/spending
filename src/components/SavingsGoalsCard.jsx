@@ -1,6 +1,23 @@
 import Card from './Card'
-import ProgressBar from './ProgressBar'
 import { formatGBP, formatMonthYear } from '../utils/format'
+
+// Always green regardless of theme, with the amount added last month picked
+// out in yellow -- unlike the shared ProgressBar, this one isn't meant to
+// reflect the pink/emerald theme toggle.
+function GoalProgressBar({ basePercent, addedPercent, className = '' }) {
+  return (
+    <div
+      className={`flex h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10 ${className}`}
+      role="progressbar"
+      aria-valuenow={Math.round(basePercent + addedPercent)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div className="h-full bg-emerald-500 transition-[width] duration-300" style={{ width: `${basePercent}%` }} />
+      <div className="h-full bg-yellow-400 transition-[width] duration-300" style={{ width: `${addedPercent}%` }} />
+    </div>
+  )
+}
 
 function estimateCompletion(goal) {
   const remaining = goal.target - goal.current
@@ -32,7 +49,10 @@ export default function SavingsGoalsCard({ goals }) {
       <ul className="flex flex-col gap-5">
         {sortedGoals.map((goal) => {
           const hasTarget = goal.target != null
-          const progress = hasTarget ? (goal.current / goal.target) * 100 : 0
+          const totalPercent = hasTarget ? Math.max(0, Math.min(100, (goal.current / goal.target) * 100)) : 0
+          const previousAmount = Math.max(0, goal.current - Math.max(0, goal.monthlyContribution || 0))
+          const basePercent = hasTarget ? Math.max(0, Math.min(100, (previousAmount / goal.target) * 100)) : 0
+          const addedPercent = Math.max(0, totalPercent - basePercent)
 
           return (
             <li key={goal.id}>
@@ -44,7 +64,7 @@ export default function SavingsGoalsCard({ goals }) {
                   {hasTarget ? `${formatGBP(goal.current)} / ${formatGBP(goal.target)}` : formatGBP(goal.current)}
                 </span>
               </div>
-              {hasTarget && <ProgressBar value={progress} className="mb-2" />}
+              {hasTarget && <GoalProgressBar basePercent={basePercent} addedPercent={addedPercent} className="mb-2" />}
               <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
                 {hasTarget ? (
                   <>

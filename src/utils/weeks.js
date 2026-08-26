@@ -16,6 +16,7 @@ export function lastDayOfMonth(monthValue) {
 // than spilling outside it. The range is usually payday-to-payday rather
 // than a calendar month.
 export function computeWeekBuckets(startDate, endDate) {
+  if (!startDate || !endDate) return []
   const rangeStart = parseDateOnly(startDate)
   const rangeEnd = parseDateOnly(endDate)
   if (rangeEnd < rangeStart) return []

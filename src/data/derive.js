@@ -39,7 +39,11 @@ export function deriveMonthlyOverview(entries) {
   const latest = entries[entries.length - 1]
   if (!latest) return { income: 0, spent: 0, saved: 0, categories: [] }
 
-  const income = Number(latest.income) || 0
+  const previous = entries[entries.length - 2]
+  // Income is only ever entered once, at month-end -- until then this
+  // month's entry sits at 0, so fall back to last month's as a working
+  // estimate rather than showing a misleading £0.
+  const income = Number(latest.income) || Number(previous?.income) || 0
   const spending = latest.spending ?? {}
   const spent = sum(spending)
   const categories = Object.entries(spending)
@@ -47,6 +51,44 @@ export function deriveMonthlyOverview(entries) {
     .sort((a, b) => b.amount - a.amount)
 
   return { income, spent, saved: income - spent, categories }
+}
+
+function aggregateSpending(weeks) {
+  const totals = {}
+  for (const week of weeks) {
+    for (const [category, amount] of Object.entries(week.spending ?? {})) {
+      totals[category] = (totals[category] ?? 0) + (Number(amount) || 0)
+    }
+  }
+  return totals
+}
+
+// Compares this month's spending so far against last month's spending after
+// the same number of weeks logged -- a fairer read than a full-month total,
+// since the current month is usually still mid-way through. Weeks come in
+// ascending week_start order already; only variable weekly spending is
+// compared, not fixed costs, since those don't really "pace" week to week.
+export function deriveMonthlyComparison(currentWeeks, previousWeeks) {
+  if (currentWeeks.length === 0 || previousWeeks.length === 0) return null
+
+  const priorToPoint = previousWeeks.slice(0, currentWeeks.length)
+  if (priorToPoint.length === 0) return null
+
+  const currentTotals = aggregateSpending(currentWeeks)
+  const priorTotals = aggregateSpending(priorToPoint)
+
+  const currentOverall = sum(currentTotals)
+  const priorOverall = sum(priorTotals)
+  const overallChange = priorOverall > 0 ? ((currentOverall - priorOverall) / priorOverall) * 100 : null
+
+  const names = new Set([...Object.keys(currentTotals), ...Object.keys(priorTotals)])
+  const categories = [...names].map((name) => {
+    const current = currentTotals[name] ?? 0
+    const prior = priorTotals[name] ?? 0
+    return { name, change: prior > 0 ? ((current - prior) / prior) * 100 : null }
+  })
+
+  return { overallChange, categories }
 }
 
 function monthlyLeftover(entry) {

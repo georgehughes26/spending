@@ -5,8 +5,10 @@ import ContributionsCard from '../components/ContributionsCard'
 import { useAuth } from '../context/AuthContext'
 import { useMonthlyEntries } from '../hooks/useMonthlyEntries'
 import { useSavingsPots } from '../hooks/useSavingsPots'
+import { useWeeklySpending } from '../hooks/useWeeklySpending'
 import {
   deriveContributions,
+  deriveMonthlyComparison,
   deriveMonthlyOverview,
   deriveSavingsGoals,
   deriveTotalSavingsHistory,
@@ -16,6 +18,11 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const { entries, loading, error } = useMonthlyEntries(user?.id)
   const { pots, loading: potsLoading } = useSavingsPots(user?.id)
+
+  const currentMonthValue = entries[entries.length - 1]?.month.slice(0, 7)
+  const previousMonthValue = entries[entries.length - 2]?.month.slice(0, 7)
+  const { weeks: currentWeeks } = useWeeklySpending(user?.id, currentMonthValue)
+  const { weeks: previousWeeks } = useWeeklySpending(user?.id, previousMonthValue)
 
   if (loading || potsLoading) {
     return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading your data…</p>
@@ -30,6 +37,7 @@ export default function DashboardPage() {
   }
 
   const monthlyOverview = deriveMonthlyOverview(entries)
+  const monthlyComparison = deriveMonthlyComparison(currentWeeks, previousWeeks)
   const savingsGoals = deriveSavingsGoals(entries, pots)
   const contributions = deriveContributions(entries, pots)
   const savingsHistory = deriveTotalSavingsHistory(entries, pots)
@@ -43,7 +51,7 @@ export default function DashboardPage() {
       )}
 
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <MonthlyOverviewCard {...monthlyOverview} />
+        <MonthlyOverviewCard {...monthlyOverview} comparison={monthlyComparison} />
         <TotalSavingsCard goals={savingsGoals} history={savingsHistory} />
       </section>
 
