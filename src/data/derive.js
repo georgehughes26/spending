@@ -109,6 +109,21 @@ function potContributionForEntry(entries, index, pot) {
   return monthlyLeftover(entries, index) * pot.percentage
 }
 
+// The "this month" contribution figure shown on the dashboard: the actual
+// amount entered for the latest month if there is one, otherwise the most
+// recent month that actually had one entered (not a guide estimate for the
+// in-progress month) — same "carry the last real figure forward" rule as
+// effectiveIncome, since a guide computed from a still-£0 income just shows
+// a wrong number instead of last month's real one.
+function displayContribution(entries, pot) {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const stored = entries[i].goal_contributions?.[pot.id]
+    if (stored !== undefined && stored !== null) return Number(stored) || 0
+  }
+  const latestIndex = entries.length - 1
+  return latestIndex >= 0 ? potContributionForEntry(entries, latestIndex, pot) : 0
+}
+
 // A pot's value always comes from the closing balance you actually enter —
 // never derived from contributions, since growth/loss/fees mean a pound in
 // doesn't always mean a pound there. Falls back to the starting balance
@@ -123,8 +138,7 @@ function latestPotBalance(entries, pot) {
 
 export function deriveSavingsGoals(entries, pots) {
   return (pots ?? []).map((pot) => {
-    const latestIndex = entries.length - 1
-    const monthlyContribution = latestIndex >= 0 ? potContributionForEntry(entries, latestIndex, pot) : 0
+    const monthlyContribution = displayContribution(entries, pot)
 
     return {
       id: pot.id,
@@ -143,8 +157,7 @@ export function deriveSavingsGoals(entries, pots) {
 export function deriveContributions(entries, pots) {
   return (pots ?? []).map((pot) => {
     const totalContributed = entries.reduce((total, e, i) => total + potContributionForEntry(entries, i, pot), 0)
-    const latestIndex = entries.length - 1
-    const monthlyContribution = latestIndex >= 0 ? potContributionForEntry(entries, latestIndex, pot) : 0
+    const monthlyContribution = displayContribution(entries, pot)
 
     return {
       id: pot.id,
