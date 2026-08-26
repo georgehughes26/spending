@@ -2,6 +2,8 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import Card from './Card'
 import { useAuth } from '../context/AuthContext'
 import { formatGBP } from '../utils/format'
+import { motion } from 'framer-motion'
+import { tapScale } from './motion'
 
 const GRANULARITIES = [
   { value: 'week', label: 'Week' },
@@ -49,7 +51,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Costs land when you bought, sales land when you sold.</p>
         <div className="flex gap-2">
           {GRANULARITIES.map((g) => (
-            <button
+            <motion.button {...tapScale}
               key={g.value}
               type="button"
               onClick={() => onGranularityChange(g.value)}
@@ -60,7 +62,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
               }`}
             >
               {g.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>

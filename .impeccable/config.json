@@ -1,0 +1,116 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/App.jsx"
+        ],
+        "createdAt": "2026-08-26T08:19:22.810Z",
+        "reason": "false positive: detector cross-matched dark:text-zinc-950 (dark theme, on dark:bg-emerald-400) against bg-pink-600 (light theme) from the same ternary string; the two never render together, and each theme's actual pairing (white-on-pink, near-black-on-emerald) has strong contrast"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "bg-clip-text bg-gradient",
+        "files": [
+          "src/App.jsx"
+        ],
+        "createdAt": "2026-08-26T08:19:36.995Z",
+        "reason": "pre-existing 'Layla' wordmark brand asset, recorded as a confirmed brand commitment in PRODUCT.md before this redesign began; not new AI-slop, evidence-based not explicitly re-confirmed by the user this turn"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-amber-600",
+        "files": [
+          "src/pages/ResalePage.jsx"
+        ],
+        "createdAt": "2026-08-26T08:36:40.244Z",
+        "reason": "same cross-theme false positive as other Reselling files"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-amber-600",
+        "files": [
+          "src/components/ResaleItemRow.jsx"
+        ],
+        "createdAt": "2026-08-26T08:36:59.517Z",
+        "reason": "same cross-theme false positive: dark:text-zinc-950 (paired with dark:bg-amber-400) never renders against the light-theme bg-amber-600 in the same ternary string; each theme's real pairing has strong contrast"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-amber-600",
+        "files": [
+          "src/App.jsx"
+        ],
+        "createdAt": "2026-08-26T08:40:54.856Z",
+        "reason": "same cross-theme false positive: dark:text-zinc-950 (paired with dark:bg-amber-400) never renders against the light-theme bg-amber-600 in the same ternary string"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-400 on bg-amber-500",
+        "files": [
+          "src/App.jsx"
+        ],
+        "createdAt": "2026-08-26T08:47:42.189Z",
+        "reason": "cross-branch false positive: text-zinc-400 belongs to the inactive nav-item ternary branch, bg-amber-500 to the active branch; they never render together"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-100 on bg-amber-500",
+        "files": [
+          "src/App.jsx"
+        ],
+        "createdAt": "2026-08-26T08:47:42.227Z",
+        "reason": "cross-branch false positive: text-zinc-100 is the inactive-hover ternary branch, bg-amber-500 the active branch; they never render together"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-amber-600",
+        "files": [
+          "src/components/ResaleDetailModal.jsx"
+        ],
+        "createdAt": "2026-08-26T08:54:53.024Z",
+        "reason": "same cross-theme false positive as other Reselling files: dark:text-zinc-950 (with dark:bg-amber-400) never renders against light-theme bg-amber-600"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-amber-600",
+        "files": [
+          "src/components/ResaleBoard.jsx"
+        ],
+        "createdAt": "2026-08-26T08:55:45.642Z",
+        "reason": "same cross-theme false positive as other Reselling files"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/components/ResaleBoard.jsx"
+        ],
+        "createdAt": "2026-08-26T09:19:42.895Z",
+        "reason": "same cross-theme false positive pattern (dark:text-zinc-950 paired with dark:bg-emerald-400 never renders against light-theme bg-pink-600)"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/components/ResaleDetailModal.jsx"
+        ],
+        "createdAt": "2026-08-26T09:23:09.689Z",
+        "reason": "same cross-theme false positive pattern established for this file's other buttons"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/pages/ResalePage.jsx"
+        ],
+        "createdAt": "2026-08-26T09:32:40.050Z",
+        "reason": "same cross-theme false positive as this session's other buttons: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against the light-theme bg-pink-600 in the same ternary/template string"
+      }
+    ]
+  }
+}

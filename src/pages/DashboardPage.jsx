@@ -2,14 +2,24 @@ import MonthlyOverviewCard from '../components/MonthlyOverviewCard'
 import TotalSavingsCard from '../components/TotalSavingsCard'
 import SavingsGoalsCard from '../components/SavingsGoalsCard'
 import ContributionsCard from '../components/ContributionsCard'
+import NetWorthCard from '../components/NetWorthCard'
+import HouseGoalCard from '../components/HouseGoalCard'
+import MilestonesCard from '../components/MilestonesCard'
+import WealthTimelineCard from '../components/WealthTimelineCard'
+import { FadeInItem, FadeInStagger } from '../components/motion'
 import { useAuth } from '../context/AuthContext'
 import { useMonthlyEntries } from '../hooks/useMonthlyEntries'
 import { useSavingsPots } from '../hooks/useSavingsPots'
 import { useWeeklySpending } from '../hooks/useWeeklySpending'
+import { GROWTH_ASSUMPTIONS, LIABILITIES } from '../data/config'
 import {
+  deriveAssets,
   deriveContributions,
+  deriveHouseGoal,
+  deriveMilestones,
   deriveMonthlyComparison,
   deriveMonthlyOverview,
+  deriveNetWorthHistory,
   deriveSavingsGoals,
   deriveTotalSavingsHistory,
 } from '../data/derive'
@@ -41,6 +51,11 @@ export default function DashboardPage() {
   const savingsGoals = deriveSavingsGoals(entries, pots)
   const contributions = deriveContributions(entries, pots)
   const savingsHistory = deriveTotalSavingsHistory(entries, pots)
+  const assets = deriveAssets(entries, pots)
+  const netWorthHistory = deriveNetWorthHistory(entries, pots)
+  const netWorth = netWorthHistory[netWorthHistory.length - 1].value
+  const houseGoal = deriveHouseGoal(entries)
+  const milestones = deriveMilestones(entries, pots)
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-6">
@@ -50,15 +65,30 @@ export default function DashboardPage() {
         </p>
       )}
 
-      <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <MonthlyOverviewCard {...monthlyOverview} comparison={monthlyComparison} />
-        <TotalSavingsCard goals={savingsGoals} history={savingsHistory} />
-      </section>
+      <FadeInStagger className="flex flex-col gap-5">
+        <FadeInItem>
+          <NetWorthCard assets={assets} liabilities={LIABILITIES} netWorthHistory={netWorthHistory} />
+        </FadeInItem>
 
-      <section className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <SavingsGoalsCard goals={savingsGoals} />
-        <ContributionsCard contributions={contributions} />
-      </section>
+        {/* A bento mix of spans instead of a uniform grid -- the fuller
+            cards (overview, savings history) get more room than the
+            lighter ones, so it reads as composed rather than tiled. */}
+        <FadeInItem className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-2"><MonthlyOverviewCard {...monthlyOverview} comparison={monthlyComparison} /></div>
+          <SavingsGoalsCard goals={savingsGoals} />
+          <ContributionsCard contributions={contributions} />
+          <div className="lg:col-span-2"><TotalSavingsCard goals={savingsGoals} history={savingsHistory} /></div>
+        </FadeInItem>
+
+        <FadeInItem className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+          <div className="lg:col-span-3"><HouseGoalCard goal={houseGoal} /></div>
+          <div className="lg:col-span-2"><MilestonesCard milestones={milestones} /></div>
+        </FadeInItem>
+
+        <FadeInItem>
+          <WealthTimelineCard startingNetWorth={netWorth} initialAssumptions={GROWTH_ASSUMPTIONS} />
+        </FadeInItem>
+      </FadeInStagger>
     </main>
   )
 }

@@ -1,9 +1,5 @@
-function extraCosts(item) {
-  return (item.resale_item_costs ?? []).reduce((t, c) => t + (Number(c.amount) || 0), 0)
-}
-
 export function itemAllInCost(item) {
-  return (Number(item.cost_price) || 0) + extraCosts(item)
+  return Number(item.cost_price) || 0
 }
 
 export function itemProfit(item) {
@@ -18,14 +14,19 @@ export function itemPotentialProfit(item) {
 
 // Lifetime totals, unaffected by any time-period filter. totalCost is every
 // item's all-in cost regardless of status -- it doesn't drop an item just
-// because it's since sold, so it reads as "money spent on stock overall".
-export function deriveResaleSummary(items) {
+// because it's since sold, so it reads as "money spent on stock overall" --
+// plus general costs (packaging, subscriptions) that aren't tied to any one
+// item. Those general costs reduce total profit but never touch a specific
+// item's own profit/potential-profit figure, since they can't be attributed
+// to one sale.
+export function deriveResaleSummary(items, generalCosts = []) {
   const sold = items.filter((i) => i.status === 'sold')
   const active = items.filter((i) => i.status !== 'sold')
 
-  const totalCost = items.reduce((t, i) => t + itemAllInCost(i), 0)
+  const generalCostsTotal = generalCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
+  const totalCost = items.reduce((t, i) => t + itemAllInCost(i), 0) + generalCostsTotal
   const totalSales = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
-  const totalProfit = sold.reduce((t, i) => t + itemProfit(i), 0)
+  const totalProfit = sold.reduce((t, i) => t + itemProfit(i), 0) - generalCostsTotal
   const potentialProfit = active
     .filter((i) => i.target_price != null)
     .reduce((t, i) => t + itemPotentialProfit(i), 0)
@@ -33,7 +34,34 @@ export function deriveResaleSummary(items) {
   const stageCounts = { purchased: 0, arrived: 0, listed: 0, sold: 0 }
   for (const item of items) stageCounts[item.status] = (stageCounts[item.status] ?? 0) + 1
 
-  return { totalCost, totalSales, totalProfit, potentialProfit, stageCounts, itemCount: items.length }
+  return { totalCost, totalSales, totalProfit, potentialProfit, stageCounts, itemCount: items.length, generalCostsTotal }
+}
+
+// Operational health of the resale side-business: what's still to post, how
+// fast stock actually sells, and which courier carries most of it.
+export function deriveResaleLogistics(items) {
+  const sold = items.filter((i) => i.status === 'sold')
+  const awaitingShipment = sold.filter((i) => i.shipping_status !== 'shipped').length
+
+  const withDates = sold.filter((i) => i.purchased_date && i.sold_date)
+  const avgDaysToSell = withDates.length > 0
+    ? Math.round(
+        withDates.reduce((t, i) => t + (new Date(i.sold_date) - new Date(i.purchased_date)) / 86400000, 0) /
+          withDates.length,
+      )
+    : null
+
+  const sellThroughRate = items.length > 0 ? Math.round((sold.length / items.length) * 100) : 0
+
+  const courierCounts = {}
+  for (const i of sold) {
+    if (i.shipping_out) courierCounts[i.shipping_out] = (courierCounts[i.shipping_out] ?? 0) + 1
+  }
+  const courierSplit = Object.entries(courierCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+
+  return { awaitingShipment, avgDaysToSell, sellThroughRate, courierSplit }
 }
 
 // UTC throughout -- local-time date arithmetic drifts by a day once the

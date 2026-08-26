@@ -16,7 +16,7 @@ export function useResaleItems(userId) {
     setError(null)
     const { data, error: fetchError } = await supabase
       .from('resale_items')
-      .select('*, resale_item_costs(*)')
+      .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
@@ -71,18 +71,6 @@ export function useResaleItems(userId) {
 
   const markShipped = useCallback((id) => updateItem(id, { shipping_status: 'shipped' }), [updateItem])
 
-  const addItemCost = useCallback(async (itemId, label, amount) => {
-    const { error: insertError } = await supabase.from('resale_item_costs').insert({ item_id: itemId, label, amount })
-    if (insertError) throw new Error(insertError.message)
-    await refresh()
-  }, [refresh])
-
-  const deleteItemCost = useCallback(async (costId) => {
-    const { error: deleteError } = await supabase.from('resale_item_costs').delete().eq('id', costId)
-    if (deleteError) throw new Error(deleteError.message)
-    await refresh()
-  }, [refresh])
-
   return {
     items,
     loading,
@@ -95,8 +83,6 @@ export function useResaleItems(userId) {
     markSold,
     markPaid,
     markShipped,
-    addItemCost,
-    deleteItemCost,
     refresh,
   }
 }

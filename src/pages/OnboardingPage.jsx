@@ -5,6 +5,8 @@ import NumberField from '../components/NumberField'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { formatGBP } from '../utils/format'
+import { motion } from 'framer-motion'
+import { tapScale } from '../components/motion'
 
 const DEFAULT_CATEGORIES = ['Food', 'Drinking', 'Shopping', 'Entertainment', 'Transport', 'Health', 'Other']
 
@@ -40,13 +42,13 @@ function PotsStep({ pots, setPots }) {
                 placeholder="Pot name, e.g. LISA"
                 className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
               />
-              <button
+              <motion.button {...tapScale}
                 type="button"
                 onClick={() => setPots((prev) => prev.filter((_, idx) => idx !== i))}
                 className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
               >
                 Remove
-              </button>
+              </motion.button>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="text-sm">
@@ -89,13 +91,13 @@ function PotsStep({ pots, setPots }) {
         ))}
       </div>
 
-      <button
+      <motion.button {...tapScale}
         type="button"
         onClick={() => setPots((prev) => [...prev, emptyPot()])}
         className="mt-4 min-h-11 cursor-pointer rounded-lg border border-pink-300 dark:border-emerald-500/40 px-4 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10"
       >
         + Add a pot
-      </button>
+      </motion.button>
 
       <div className="mt-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
         <span className="text-zinc-500 dark:text-zinc-400">Total percentage</span>
@@ -131,13 +133,13 @@ function CategoriesStep({ categories, setCategories }) {
               onChange={(e) => setCategories((prev) => prev.map((c, idx) => (idx === i ? e.target.value : c)))}
               className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
             />
-            <button
+            <motion.button {...tapScale}
               type="button"
               onClick={() => setCategories((prev) => prev.filter((_, idx) => idx !== i))}
               className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
             >
               Remove
-            </button>
+            </motion.button>
           </li>
         ))}
       </ul>
@@ -150,13 +152,13 @@ function CategoriesStep({ categories, setCategories }) {
           placeholder="e.g. Gifts"
           className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
-        <button
+        <motion.button {...tapScale}
           type="button"
           onClick={add}
           className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300"
         >
           Add
-        </button>
+        </motion.button>
       </div>
     </Card>
   )
@@ -188,13 +190,13 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
               <span className="text-zinc-800 dark:text-zinc-200">{cost.name}</span>
               <div className="flex items-center gap-3">
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount)}</span>
-                <button
+                <motion.button {...tapScale}
                   type="button"
                   onClick={() => setFixedCosts((prev) => prev.filter((_, idx) => idx !== i))}
                   className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
                 >
                   Remove
-                </button>
+                </motion.button>
               </div>
             </li>
           ))}
@@ -221,13 +223,13 @@ function FixedCostsStep({ fixedCosts, setFixedCosts }) {
               className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
             />
           </div>
-          <button
+          <motion.button {...tapScale}
             type="button"
             onClick={add}
             className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 sm:flex-none"
           >
             Add
-          </button>
+          </motion.button>
         </div>
       </div>
       <div className="mt-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-4 text-sm">
@@ -341,33 +343,33 @@ export default function OnboardingPage() {
       {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <div className="mt-6 flex items-center justify-between">
-        <button
+        <motion.button {...tapScale}
           type="button"
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
           className="min-h-11 cursor-pointer rounded-lg px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400 transition-colors duration-150 hover:text-zinc-800 dark:hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
-        </button>
+        </motion.button>
 
         {step < STEPS.length - 1 ? (
-          <button
+          <motion.button {...tapScale}
             type="button"
             onClick={() => setStep((s) => s + 1)}
             disabled={!canGoNext}
             className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
-          </button>
+          </motion.button>
         ) : (
-          <button
+          <motion.button {...tapScale}
             type="button"
             onClick={handleFinish}
             disabled={submitting}
             className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Setting up…' : 'Finish setup'}
-          </button>
+          </motion.button>
         )}
       </div>
     </div>

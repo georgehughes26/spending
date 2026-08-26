@@ -4,6 +4,8 @@ import { useBankData } from '../hooks/useBankData'
 import { useMonthlyEntries } from '../hooks/useMonthlyEntries'
 import { SPENDING_CATEGORIES } from '../data/config'
 import { formatGBP, formatMonthYear } from '../utils/format'
+import { motion } from 'framer-motion'
+import { tapScale } from '../components/motion'
 
 function redirectUrl() {
   return `${window.location.origin}${window.location.pathname}#/bank-callback`
@@ -156,22 +158,22 @@ export default function BankPage() {
 
         {!showPicker ? (
           <div className="flex flex-wrap gap-3">
-            <button
+            <motion.button {...tapScale}
               type="button"
               onClick={openPicker}
               className="cursor-pointer rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-pink-500"
             >
               Connect a bank
-            </button>
+            </motion.button>
             {connections.some((c) => c.status === 'linked') && (
-              <button
+              <motion.button {...tapScale}
                 type="button"
                 onClick={handleSync}
                 disabled={syncing}
                 className="cursor-pointer rounded-lg border border-pink-900/40 px-4 py-2 text-sm font-medium text-pink-300 transition-colors duration-150 hover:bg-pink-950/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {syncing ? 'Syncing…' : 'Sync transactions'}
-              </button>
+              </motion.button>
             )}
           </div>
         ) : (
@@ -190,13 +192,13 @@ export default function BankPage() {
               <ul className="max-h-72 overflow-y-auto rounded-lg border border-zinc-800">
                 {filteredInstitutions.map((inst) => (
                   <li key={inst.id}>
-                    <button
+                    <motion.button {...tapScale}
                       type="button"
                       onClick={() => handleConnect(inst)}
                       className="w-full cursor-pointer px-3 py-2 text-left text-sm text-zinc-200 transition-colors duration-150 hover:bg-zinc-800"
                     >
                       {inst.name}
-                    </button>
+                    </motion.button>
                   </li>
                 ))}
                 {filteredInstitutions.length === 0 && (
@@ -204,13 +206,13 @@ export default function BankPage() {
                 )}
               </ul>
             )}
-            <button
+            <motion.button {...tapScale}
               type="button"
               onClick={() => setShowPicker(false)}
               className="mt-3 cursor-pointer text-sm text-zinc-500 transition-colors duration-150 hover:text-zinc-300"
             >
               Cancel
-            </button>
+            </motion.button>
           </div>
         )}
 
@@ -224,13 +226,13 @@ export default function BankPage() {
             {monthKeys.map((key) => (
               <li key={key} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-zinc-200">{formatMonthYear(`${key}-01`)}</span>
-                <button
+                <motion.button {...tapScale}
                   type="button"
                   onClick={() => importMonth(key)}
                   className="cursor-pointer rounded-lg border border-pink-900/40 px-3 py-1.5 text-xs font-medium text-pink-300 transition-colors duration-150 hover:bg-pink-950/20"
                 >
                   Import into Data Entry
-                </button>
+                </motion.button>
               </li>
             ))}
           </ul>

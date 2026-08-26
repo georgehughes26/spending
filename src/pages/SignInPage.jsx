@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { motion } from 'framer-motion'
+import { tapScale } from '../components/motion'
 
 export default function SignInPage() {
   const { signIn, signUp } = useAuth()
@@ -65,15 +67,15 @@ export default function SignInPage() {
 
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-          <button
+          <motion.button {...tapScale}
             type="submit"
             disabled={submitting || !name.trim() || pin.length !== 4}
             className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Sign up'}
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button {...tapScale}
             type="button"
             onClick={() => {
               setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
@@ -82,7 +84,7 @@ export default function SignInPage() {
             className="min-h-11 cursor-pointer text-sm text-zinc-500 dark:text-zinc-400 transition-colors duration-150 hover:text-zinc-700 dark:hover:text-zinc-200"
           >
             {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-          </button>
+          </motion.button>
         </form>
       </div>
     </div>

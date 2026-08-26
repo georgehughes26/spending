@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import NumberField from './NumberField'
 import { formatGBP } from '../utils/format'
 import { formatWeekRange } from '../utils/weeks'
+import { motion } from 'framer-motion'
+import { tapScale } from './motion'
 
 function emptySpending(categories) {
   return Object.fromEntries(categories.map((c) => [c, 0]))
@@ -36,7 +38,7 @@ export default function WeekEntryRow({ weekStart, weekEnd, categories, initialSp
 
   return (
     <li className="py-3">
-      <button
+      <motion.button {...tapScale}
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="flex min-h-11 w-full cursor-pointer items-center justify-between text-left text-sm"
@@ -49,7 +51,7 @@ export default function WeekEntryRow({ weekStart, weekEnd, categories, initialSp
           <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(total)}</span>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">{expanded ? 'Hide' : hasData ? 'Edit' : 'Add'}</span>
         </span>
-      </button>
+      </motion.button>
 
       {expanded && (
         <div className="mt-3 rounded-lg border border-zinc-200 dark:border-white/10 bg-pink-50 dark:bg-white/5 p-4">
@@ -65,14 +67,14 @@ export default function WeekEntryRow({ weekStart, weekEnd, categories, initialSp
             ))}
           </div>
           {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-          <button
+          <motion.button {...tapScale}
             type="button"
             onClick={handleSave}
             disabled={saving}
             className="mt-4 min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 py-2 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save week'}
-          </button>
+          </motion.button>
         </div>
       )}
     </li>

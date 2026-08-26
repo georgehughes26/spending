@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { formatGBP, formatMonthYear } from '../utils/format'
+import { motion } from 'framer-motion'
+import { tapScale } from './motion'
 
 export default function PotRow({ pot, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false)
@@ -91,21 +93,21 @@ export default function PotRow({ pot, onUpdate, onDelete }) {
           </label>
         </div>
         <div className="mt-3 flex items-center gap-3">
-          <button
+          <motion.button {...tapScale}
             type="button"
             onClick={handleSave}
             disabled={saving}
             className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:opacity-50"
           >
             Save
-          </button>
-          <button
+          </motion.button>
+          <motion.button {...tapScale}
             type="button"
             onClick={() => setEditing(false)}
             className="min-h-11 cursor-pointer px-2 text-sm text-zinc-500 dark:text-zinc-400 transition-colors duration-150 hover:text-zinc-700 dark:hover:text-zinc-200"
           >
             Cancel
-          </button>
+          </motion.button>
         </div>
       </li>
     )
@@ -123,20 +125,20 @@ export default function PotRow({ pot, onUpdate, onDelete }) {
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <button
+        <motion.button {...tapScale}
           type="button"
           onClick={() => setEditing(true)}
           className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-pink-600 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10 hover:text-pink-700 dark:hover:text-emerald-400"
         >
           Edit
-        </button>
-        <button
+        </motion.button>
+        <motion.button {...tapScale}
           type="button"
           onClick={() => onDelete(pot.id)}
           className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
         >
           Delete
-        </button>
+        </motion.button>
       </div>
     </li>
   )

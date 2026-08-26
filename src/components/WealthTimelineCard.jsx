@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import Card from './Card'
+import { AnimatedNumber, tapScale } from './motion'
+import { useAuth } from '../context/AuthContext'
 import { formatGBP } from '../utils/format'
+import { motion } from 'framer-motion'
 
 const HORIZON_MONTHS = 36
 
@@ -39,10 +42,10 @@ function projectNetWorth(startingNetWorth, assumptions) {
 
 function SliderField({ label, value, min, max, step, onChange, format }) {
   return (
-    <label className="block text-xs text-zinc-400">
+    <label className="block text-xs text-zinc-500 dark:text-zinc-400">
       <div className="mb-1 flex justify-between">
         <span>{label}</span>
-        <span className="font-medium text-zinc-200">{format(value)}</span>
+        <span className="font-medium text-zinc-700 dark:text-zinc-200">{format(value)}</span>
       </div>
       <input
         type="range"
@@ -51,13 +54,17 @@ function SliderField({ label, value, min, max, step, onChange, format }) {
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-pink-600"
+        className="w-full accent-pink-600 dark:accent-emerald-400"
       />
     </label>
   )
 }
 
 export default function WealthTimelineCard({ startingNetWorth, initialAssumptions }) {
+  const { theme } = useAuth()
+  const accent = theme === 'dark' ? '#34d399' : '#db2777'
+  const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : '#e4e4e7'
+  const axisColor = theme === 'dark' ? '#a1a1aa' : '#71717a'
   const [assumptions, setAssumptions] = useState(initialAssumptions)
   const [showControls, setShowControls] = useState(false)
 
@@ -81,11 +88,12 @@ export default function WealthTimelineCard({ startingNetWorth, initialAssumption
           { label: '24 months', value: at24?.value },
           { label: '36 months', value: at36?.value },
         ].map((p) => (
-          <div key={p.label} className="rounded-xl bg-zinc-800/60 py-3">
-            <div className="text-xs text-zinc-500">{p.label}</div>
-            <div className="mt-1 text-sm font-semibold text-zinc-50 sm:text-base">
-              {formatGBP(p.value ?? 0)}
-            </div>
+          <div key={p.label} className="rounded-xl bg-zinc-100 dark:bg-white/5 py-3">
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">{p.label}</div>
+            <AnimatedNumber
+              value={p.value ?? 0}
+              className="mt-1 block text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-100 sm:text-base"
+            />
           </div>
         ))}
       </div>
@@ -95,44 +103,48 @@ export default function WealthTimelineCard({ startingNetWorth, initialAssumption
           <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="netWorthFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ec4899" stopOpacity={0.45} />
-                <stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
+                <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={accent} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="#27272a" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke={gridColor} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: '#71717a', fontSize: 11 }}
-              axisLine={{ stroke: '#3f3f46' }}
+              tick={{ fill: axisColor, fontSize: 11 }}
+              axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: '#71717a', fontSize: 11 }}
+              tick={{ fill: axisColor, fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) => `£${Math.round(v / 1000)}k`}
               width={44}
             />
             <Tooltip
-              contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8 }}
-              labelStyle={{ color: '#a1a1aa' }}
+              contentStyle={{
+                background: theme === 'dark' ? 'var(--surface-dark)' : '#ffffff',
+                border: `1px solid ${theme === 'dark' ? 'var(--border-dark)' : '#fbcfe8'}`,
+                borderRadius: 8,
+              }}
+              labelStyle={{ color: axisColor }}
               formatter={(value) => [formatGBP(value), 'Net worth']}
             />
-            <Area type="monotone" dataKey="value" stroke="#ec4899" strokeWidth={2} fill="url(#netWorthFill)" />
+            <Area type="monotone" dataKey="value" stroke={accent} strokeWidth={2} fill="url(#netWorthFill)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      <button
+      <motion.button {...tapScale}
         type="button"
         onClick={() => setShowControls((s) => !s)}
-        className="mt-4 cursor-pointer text-sm font-medium text-pink-400 transition-colors duration-150 hover:text-pink-300"
+        className="mt-4 cursor-pointer text-sm font-medium text-pink-600 dark:text-emerald-400 transition-colors duration-150 hover:text-pink-700 dark:hover:text-emerald-300"
       >
         {showControls ? 'Hide assumptions' : 'Adjust assumptions'}
-      </button>
+      </motion.button>
 
       {showControls && (
-        <div className="mt-4 grid grid-cols-1 gap-4 border-t border-zinc-800 pt-4 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 border-t border-zinc-200 dark:border-white/10 pt-4 sm:grid-cols-2">
           <SliderField
             label="Monthly savings"
             value={assumptions.monthlySavings}

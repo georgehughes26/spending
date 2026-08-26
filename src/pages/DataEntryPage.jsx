@@ -11,6 +11,8 @@ import { useFixedCosts } from '../hooks/useFixedCosts'
 import { useSavingsPots } from '../hooks/useSavingsPots'
 import { useSpendingCategories } from '../hooks/useSpendingCategories'
 import { formatGBP, formatMonthYear } from '../utils/format'
+import { motion } from 'framer-motion'
+import { tapScale } from '../components/motion'
 
 const FIXED_COSTS_CATEGORY = 'Fixed Monthly Costs'
 
@@ -410,7 +412,7 @@ export default function DataEntryPage() {
                       Contributions total on your dashboard. It doesn't affect the pot's balance, which comes
                       from the closing balance above.
                     </p>
-                    <button
+                    <motion.button {...tapScale}
                       type="button"
                       onClick={() =>
                         setActualSplit(
@@ -422,7 +424,7 @@ export default function DataEntryPage() {
                       className="min-h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 dark:border-emerald-500/40 px-3 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10"
                     >
                       Copy guide amounts
-                    </button>
+                    </motion.button>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {pots.map((pot) => (
@@ -459,21 +461,21 @@ export default function DataEntryPage() {
             {saved && <p className="text-sm text-emerald-600 dark:text-emerald-400">Saved {formatMonthYear(monthValueToDate(selectedMonth))}.</p>}
 
             <div className="flex flex-wrap items-center gap-3">
-              <button
+              <motion.button {...tapScale}
                 type="submit"
                 disabled={saving || loading}
                 className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-5 py-2.5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? 'Saving…' : existingEntry ? 'Update month' : 'Save month'}
-              </button>
+              </motion.button>
               {existingEntry && (
-                <button
+                <motion.button {...tapScale}
                   type="button"
                   onClick={handleDelete}
                   className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
                 >
                   Delete this month's entry
-                </button>
+                </motion.button>
               )}
             </div>
           </form>
@@ -491,13 +493,13 @@ export default function DataEntryPage() {
             {[...entries].reverse().map((e) => (
               <li key={e.id} className="flex items-center justify-between py-1 pl-4 pr-2 text-sm">
                 <span className="text-zinc-800 dark:text-zinc-200">{formatMonthYear(e.month)}</span>
-                <button
+                <motion.button {...tapScale}
                   type="button"
                   onClick={() => setSelectedMonth(dateToMonthValue(e.month))}
                   className="min-h-11 cursor-pointer rounded-lg px-3 font-medium text-pink-600 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10 hover:text-pink-700 dark:hover:text-emerald-400"
                 >
                   Edit
-                </button>
+                </motion.button>
               </li>
             ))}
           </ul>

@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion'
 import Card from './Card'
+import { AnimatedNumber } from './motion'
 import { formatGBP } from '../utils/format'
 
 function barColor(percentSpent) {
@@ -34,9 +36,9 @@ export default function MonthlyOverviewCard({ income, spent, saved, categories =
   const changeByCategory = Object.fromEntries((comparison?.categories ?? []).map((c) => [c.name, c.change]))
 
   const stats = [
-    { label: 'Income', value: formatGBP(income), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Spent', value: formatGBP(spent), tone: 'text-red-600 dark:text-red-400', change: comparison?.overallChange },
-    { label: 'Saved', value: formatGBP(saved), tone: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Income', value: income, tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Spent', value: spent, tone: 'text-red-600 dark:text-red-400', change: comparison?.overallChange },
+    { label: 'Saved', value: saved, tone: 'text-emerald-600 dark:text-emerald-400' },
   ]
 
   return (
@@ -45,7 +47,7 @@ export default function MonthlyOverviewCard({ income, spent, saved, categories =
         {stats.map((s) => (
           <div key={s.label}>
             <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{s.label}</div>
-            <div className={`mt-1 text-xl font-semibold ${s.tone}`}>{s.value}</div>
+            <AnimatedNumber value={s.value} className={`mt-1 block text-2xl font-bold tracking-tight tabular-nums ${s.tone}`} />
             {s.change !== undefined && (
               <div className="mt-0.5">
                 <ChangeBadge change={s.change} />
@@ -58,12 +60,14 @@ export default function MonthlyOverviewCard({ income, spent, saved, categories =
       <div className="mt-5 border-t border-zinc-200 dark:border-white/10 pt-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-zinc-500 dark:text-zinc-400">Spent this month</span>
-          <span className="font-semibold text-zinc-900 dark:text-zinc-100">{percentSpent}%</span>
+          <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">{percentSpent}%</span>
         </div>
         <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10">
-          <div
-            className={`h-full rounded-full transition-[width] duration-300 ${barColor(percentSpent)}`}
-            style={{ width: `${Math.min(100, percentSpent)}%` }}
+          <motion.div
+            className={`h-full rounded-full ${barColor(percentSpent)}`}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(100, percentSpent)}%` }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
       </div>

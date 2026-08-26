@@ -1,5 +1,8 @@
+import { motion } from 'framer-motion'
 import Card from './Card'
 import { formatGBP, formatMonthYear } from '../utils/format'
+
+const springFill = { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
 
 // Always green regardless of theme, with the amount added last month picked
 // out in yellow -- unlike the shared ProgressBar, this one isn't meant to
@@ -13,8 +16,18 @@ function GoalProgressBar({ basePercent, addedPercent, className = '' }) {
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div className="h-full bg-emerald-500 transition-[width] duration-300" style={{ width: `${basePercent}%` }} />
-      <div className="h-full bg-yellow-400 transition-[width] duration-300" style={{ width: `${addedPercent}%` }} />
+      <motion.div
+        className="h-full bg-emerald-500"
+        initial={{ width: 0 }}
+        animate={{ width: `${basePercent}%` }}
+        transition={springFill}
+      />
+      <motion.div
+        className="h-full bg-yellow-400"
+        initial={{ width: 0 }}
+        animate={{ width: `${addedPercent}%` }}
+        transition={{ ...springFill, delay: 0.1 }}
+      />
     </div>
   )
 }

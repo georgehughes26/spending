@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Card from './Card'
 import { formatGBP, formatMonthYear } from '../utils/format'
+import { motion } from 'framer-motion'
+import { tapScale } from './motion'
 
 function FixedCostRow({ cost, onUpdate, onRemove, removeLabel, showRange }) {
   const [editing, setEditing] = useState(false)
@@ -39,21 +41,21 @@ function FixedCostRow({ cost, onUpdate, onRemove, removeLabel, showRange }) {
               className="w-full bg-transparent px-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
             />
           </div>
-          <button
+          <motion.button {...tapScale}
             type="button"
             onClick={handleSave}
             disabled={saving}
             className="min-h-11 cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:opacity-50"
           >
             Save
-          </button>
-          <button
+          </motion.button>
+          <motion.button {...tapScale}
             type="button"
             onClick={() => setEditing(false)}
             className="min-h-11 cursor-pointer whitespace-nowrap px-2 text-sm text-zinc-500 dark:text-zinc-400 transition-colors duration-150 hover:text-zinc-700 dark:hover:text-zinc-200"
           >
             Cancel
-          </button>
+          </motion.button>
         </div>
       </li>
     )
@@ -73,20 +75,20 @@ function FixedCostRow({ cost, onUpdate, onRemove, removeLabel, showRange }) {
       </div>
       <div className="flex items-center gap-1">
         <span className="mr-2 font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount)}</span>
-        <button
+        <motion.button {...tapScale}
           type="button"
           onClick={() => setEditing(true)}
           className="min-h-11 min-w-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-pink-600 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10 hover:text-pink-700 dark:hover:text-emerald-400"
         >
           Edit
-        </button>
-        <button
+        </motion.button>
+        <motion.button {...tapScale}
           type="button"
           onClick={() => onRemove(cost.id)}
           className="min-h-11 cursor-pointer whitespace-nowrap rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
         >
           {removeLabel}
-        </button>
+        </motion.button>
       </div>
     </li>
   )
@@ -162,13 +164,13 @@ export default function FixedCostsCard({
               className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none"
             />
           </div>
-          <button
+          <motion.button {...tapScale}
             type="submit"
             disabled={adding || !newName.trim()}
             className="min-h-11 flex-1 cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
           >
             Add
-          </button>
+          </motion.button>
         </div>
       </form>
 

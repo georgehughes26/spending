@@ -1,6 +1,4 @@
 import {
-  ACCOUNTS,
-  BASELINE_ACCOUNT_BALANCES,
   HOUSE_GOAL_CONFIG,
   LIABILITIES,
   MILESTONES_CONFIG,
@@ -12,27 +10,35 @@ function formatMonthLabel(monthString) {
   return new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(new Date(monthString))
 }
 
-export function deriveNetWorthHistory(entries) {
+// Net worth is driven by real savings pots, not a static hardcoded account
+// list -- account_balances is keyed by pot id, so this must match how
+// deriveTotalSavingsHistory/deriveSavingsGoals already read it, or the two
+// figures silently diverge (a pot renamed or added never shows up here).
+export function deriveNetWorthHistory(entries, pots) {
   const totalLiabilities = LIABILITIES.reduce((t, l) => t + l.value, 0)
 
-  if (entries.length === 0) {
-    const total = sum(BASELINE_ACCOUNT_BALANCES) - totalLiabilities
-    return [{ month: 'Today', value: total }]
+  if (!pots || pots.length === 0) {
+    return [{ month: 'Today', value: -totalLiabilities }]
   }
 
+  if (entries.length === 0) {
+    const total = pots.reduce((t, p) => t + (Number(p.starting_balance) || 0), 0)
+    return [{ month: 'Today', value: total - totalLiabilities }]
+  }
+
+  const running = Object.fromEntries(pots.map((pot) => [pot.id, Number(pot.starting_balance) || 0]))
   return entries.map((entry) => {
-    const balances = { ...BASELINE_ACCOUNT_BALANCES, ...(entry.account_balances ?? {}) }
-    return { month: formatMonthLabel(entry.month), value: sum(balances) - totalLiabilities }
+    for (const pot of pots) {
+      const stored = entry.account_balances?.[pot.id]
+      if (stored !== undefined && stored !== null) running[pot.id] = Number(stored) || 0
+    }
+    const total = pots.reduce((t, pot) => t + running[pot.id], 0)
+    return { month: formatMonthLabel(entry.month), value: total - totalLiabilities }
   })
 }
 
-export function deriveAssets(entries) {
-  const latest = entries[entries.length - 1]
-  const balances = latest?.account_balances && Object.keys(latest.account_balances).length > 0
-    ? latest.account_balances
-    : BASELINE_ACCOUNT_BALANCES
-
-  return ACCOUNTS.map((a) => ({ label: a.label, value: balances[a.key] ?? 0 }))
+export function deriveAssets(entries, pots) {
+  return (pots ?? []).map((pot) => ({ label: pot.name, value: latestPotBalance(entries, pot) }))
 }
 
 // Income is only ever entered once, at month-end -- until then an entry

@@ -1,53 +1,20 @@
 import { useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import Card from '../components/Card'
-import ResaleItemRow from '../components/ResaleItemRow'
+import ResaleBoard from '../components/ResaleBoard'
 import ResaleTimeSeriesChart from '../components/ResaleTimeSeriesChart'
+import ResaleLogisticsCard from '../components/ResaleLogisticsCard'
+import { AnimatedNumber, tapScale } from '../components/motion'
 import { useAuth } from '../context/AuthContext'
 import { useResaleItems } from '../hooks/useResaleItems'
-import { deriveResaleSummary, deriveResaleTimeSeries } from '../data/deriveResale'
+import { useResaleGeneralCosts } from '../hooks/useResaleGeneralCosts'
+import { deriveResaleLogistics, deriveResaleSummary, deriveResaleTimeSeries } from '../data/deriveResale'
 import { formatGBP } from '../utils/format'
-
-const STAGES = [
-  { value: 'all', label: 'All' },
-  { value: 'purchased', label: 'Purchased' },
-  { value: 'arrived', label: 'Arrived' },
-  { value: 'listed', label: 'Listed' },
-  { value: 'sold', label: 'Sold' },
-]
 
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
 const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
-
-// UTC to match deriveResale.js's week bucketing -- local-time arithmetic
-// drifts a day across DST changes.
-function startOfWeekUTC(dateString) {
-  const d = new Date(dateString)
-  const day = (d.getUTCDay() + 6) % 7 // Monday = 0
-  d.setUTCDate(d.getUTCDate() - day)
-  return d.toISOString().slice(0, 10)
-}
-
-function weekLabel(weekKey) {
-  return `WC ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(weekKey))}`
-}
-
-function groupByWeek(items) {
-  const groups = []
-  const byKey = new Map()
-  for (const item of items) {
-    const key = item.purchased_date ? startOfWeekUTC(item.purchased_date) : 'unknown'
-    let group = byKey.get(key)
-    if (!group) {
-      group = { key, items: [] }
-      byKey.set(key, group)
-      groups.push(group)
-    }
-    group.items.push(item)
-  }
-  return groups
-}
 
 function emptyForm() {
   return { name: '', shippingIn: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
@@ -64,7 +31,7 @@ function nextParcelNumber(items) {
   return highest + 1
 }
 
-function AddItemCard({ items, onAdd }) {
+function AddItemModal({ items, onAdd, onClose }) {
   const [form, setForm] = useState(emptyForm())
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState(null)
@@ -86,7 +53,7 @@ function AddItemCard({ items, onAdd }) {
         target_price: form.targetPrice === '' ? null : Number(form.targetPrice),
         purchased_date: form.purchasedDate,
       })
-      setForm(emptyForm())
+      onClose()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -95,80 +62,186 @@ function AddItemCard({ items, onAdd }) {
   }
 
   return (
-    <Card title="Add Stock" className="mb-5">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <input value={form.name} onChange={set('name')} placeholder="Item name" className={inputClass} />
-          <div className="flex h-11 items-center rounded-lg border border-dashed border-zinc-300 dark:border-white/15 px-3 text-sm text-zinc-500 dark:text-zinc-400">
-            #{parcelNumber} <span className="ml-1 text-xs">(auto)</span>
+    <motion.div
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="w-full max-w-lg rounded-t-2xl bg-white p-5 dark:bg-[var(--surface-dark)] sm:rounded-2xl"
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 40, opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">Add Stock</h3>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <input autoFocus value={form.name} onChange={set('name')} placeholder="Item name" className={inputClass} />
+            <div className="flex h-11 items-center rounded-lg border border-dashed border-zinc-300 dark:border-white/15 px-3 text-sm text-zinc-500 dark:text-zinc-400">
+              #{parcelNumber} <span className="ml-1 text-xs">(auto)</span>
+            </div>
+            <label className="text-sm">
+              <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
+              <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={inputClass} />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping in (optional)</span>
+              <select value={form.shippingIn} onChange={set('shippingIn')} className={inputClass}>
+                <option value="">—</option>
+                {SHIPPING_COMPANIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Cost price</span>
+              <div className="flex h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3">
+                <span className="text-zinc-500 dark:text-zinc-400">£</span>
+                <input type="number" min="0" step="0.01" value={form.costPrice} onChange={set('costPrice')} className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
+              </div>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Target sell price (optional)</span>
+              <div className="flex h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3">
+                <span className="text-zinc-500 dark:text-zinc-400">£</span>
+                <input type="number" min="0" step="0.01" value={form.targetPrice} onChange={set('targetPrice')} className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
+              </div>
+            </label>
           </div>
-          <label className="text-sm">
-            <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
-            <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={`max-w-[200px] sm:max-w-none ${inputClass}`} />
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping in (optional)</span>
-            <select value={form.shippingIn} onChange={set('shippingIn')} className={inputClass}>
-              <option value="">—</option>
-              {SHIPPING_COMPANIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Cost price</span>
-            <div className="flex h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3">
-              <span className="text-zinc-500 dark:text-zinc-400">£</span>
-              <input type="number" min="0" step="0.01" value={form.costPrice} onChange={set('costPrice')} className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
-            </div>
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Target sell price (optional)</span>
-            <div className="flex h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3">
-              <span className="text-zinc-500 dark:text-zinc-400">£</span>
-              <input type="number" min="0" step="0.01" value={form.targetPrice} onChange={set('targetPrice')} className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
-            </div>
-          </label>
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          <div className="flex items-center gap-3">
+            <motion.button
+              {...tapScale}
+              type="submit"
+              disabled={adding || !form.name.trim()}
+              className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 text-sm font-medium text-white dark:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-6"
+            >
+              {adding ? 'Adding…' : 'Add to stock'}
+            </motion.button>
+            <motion.button {...tapScale} type="button" onClick={onClose} className="min-h-11 cursor-pointer px-3 text-sm text-zinc-500 dark:text-zinc-400">
+              Cancel
+            </motion.button>
+          </div>
+        </form>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function PerformanceHero({ summary }) {
+  return (
+    <Card
+      title="Performance"
+      className="!border-0 bg-gradient-to-br from-pink-600 to-rose-600 dark:from-emerald-500 dark:to-teal-600 !shadow-[0_16px_40px_-12px_rgba(219,39,119,0.45)] dark:!shadow-[0_16px_40px_-12px_rgba(16,185,129,0.35)]"
+      titleClassName="!text-pink-100 dark:!text-emerald-50"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-white/80">Total profit</div>
+          <AnimatedNumber value={summary.totalProfit} format="gbp" showSign className="block text-5xl font-bold tracking-tight tabular-nums text-white" />
         </div>
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <button
-          type="submit"
-          disabled={adding || !form.name.trim()}
-          className="min-h-11 cursor-pointer self-start rounded-lg bg-pink-600 dark:bg-emerald-400 px-5 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {adding ? 'Adding…' : 'Add to stock'}
-        </button>
-      </form>
+        <div className="flex gap-6 text-right">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Cost</div>
+            <div className="text-lg font-semibold text-white">{formatGBP(summary.totalCost, { pence: true })}</div>
+          </div>
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Sales</div>
+            <div className="text-lg font-semibold text-white">{formatGBP(summary.totalSales, { pence: true })}</div>
+          </div>
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Potential</div>
+            <div className="text-lg font-semibold text-white">{formatGBP(summary.potentialProfit, { pence: true, showSign: true })}</div>
+          </div>
+        </div>
+      </div>
     </Card>
   )
 }
 
-function SummaryCards({ summary }) {
-  const stats = [
-    { label: 'Total Cost', value: formatGBP(summary.totalCost, { pence: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Total Sales', value: formatGBP(summary.totalSales, { pence: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Total Profit', value: formatGBP(summary.totalProfit, { pence: true, showSign: true }), tone: summary.totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' },
-    { label: 'Potential Profit', value: formatGBP(summary.potentialProfit, { pence: true, showSign: true }), tone: 'text-zinc-900 dark:text-zinc-100' },
-  ]
+// Costs that aren't tied to any one item -- packaging, a Vinted
+// subscription, printer ink. Added the same lightweight way as a stock
+// item, just without a purchase/sale lifecycle attached.
+function GeneralCostsCard({ costs, onAdd, onDelete }) {
+  const [label, setLabel] = useState('')
+  const [amount, setAmount] = useState('')
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const total = costs.reduce((t, c) => t + (Number(c.amount) || 0), 0)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!label.trim()) return
+    setSaving(true)
+    setError(null)
+    try {
+      await onAdd(label.trim(), Number(amount) || 0, date)
+      setLabel('')
+      setAmount('')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <Card title="Performance" className="mb-5">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className="min-w-0">
-            <div className="truncate text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{s.label}</div>
-            <div className={`mt-1 truncate text-lg font-semibold ${s.tone}`}>{s.value}</div>
+    <Card title="General Costs" className="mb-5">
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+        Costs that aren't tied to one item -- packaging, subscriptions, postage supplies. Counted in Total Cost and Total Profit above.
+      </p>
+      <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <input
+          type="text"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="e.g. Parcel tape"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="min-h-11 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
+        />
+        <div className="flex items-center gap-2">
+          <div className="flex h-11 w-24 shrink-0 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
+            <span className="text-zinc-500 dark:text-zinc-400">£</span>
+            <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
           </div>
-        ))}
-      </div>
-      <div className="mt-5 grid grid-cols-2 gap-4 border-t border-zinc-200 dark:border-white/10 pt-4 sm:grid-cols-4">
-        {['purchased', 'arrived', 'listed', 'sold'].map((stage) => (
-          <div key={stage}>
-            <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400 capitalize">{stage}</div>
-            <div className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{summary.stageCounts[stage] ?? 0}</div>
-          </div>
-        ))}
-      </div>
+          <motion.button {...tapScale} type="submit" disabled={saving || !label.trim()} className="min-h-11 flex-1 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 dark:border-emerald-500/40 px-3 text-sm font-medium text-pink-700 dark:text-emerald-400 disabled:opacity-50 sm:flex-none">
+            Add
+          </motion.button>
+        </div>
+      </form>
+      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {costs.length > 0 ? (
+        <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
+          {costs.map((cost) => (
+            <li key={cost.id} className="flex items-center justify-between py-2 text-sm">
+              <span className="text-zinc-700 dark:text-zinc-300">{cost.label} <span className="text-xs text-zinc-500 dark:text-zinc-400">· {cost.cost_date}</span></span>
+              <span className="flex items-center gap-3">
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount, { pence: true })}</span>
+                <button type="button" onClick={() => onDelete(cost.id)} className="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400 hover:underline">
+                  Remove
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">No general costs yet.</p>
+      )}
+      {costs.length > 0 && (
+        <div className="mt-3 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-3 text-sm">
+          <span className="text-zinc-500 dark:text-zinc-400">Total</span>
+          <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(total, { pence: true })}</span>
+        </div>
+      )}
     </Card>
   )
 }
@@ -182,29 +255,21 @@ export default function ResalePage() {
     addItem,
     updateItem,
     deleteItem,
-    markArrived,
-    markListed,
     markSold,
     markPaid,
     markShipped,
-    addItemCost,
-    deleteItemCost,
   } = useResaleItems(user?.id)
-  const [filter, setFilter] = useState('all')
+  const { costs: generalCosts, addCost: addGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
   const [granularity, setGranularity] = useState('month')
+  const [addingItem, setAddingItem] = useState(false)
 
-  const summary = useMemo(() => deriveResaleSummary(items), [items])
+  const summary = useMemo(() => deriveResaleSummary(items, generalCosts), [items, generalCosts])
   const timeSeries = useMemo(() => deriveResaleTimeSeries(items, granularity), [items, granularity])
-  const filteredItems = (filter === 'all' ? items : items.filter((i) => i.status === filter))
-    .slice()
-    .sort((a, b) => (b.purchased_date ?? '').localeCompare(a.purchased_date ?? ''))
-  const isCompleted = (item) => item.status === 'sold' && item.payment_status === 'paid'
-  const activeItems = filteredItems.filter((i) => !isCompleted(i))
-  const completedItems = filteredItems.filter(isCompleted)
+  const logistics = useMemo(() => deriveResaleLogistics(items), [items])
   const initialLoading = loading && items.length === 0
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-6">
+    <div className="mx-auto max-w-6xl px-6 py-6">
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Reselling</h2>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -222,94 +287,49 @@ export default function ResalePage() {
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading your stock…</p>
       ) : (
         <>
-          <SummaryCards summary={summary} />
-          <div className="mb-5">
-            <ResaleTimeSeriesChart data={timeSeries} granularity={granularity} onGranularityChange={setGranularity} />
-          </div>
-          <AddItemCard items={items} onAdd={addItem} />
-
-          <Card title="Stock">
-            <div className="mb-4 flex flex-wrap gap-2">
-              {STAGES.map((stage) => (
-                <button
-                  key={stage.value}
-                  type="button"
-                  onClick={() => setFilter(stage.value)}
-                  className={`min-h-11 cursor-pointer rounded-lg border px-3 text-sm font-medium transition-colors duration-150 ${
-                    filter === stage.value
-                      ? 'border-pink-600 dark:border-emerald-400 bg-pink-600 dark:bg-emerald-400 text-white dark:text-zinc-950'
-                      : 'border-zinc-300 dark:border-white/15 text-zinc-500 dark:text-zinc-400 hover:text-pink-700 dark:hover:text-emerald-400'
-                  }`}
-                >
-                  {stage.label}
-                </button>
-              ))}
+          <div className="mb-5 flex flex-col gap-5">
+            <PerformanceHero summary={summary} />
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <ResaleTimeSeriesChart data={timeSeries} granularity={granularity} onGranularityChange={setGranularity} />
+              </div>
+              <ResaleLogisticsCard logistics={logistics} />
             </div>
+          </div>
 
-            {filteredItems.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {items.length === 0 ? 'No stock added yet. Use the form above to add your first item.' : 'Nothing at this stage.'}
-              </p>
-            ) : (
-              <>
-                {activeItems.length > 0 && (
-                  <div className="flex flex-col gap-5">
-                    {groupByWeek(activeItems).map((group) => (
-                      <div key={group.key}>
-                        <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                          {group.key === 'unknown' ? 'No date' : weekLabel(group.key)}
-                        </h3>
-                        <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
-                          {group.items.map((item) => (
-                            <ResaleItemRow
-                              key={item.id}
-                              item={item}
-                              onUpdate={updateItem}
-                              onDelete={deleteItem}
-                              onMarkArrived={markArrived}
-                              onMarkListed={markListed}
-                              onMarkSold={markSold}
-                              onMarkPaid={markPaid}
-                              onMarkShipped={markShipped}
-                              onAddCost={addItemCost}
-                              onDeleteCost={deleteItemCost}
-                            />
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          <GeneralCostsCard costs={generalCosts} onAdd={addGeneralCost} onDelete={deleteGeneralCost} />
 
-                {completedItems.length > 0 && (
-                  <div className={activeItems.length > 0 ? 'mt-6' : ''}>
-                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                      Completed
-                    </h3>
-                    <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10 opacity-50">
-                      {completedItems.map((item) => (
-                        <ResaleItemRow
-                          key={item.id}
-                          item={item}
-                          onUpdate={updateItem}
-                          onDelete={deleteItem}
-                          onMarkArrived={markArrived}
-                          onMarkListed={markListed}
-                          onMarkSold={markSold}
-                          onMarkPaid={markPaid}
-                          onMarkShipped={markShipped}
-                          onAddCost={addItemCost}
-                          onDeleteCost={deleteItemCost}
-                        />
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </>
-            )}
-          </Card>
+          {items.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-zinc-300 dark:border-white/15 p-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+              No stock added yet. Tap the + button to add your first item.
+            </p>
+          ) : (
+            <ResaleBoard
+              items={items}
+              onUpdate={updateItem}
+              onDelete={deleteItem}
+              onMarkSold={markSold}
+              onMarkPaid={markPaid}
+              onMarkShipped={markShipped}
+            />
+          )}
         </>
       )}
+
+      <motion.button
+        {...tapScale}
+        type="button"
+        onClick={() => setAddingItem(true)}
+        className="fixed bottom-6 right-6 z-30 flex h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-semibold text-white dark:text-zinc-950 shadow-[0_8px_24px_-4px_rgba(219,39,119,0.5)] sm:pl-4 sm:pr-5"
+        aria-label="Add stock"
+      >
+        <svg viewBox="0 0 20 20" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 4v12M4 10h12" /></svg>
+        <span className="hidden sm:inline">Add Stock</span>
+      </motion.button>
+
+      <AnimatePresence>
+        {addingItem && <AddItemModal items={items} onAdd={addItem} onClose={() => setAddingItem(false)} />}
+      </AnimatePresence>
     </div>
   )
 }

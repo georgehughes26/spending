@@ -1,5 +1,6 @@
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import Card from './Card'
+import { AnimatedNumber } from './motion'
 import { useAuth } from '../context/AuthContext'
 import { formatGBP } from '../utils/format'
 import { formatMonthYear } from '../utils/format'
@@ -24,7 +25,7 @@ export default function TotalSavingsCard({ goals, history = [] }) {
 
   return (
     <Card title="Total Savings">
-      <div className="mb-4 text-3xl font-semibold text-zinc-900 dark:text-zinc-100">{formatGBP(total)}</div>
+      <AnimatedNumber value={total} className="mb-4 block text-4xl font-bold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100" />
 
       <div className="mb-5 h-40 w-full">
         <ResponsiveContainer width="100%" height="100%">

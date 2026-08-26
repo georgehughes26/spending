@@ -1,4 +1,5 @@
 import Card from './Card'
+import { AnimatedNumber } from './motion'
 import { formatGBP } from '../utils/format'
 
 export default function ContributionsCard({ contributions }) {
@@ -10,7 +11,7 @@ export default function ContributionsCard({ contributions }) {
         How much you've actually put into each pot. Separate from what it's worth now, since growth or loss
         moves the balance on its own.
       </p>
-      <div className="mb-4 text-3xl font-semibold text-zinc-900 dark:text-zinc-100">{formatGBP(total)}</div>
+      <AnimatedNumber value={total} className="mb-4 block text-4xl font-bold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100" />
       <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-white/10">
         {contributions.map((c) => (
           <li key={c.id} className="flex items-center justify-between py-2 text-sm">

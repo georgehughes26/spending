@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext'
 import { useSavingsPots } from '../hooks/useSavingsPots'
 import { useSpendingCategories } from '../hooks/useSpendingCategories'
 import { useFixedCosts } from '../hooks/useFixedCosts'
+import { motion } from 'framer-motion'
+import { tapScale } from '../components/motion'
 
 function AppearanceCard() {
   const { theme, setTheme } = useAuth()
@@ -20,7 +22,7 @@ function AppearanceCard() {
       <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Choose the theme for your account.</p>
       <div className="flex gap-3">
         {options.map((opt) => (
-          <button
+          <motion.button {...tapScale}
             key={opt.value}
             type="button"
             onClick={() => setTheme(opt.value)}
@@ -32,7 +34,7 @@ function AppearanceCard() {
           >
             <span className={`h-3 w-3 rounded-full ${opt.swatch}`} aria-hidden="true" />
             {opt.label}
-          </button>
+          </motion.button>
         ))}
       </div>
     </Card>
@@ -103,13 +105,13 @@ function PotsCard() {
             />
             <span className="text-zinc-500 dark:text-zinc-400">%</span>
           </div>
-          <button
+          <motion.button {...tapScale}
             type="submit"
             disabled={adding || !newName.trim()}
             className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
           >
             Add
-          </button>
+          </motion.button>
         </div>
       </form>
 
@@ -158,13 +160,13 @@ function CategoriesCard() {
                 }}
                 className="min-h-11 min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-3 text-zinc-800 dark:text-zinc-200 outline-none focus:border-pink-600 dark:focus:border-emerald-400 focus:bg-white dark:focus:bg-[var(--surface-dark)]"
               />
-              <button
+              <motion.button {...tapScale}
                 type="button"
                 onClick={() => deleteCategory(cat.id)}
                 className="min-h-11 cursor-pointer rounded-lg px-3 text-sm font-medium text-red-600 dark:text-red-400 transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/10"
               >
                 Delete
-              </button>
+              </motion.button>
             </li>
           ))}
         </ul>
@@ -177,13 +179,13 @@ function CategoriesCard() {
           placeholder="e.g. Gifts"
           className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
-        <button
+        <motion.button {...tapScale}
           type="submit"
           disabled={adding || !newName.trim()}
           className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Add
-        </button>
+        </motion.button>
       </form>
     </Card>
   )
