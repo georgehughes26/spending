@@ -352,7 +352,7 @@ export default function ResalePage() {
         {...tapScale}
         type="button"
         onClick={() => setAddingItem(true)}
-        className="fixed bottom-6 right-6 z-30 flex h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-semibold text-white dark:text-zinc-950 shadow-[0_8px_24px_-4px_rgba(219,39,119,0.5)] sm:pl-4 sm:pr-5"
+        className="fixed bottom-24 right-4 z-30 flex h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-semibold text-white dark:text-zinc-950 shadow-[0_8px_24px_-4px_rgba(219,39,119,0.5)] sm:pl-4 sm:pr-5 lg:bottom-6 lg:right-6"
         aria-label="Add stock"
       >
         <svg viewBox="0 0 20 20" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 4v12M4 10h12" /></svg>

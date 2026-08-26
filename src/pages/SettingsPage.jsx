@@ -191,6 +191,32 @@ function CategoriesCard() {
   )
 }
 
+// The sidebar's own sign-out button is desktop-only (it lives in a
+// lg:block-only footer), so this is the only way to sign out on mobile --
+// it needs to exist here regardless of screen size.
+function AccountCard() {
+  const { user, signOut } = useAuth()
+
+  return (
+    <Card title="Account" className="mb-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{user?.name}</div>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Signed in on this device</p>
+        </div>
+        <motion.button
+          {...tapScale}
+          type="button"
+          onClick={signOut}
+          className="min-h-11 cursor-pointer rounded-lg border border-red-300 px-4 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10"
+        >
+          Sign out
+        </motion.button>
+      </div>
+    </Card>
+  )
+}
+
 export default function SettingsPage() {
   const { user } = useAuth()
   const { costs, addCost, updateCost, deleteCost } = useFixedCosts(user?.id)
@@ -218,6 +244,7 @@ export default function SettingsPage() {
         description="Costs still applying each month. New ones start from this month onward. Deleting here removes a cost completely, including past months, so use it only to fix a mistake."
         emptyLabel="No ongoing fixed costs."
       />
+      <AccountCard />
     </div>
   )
 }

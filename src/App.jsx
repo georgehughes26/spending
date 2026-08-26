@@ -55,6 +55,16 @@ const navItemClass = ({ isActive }) =>
       : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'
   }`
 
+// Thumb-reachable bottom tab bar for mobile -- a horizontally scrolling row
+// of full nav items (the old mobile treatment) forced multi-word labels to
+// wrap mid-word and hid the last tab off-screen with no scroll affordance.
+// A fixed bottom bar keeps every destination visible and reachable at once,
+// which is the platform-standard mobile nav pattern.
+const mobileTabItemClass = ({ isActive }) =>
+  `flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium whitespace-nowrap transition-colors duration-150 [&_svg]:h-5 [&_svg]:w-5 ${
+    isActive ? 'text-pink-500 dark:text-emerald-400' : 'text-zinc-500'
+  }`
+
 function RequireAuth({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
@@ -106,20 +116,18 @@ function Shell({ children }) {
 
   return (
     <div className="min-h-svh lg:flex">
-      <aside className="sticky top-0 z-10 flex-shrink-0 bg-zinc-950 lg:h-svh lg:w-64 lg:flex lg:flex-col lg:justify-between">
-        <div className="flex items-center justify-between px-5 py-4 lg:block lg:px-6 lg:py-6">
-          <div>
-            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400">
-              Layla
-            </h1>
-            <p className="mt-0.5 hidden text-xs text-zinc-500 lg:block">Smart Spending Management</p>
-          </div>
+      {/* Desktop sidebar -- unchanged from before, just scoped to lg+ now
+          that mobile has its own top header and bottom tab bar below. */}
+      <aside className="sticky top-0 z-10 hidden flex-shrink-0 bg-zinc-950 lg:flex lg:h-svh lg:w-64 lg:flex-col lg:justify-between">
+        <div className="px-6 py-6">
+          <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400">
+            Layla
+          </h1>
+          <p className="mt-0.5 text-xs text-zinc-500">Smart Spending Management</p>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-1 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:px-4 lg:pb-0">
-          {navItems}
-        </nav>
+        <nav className="flex flex-1 flex-col gap-1.5 px-4">{navItems}</nav>
         {user && (
-          <div className="hidden px-4 pb-6 lg:block">
+          <div className="px-4 pb-6">
             <motion.button {...tapScale}
               type="button"
               onClick={signOut}
@@ -130,7 +138,39 @@ function Shell({ children }) {
           </div>
         )}
       </aside>
-      <div className="min-w-0 flex-1">{children}</div>
+
+      {/* Mobile top header -- wordmark only, nav lives in the bottom tab
+          bar so it doesn't compete for the same row. */}
+      <header className="sticky top-0 z-10 bg-zinc-950 px-5 py-4 lg:hidden">
+        <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400">
+          Layla
+        </h1>
+      </header>
+
+      <div className="min-w-0 flex-1 pb-20 lg:pb-0">{children}</div>
+
+      {/* Mobile bottom tab bar -- fixed, safe-area aware, every destination
+          reachable without scrolling or wrapping. */}
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-white/10 bg-zinc-950 pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <NavLink to="/" end className={mobileTabItemClass}>
+          {icons.dashboard}
+          Dashboard
+        </NavLink>
+        <NavLink to="/entry" className={mobileTabItemClass}>
+          {icons.entry}
+          Entry
+        </NavLink>
+        <NavLink to="/settings" className={mobileTabItemClass}>
+          {icons.settings}
+          Settings
+        </NavLink>
+        {user?.resale_access && (
+          <NavLink to="/resale" className={mobileTabItemClass}>
+            {icons.resale}
+            Reselling
+          </NavLink>
+        )}
+      </nav>
     </div>
   )
 }

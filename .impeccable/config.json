@@ -137,6 +137,24 @@
         ],
         "createdAt": "2026-08-26T10:15:55.292Z",
         "reason": "explicitly discussed with user: asked whether to fill the whole card with the stage colour vs a border, recommended a left-border accent to avoid clashing with the profit/cost text already colour-coded on the card, user proceeded with it after seeing screenshots in both themes"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/pages/SettingsPage.jsx"
+        ],
+        "createdAt": "2026-08-26T12:46:09.229Z",
+        "reason": "same cross-theme false positive as other buttons this session: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against light-theme bg-pink-600 in the same ternary/template string"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/App.jsx"
+        ],
+        "createdAt": "2026-08-26T12:56:13.337Z",
+        "reason": "pre-existing 'Layla' wordmark, used identically on both the desktop sidebar and the new mobile header added this session -- confirmed brand commitment recorded in PRODUCT.md before this redesign began, not new AI-slop. (Note: an earlier specific-value ignore-value entry for this rule in this file was a no-op -- gradient-text has no extractable match value in the detector's matching logic, so only a wildcard entry actually suppresses it.)"
       }
     ]
   }
