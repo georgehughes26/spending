@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Card from '../components/Card'
 import ResaleBoard from '../components/ResaleBoard'
+import MobileResaleBoard from '../components/MobileResaleBoard'
 import ResaleTimeSeriesChart from '../components/ResaleTimeSeriesChart'
 import ResaleLogisticsCard from '../components/ResaleLogisticsCard'
 import { AnimatedNumber, tapScale } from '../components/motion'
@@ -336,14 +337,31 @@ export default function ResalePage() {
               No stock added yet. Tap the + button to add your first item.
             </p>
           ) : (
-            <ResaleBoard
-              items={items}
-              onUpdate={updateItem}
-              onDelete={deleteItem}
-              onMarkSold={markSold}
-              onMarkPaid={markPaid}
-              onMarkShipped={markShipped}
-            />
+            <>
+              {/* Drag-and-drop kanban on desktop, where there's room and a
+                  mouse; tap-to-filter + tap-to-move list on mobile, where
+                  dragging between narrow columns is too fiddly. */}
+              <div className="hidden lg:block">
+                <ResaleBoard
+                  items={items}
+                  onUpdate={updateItem}
+                  onDelete={deleteItem}
+                  onMarkSold={markSold}
+                  onMarkPaid={markPaid}
+                  onMarkShipped={markShipped}
+                />
+              </div>
+              <div className="lg:hidden">
+                <MobileResaleBoard
+                  items={items}
+                  onUpdate={updateItem}
+                  onDelete={deleteItem}
+                  onMarkSold={markSold}
+                  onMarkPaid={markPaid}
+                  onMarkShipped={markShipped}
+                />
+              </div>
+            </>
           )}
         </>
       )}

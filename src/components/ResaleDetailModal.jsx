@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { tapScale } from './motion'
 import { itemAllInCost, itemPotentialProfit, itemProfit } from '../data/deriveResale'
+import { COLUMNS, itemColumn } from '../utils/resaleStages'
 import { formatDDMM, formatGBP, formatMonthYear } from '../utils/format'
 
 const STATUS_STYLES = {
@@ -16,7 +17,7 @@ const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
-export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, onMarkPaid, onMarkShipped }) {
+export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, onMarkPaid, onMarkShipped, onMoveToStage }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
   const [sku, setSku] = useState(item.sku ?? '')
@@ -90,6 +91,25 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
               <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M5 5l10 10M15 5 5 15" /></svg>
             </motion.button>
           </div>
+
+          {!editing && onMoveToStage && (
+            <div className="mb-4">
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Move to</div>
+              <div className="flex flex-wrap gap-2">
+                {COLUMNS.filter((col) => col.status !== itemColumn(item)).map((col) => (
+                  <motion.button
+                    key={col.status}
+                    {...tapScale}
+                    type="button"
+                    onClick={() => onMoveToStage(item, col.status)}
+                    className="min-h-11 cursor-pointer rounded-lg border border-zinc-300 px-3 text-sm font-medium text-zinc-700 transition-colors duration-150 hover:border-pink-400 hover:text-pink-700 dark:border-white/15 dark:text-zinc-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
+                  >
+                    {col.label}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 

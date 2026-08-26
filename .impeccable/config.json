@@ -155,6 +155,24 @@
         ],
         "createdAt": "2026-08-26T12:56:13.337Z",
         "reason": "pre-existing 'Layla' wordmark, used identically on both the desktop sidebar and the new mobile header added this session -- confirmed brand commitment recorded in PRODUCT.md before this redesign began, not new AI-slop. (Note: an earlier specific-value ignore-value entry for this rule in this file was a no-op -- gradient-text has no extractable match value in the detector's matching logic, so only a wildcard entry actually suppresses it.)"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/components/SoldCaptureModal.jsx"
+        ],
+        "createdAt": "2026-08-26T13:55:46.916Z",
+        "reason": "same cross-theme false positive as other buttons this session: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against light-theme bg-pink-600 in the same ternary/template string -- this file is a straight extraction of the pre-existing SoldCaptureModal from ResaleBoard.jsx"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/components/MobileResaleBoard.jsx"
+        ],
+        "createdAt": "2026-08-26T14:00:05.550Z",
+        "reason": "same cross-theme false positive as other buttons this session: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against light-theme bg-pink-600 in the same ternary/template string -- this is the active-tab styling on the mobile stage filter pills"
       }
     ]
   }

@@ -1,51 +1,11 @@
 import { useState } from 'react'
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
-import confetti from 'canvas-confetti'
-import { motion } from 'framer-motion'
 import ResaleCard, { ResaleCardVisual, STAGE_META } from './ResaleCard'
 import ResaleDetailModal from './ResaleDetailModal'
-import { tapScale } from './motion'
+import SoldCaptureModal from './SoldCaptureModal'
 import { itemAllInCost } from '../data/deriveResale'
+import { COLUMNS, fireConfetti, itemColumn, resolveMove, sortForColumn } from '../utils/resaleStages'
 import { formatGBP } from '../utils/format'
-
-const COLUMNS = [
-  { status: 'purchased', label: 'Purchased' },
-  { status: 'arrived', label: 'Arrived' },
-  { status: 'listed', label: 'Listed' },
-  { status: 'sold', label: 'Sold' },
-  { status: 'completed', label: 'Completed' },
-]
-
-const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
-
-// "Completed" isn't a real status in the database -- it's sold items that
-// are also paid and shipped, i.e. nothing left to do. Splitting it out as
-// its own column (rather than a faded row inside Sold) makes "fully done"
-// visually obvious.
-function itemColumn(item) {
-  if (item.status === 'sold' && item.payment_status === 'paid' && item.shipping_status === 'shipped') return 'completed'
-  return item.status
-}
-
-// Newest first within a column, by whichever date is relevant to that
-// column -- purchase date while stock is still moving through the shop
-// floor, sale date once it's sold (both Sold and Completed use it, so a
-// completed sale doesn't jump to the top just because it was marked
-// paid+shipped moments ago).
-function sortForColumn(items, column) {
-  const dateField = column === 'sold' || column === 'completed' ? 'sold_date' : 'purchased_date'
-  return [...items].sort((a, b) => (b[dateField] ?? '').localeCompare(a[dateField] ?? ''))
-}
-
-function fireConfetti() {
-  confetti({
-    particleCount: 70,
-    spread: 65,
-    startVelocity: 35,
-    origin: { y: 0.7 },
-    colors: ['#db2777', '#34d399', '#fbbf24', '#f472b6'],
-  })
-}
 
 function Column({ status, label, items, onOpen, itemCount }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
@@ -78,78 +38,6 @@ function Column({ status, label, items, onOpen, itemCount }) {
   )
 }
 
-function SoldCaptureModal({ item, onCancel, onConfirm }) {
-  const [soldPrice, setSoldPrice] = useState(item.target_price ?? item.cost_price ?? '')
-  const [soldDate, setSoldDate] = useState(new Date().toISOString().slice(0, 10))
-  const [shippingOut, setShippingOut] = useState('')
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onCancel}
-    >
-      <motion.div
-        className="w-full max-w-sm rounded-t-2xl bg-white p-5 dark:bg-[var(--surface-dark)] sm:rounded-2xl"
-        initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 40, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">Sold it! 🎉</h3>
-        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">{item.name} — how much for?</p>
-        <div className="mb-3 flex h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3">
-          <span className="text-zinc-500 dark:text-zinc-400">£</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            autoFocus
-            value={soldPrice}
-            onChange={(e) => setSoldPrice(e.target.value)}
-            className="w-full bg-transparent px-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
-          />
-        </div>
-        <label className="mb-3 block text-sm">
-          <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold date</span>
-          <input
-            type="date"
-            value={soldDate}
-            onChange={(e) => setSoldDate(e.target.value)}
-            className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
-          />
-        </label>
-        <label className="mb-4 block text-sm">
-          <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping out (optional)</span>
-          <select
-            value={shippingOut}
-            onChange={(e) => setShippingOut(e.target.value)}
-            className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
-          >
-            <option value="">—</option>
-            {SHIPPING_COMPANIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </label>
-        <div className="flex items-center gap-3">
-          <motion.button
-            {...tapScale}
-            type="button"
-            onClick={() => onConfirm(Number(soldPrice) || 0, soldDate, shippingOut)}
-            className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 text-sm font-medium text-white dark:text-zinc-950"
-          >
-            Confirm sale
-          </motion.button>
-          <motion.button {...tapScale} type="button" onClick={onCancel} className="min-h-11 cursor-pointer px-3 text-sm text-zinc-500 dark:text-zinc-400">
-            Cancel
-          </motion.button>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
-
 export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped }) {
   const [openItem, setOpenItem] = useState(null)
   const [pendingSale, setPendingSale] = useState(null)
@@ -164,51 +52,31 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
     setActiveItem(items.find((i) => i.id === event.active.id) ?? null)
   }
 
-  // Every move is allowed in either direction -- forward marks progress,
-  // backward undoes a mistake and clears whatever no longer applies (an
-  // item dragged from Sold back to Listed shouldn't keep a stale sold price).
+  const applyMove = (item, toColumn) => {
+    const move = resolveMove(item, toColumn)
+    if (!move) return
+    if (move.type === 'needs-sale') {
+      setPendingSale(item) // need a price before it can count as sold
+      return
+    }
+    onUpdate(item.id, move.fields)
+    if (move.celebrate) fireConfetti()
+  }
+
   const handleDragEnd = (event) => {
     setActiveItem(null)
     const { active, over } = event
     if (!over) return
     const item = items.find((i) => i.id === active.id)
     if (!item) return
-    const fromColumn = itemColumn(item)
-    const toColumn = over.id
-    if (fromColumn === toColumn) return
+    applyMove(item, over.id)
+  }
 
-    if (toColumn === 'sold') {
-      if (fromColumn === 'completed') {
-        onUpdate(item.id, { payment_status: 'awaiting_payment', shipping_status: 'not_shipped' })
-      } else {
-        setPendingSale(item) // need a price before it can count as sold
-      }
-      return
-    }
-
-    if (toColumn === 'completed') {
-      if (fromColumn !== 'sold') {
-        setPendingSale(item) // not sold yet -- capture the sale first
-        return
-      }
-      onUpdate(item.id, { payment_status: 'paid', shipping_status: 'shipped' })
-      fireConfetti()
-      return
-    }
-
-    // purchased / arrived / listed -- both directions go through here.
-    // listed_date is stamped the moment a card lands in Listed and cleared
-    // if it's dragged back out, since that's the only place it's set --
-    // it's what "average days to sell" is measured from.
-    onUpdate(item.id, {
-      status: toColumn,
-      listed_date: toColumn === 'listed' ? new Date().toISOString().slice(0, 10) : null,
-      sold_price: null,
-      sold_date: null,
-      payment_status: null,
-      shipping_status: null,
-      shipping_out: null,
-    })
+  // Also used by the "Move to" buttons inside the detail modal, for anyone
+  // who taps a card rather than dragging it.
+  const handleMoveToStage = (item, toColumn) => {
+    applyMove(item, toColumn)
+    setOpenItem(null)
   }
 
   const confirmSale = async (price, date, shippingOut) => {
@@ -254,6 +122,7 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
           onDelete={onDelete}
           onMarkPaid={onMarkPaid}
           onMarkShipped={onMarkShipped}
+          onMoveToStage={handleMoveToStage}
         />
       )}
 

@@ -40,29 +40,29 @@ const ICONS = {
   ),
 }
 
-// No fixed padding here -- the grid parent (auto-rows-fr) stretches every
-// tile to fill its share of the available height, and this just centers
-// the icon/label/value block within whatever height that turns out to be.
+// Comfortable, generously padded by default (mobile stacks this card alone
+// with no height to match) -- lg: shrinks it back down since there the grid
+// parent (auto-rows-fr) stretches every tile to fill its share of a height
+// that's pinned to match the chart card beside it.
 function SquareStat({ icon, label, value, caption }) {
   return (
-    <div title={caption} className="flex flex-col items-center justify-center gap-1 rounded-xl bg-pink-50 px-2 text-center dark:bg-emerald-500/10">
+    <div title={caption} className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-pink-50 px-2 py-4 text-center dark:bg-emerald-500/10 lg:gap-1 lg:py-0">
       <div className="flex items-center gap-1.5">
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center text-pink-600 dark:text-emerald-400 [&_svg]:h-3.5 [&_svg]:w-3.5">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-pink-600 dark:text-emerald-400 [&_svg]:h-4 [&_svg]:w-4 lg:h-4 lg:w-4 lg:[&_svg]:h-3.5 lg:[&_svg]:w-3.5">
           {icon}
         </span>
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">{label}</span>
+        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 lg:text-xs">{label}</span>
       </div>
       <div className="text-2xl font-extrabold tabular-nums text-zinc-900 dark:text-zinc-100">{value}</div>
     </div>
   )
 }
 
-// flex-1 so the two rectangles split their half of the card evenly, then
-// centers its own content vertically since that half is usually taller
-// than a single line of text needs.
+// flex-1 only bites on lg (see SquareStat) -- on mobile this is a normal
+// block with its own comfortable padding.
 function RectStat({ icon, label, value, caption }) {
   return (
-    <div title={caption} className="flex flex-1 flex-col justify-center rounded-xl bg-pink-50 px-3.5 dark:bg-emerald-500/10">
+    <div title={caption} className="flex flex-col justify-center rounded-xl bg-pink-50 px-3.5 py-3 dark:bg-emerald-500/10 lg:flex-1 lg:py-0">
       <div className="mb-1 flex items-center gap-2">
         <span className="flex h-5 w-5 shrink-0 items-center justify-center text-pink-600 dark:text-emerald-400 [&_svg]:h-3.5 [&_svg]:w-3.5">
           {icon}
@@ -78,9 +78,9 @@ export default function ResaleLogisticsCard({ logistics }) {
   const { avgProfitPerItem, avgSalePrice, roiPercent, totalItemsSold, highestProfitItem, topTeam } = logistics
 
   return (
-    <Card title="Stats" className="flex h-full flex-col">
-      <div className="flex flex-1 flex-col gap-3">
-        <div className="grid flex-1 grid-cols-2 auto-rows-fr gap-2">
+    <Card title="Stats" className="flex flex-col lg:h-full">
+      <div className="flex flex-col gap-4 lg:flex-1 lg:gap-3">
+        <div className="grid grid-cols-2 gap-3 lg:flex-1 lg:auto-rows-fr lg:gap-2">
           <SquareStat
             icon={ICONS.box}
             label="Items sold"
@@ -107,7 +107,7 @@ export default function ResaleLogisticsCard({ logistics }) {
           />
         </div>
 
-        <div className="flex flex-1 flex-col gap-2">
+        <div className="flex flex-col gap-3 lg:flex-1 lg:gap-2">
           <RectStat
             icon={ICONS.star}
             label="Highest profit item"
