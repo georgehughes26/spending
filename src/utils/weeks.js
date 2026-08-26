@@ -1,23 +1,34 @@
 const pad = (n) => String(n).padStart(2, '0')
 const toDateString = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+const parseDateOnly = (dateString) => {
+  const [y, m, d] = dateString.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
 
-// Splits a month into calendar weeks (Mon-Sun), clipped to the month's own
-// days — so the first/last bucket can be shorter than 7 days rather than
-// spilling into the neighbouring month.
-export function computeWeekBuckets(monthValue) {
+export function lastDayOfMonth(monthValue) {
   const [y, m] = monthValue.split('-').map(Number)
-  const monthStart = new Date(y, m - 1, 1)
-  const monthEnd = new Date(y, m, 0)
+  const end = new Date(y, m, 0)
+  return toDateString(end)
+}
+
+// Splits a date range into calendar weeks (Mon-Sun), clipped to the range's
+// own bounds -- so the first/last bucket can be shorter than 7 days rather
+// than spilling outside it. The range is usually payday-to-payday rather
+// than a calendar month.
+export function computeWeekBuckets(startDate, endDate) {
+  const rangeStart = parseDateOnly(startDate)
+  const rangeEnd = parseDateOnly(endDate)
+  if (rangeEnd < rangeStart) return []
 
   const buckets = []
-  let cursor = new Date(monthStart)
+  let cursor = new Date(rangeStart)
 
-  while (cursor <= monthEnd) {
+  while (cursor <= rangeEnd) {
     const dayOfWeek = cursor.getDay() // 0 = Sun ... 6 = Sat
     const daysUntilSunday = (7 - dayOfWeek) % 7
     const weekEndCandidate = new Date(cursor)
     weekEndCandidate.setDate(cursor.getDate() + daysUntilSunday)
-    const bucketEnd = weekEndCandidate < monthEnd ? weekEndCandidate : monthEnd
+    const bucketEnd = weekEndCandidate < rangeEnd ? weekEndCandidate : rangeEnd
 
     buckets.push({ weekStart: toDateString(cursor), weekEnd: toDateString(bucketEnd) })
 

@@ -12,12 +12,12 @@ export function aggregateWeeklySpending(weeks) {
   return totals
 }
 
-export function useWeeklySpending(userId, monthValue) {
+export function useWeeklySpending(userId, monthValue, periodStart, periodEnd) {
   const [weeks, setWeeks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const buckets = useMemo(() => computeWeekBuckets(monthValue), [monthValue])
+  const buckets = useMemo(() => computeWeekBuckets(periodStart, periodEnd), [periodStart, periodEnd])
 
   const refresh = useCallback(async () => {
     if (!userId) {

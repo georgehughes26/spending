@@ -18,6 +18,8 @@ const STAGES = [
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
+const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
+
 // UTC to match deriveResale.js's week bucketing -- local-time arithmetic
 // drifts a day across DST changes.
 function startOfWeekUTC(dateString) {
@@ -48,7 +50,7 @@ function groupByWeek(items) {
 }
 
 function emptyForm() {
-  return { name: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
+  return { name: '', shippingIn: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
 }
 
 // Parcel numbers are auto-generated, not typed in -- the next one is always
@@ -79,6 +81,7 @@ function AddItemCard({ items, onAdd }) {
       await onAdd({
         name: form.name.trim(),
         sku: String(parcelNumber),
+        shipping_in: form.shippingIn || null,
         cost_price: Number(form.costPrice) || 0,
         target_price: form.targetPrice === '' ? null : Number(form.targetPrice),
         purchased_date: form.purchasedDate,
@@ -102,6 +105,15 @@ function AddItemCard({ items, onAdd }) {
           <label className="text-sm">
             <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
             <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={`max-w-[200px] sm:max-w-none ${inputClass}`} />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping in (optional)</span>
+            <select value={form.shippingIn} onChange={set('shippingIn')} className={inputClass}>
+              <option value="">—</option>
+              {SHIPPING_COMPANIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </label>
           <label className="text-sm">
             <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Cost price</span>
@@ -174,6 +186,7 @@ export default function ResalePage() {
     markListed,
     markSold,
     markPaid,
+    markShipped,
     addItemCost,
     deleteItemCost,
   } = useResaleItems(user?.id)
@@ -257,6 +270,7 @@ export default function ResalePage() {
                               onMarkListed={markListed}
                               onMarkSold={markSold}
                               onMarkPaid={markPaid}
+                              onMarkShipped={markShipped}
                               onAddCost={addItemCost}
                               onDeleteCost={deleteItemCost}
                             />
@@ -283,6 +297,7 @@ export default function ResalePage() {
                           onMarkListed={markListed}
                           onMarkSold={markSold}
                           onMarkPaid={markPaid}
+                          onMarkShipped={markShipped}
                           onAddCost={addItemCost}
                           onDeleteCost={deleteItemCost}
                         />

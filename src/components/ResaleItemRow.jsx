@@ -11,14 +11,18 @@ const STATUS_STYLES = {
 
 const STATUS_LABELS = { purchased: 'Purchased', arrived: 'Arrived', listed: 'Listed', sold: 'Sold' }
 
+const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
+
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
-export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived, onMarkListed, onMarkSold, onMarkPaid, onAddCost, onDeleteCost }) {
+export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived, onMarkListed, onMarkSold, onMarkPaid, onMarkShipped, onAddCost, onDeleteCost }) {
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
   const [sku, setSku] = useState(item.sku ?? '')
+  const [shippingIn, setShippingIn] = useState(item.shipping_in ?? '')
+  const [shippingOut, setShippingOut] = useState(item.shipping_out ?? '')
   const [costPrice, setCostPrice] = useState(item.cost_price)
   const [targetPrice, setTargetPrice] = useState(item.target_price ?? '')
   const [notes, setNotes] = useState(item.notes ?? '')
@@ -53,11 +57,12 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
       await onUpdate(item.id, {
         name,
         sku: sku.trim() || null,
+        shipping_in: shippingIn || null,
         cost_price: Number(costPrice) || 0,
         target_price: targetPrice === '' ? null : Number(targetPrice),
         notes: notes.trim() || null,
         ...(item.status === 'sold'
-          ? { sold_price: Number(soldPrice) || 0, sold_date: soldDate || null }
+          ? { sold_price: Number(soldPrice) || 0, sold_date: soldDate || null, shipping_out: shippingOut || null }
           : {}),
       })
       setEditing(false)
@@ -65,7 +70,7 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
 
   const handleMarkSold = () =>
     run(async () => {
-      await onMarkSold(item.id, Number(soldPrice) || 0, soldDate)
+      await onMarkSold(item.id, Number(soldPrice) || 0, soldDate, shippingOut)
     })
 
   const handleAddCost = (e) => {
@@ -100,6 +105,17 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                 }`}
               >
                 {item.payment_status === 'paid' ? 'Paid' : 'Awaiting payment'}
+              </span>
+            )}
+            {item.status === 'sold' && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  item.shipping_status === 'shipped'
+                    ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400'
+                    : 'bg-zinc-100 text-zinc-700 dark:bg-white/10 dark:text-zinc-300'
+                }`}
+              >
+                {item.shipping_status === 'shipped' ? 'Shipped' : 'Not shipped'}
               </span>
             )}
           </span>
@@ -142,6 +158,15 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                   <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Target sell price</span>
                   <input type="number" min="0" step="0.01" value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} className={inputClass} />
                 </label>
+                <label className="text-sm">
+                  <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping in</span>
+                  <select value={shippingIn} onChange={(e) => setShippingIn(e.target.value)} className={inputClass}>
+                    <option value="">—</option>
+                    {SHIPPING_COMPANIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </label>
                 {item.status === 'sold' && (
                   <>
                     <label className="text-sm">
@@ -151,6 +176,15 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                     <label className="text-sm">
                       <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold date</span>
                       <input type="date" value={soldDate} onChange={(e) => setSoldDate(e.target.value)} className={inputClass} />
+                    </label>
+                    <label className="text-sm">
+                      <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping out</span>
+                      <select value={shippingOut} onChange={(e) => setShippingOut(e.target.value)} className={inputClass}>
+                        <option value="">—</option>
+                        {SHIPPING_COMPANIES.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
                     </label>
                   </>
                 )}
@@ -198,6 +232,18 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                 <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">All-in cost</div>
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(allInCost, { pence: true })}</div>
               </div>
+              {item.shipping_in && (
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Shipping in</div>
+                  <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.shipping_in}</div>
+                </div>
+              )}
+              {item.shipping_out && (
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Shipping out</div>
+                  <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.shipping_out}</div>
+                </div>
+              )}
               {item.notes && <div className="col-span-2 text-xs text-zinc-500 dark:text-zinc-400 sm:col-span-4">{item.notes}</div>}
             </div>
           )}
@@ -288,6 +334,16 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
                     onChange={(e) => setSoldDate(e.target.value)}
                     className="h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400 sm:flex-none"
                   />
+                  <select
+                    value={shippingOut}
+                    onChange={(e) => setShippingOut(e.target.value)}
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400 sm:flex-none"
+                  >
+                    <option value="">Shipping out</option>
+                    {SHIPPING_COMPANIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
                 <button type="button" onClick={handleMarkSold} disabled={saving} className="min-h-11 w-full cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:opacity-50 sm:w-auto">
                   Mark sold
@@ -297,6 +353,11 @@ export default function ResaleItemRow({ item, onUpdate, onDelete, onMarkArrived,
             {item.status === 'sold' && item.payment_status !== 'paid' && (
               <button type="button" onClick={() => run(() => onMarkPaid(item.id))} disabled={saving} className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 transition-colors duration-150 hover:bg-pink-500 dark:hover:bg-emerald-300 disabled:opacity-50">
                 Mark paid
+              </button>
+            )}
+            {item.status === 'sold' && item.shipping_status !== 'shipped' && (
+              <button type="button" onClick={() => run(() => onMarkShipped(item.id))} disabled={saving} className="min-h-11 cursor-pointer rounded-lg border border-pink-300 dark:border-emerald-500/40 px-4 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10 disabled:opacity-50">
+                Mark shipped
               </button>
             )}
             {item.status === 'sold' && (

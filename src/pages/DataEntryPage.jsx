@@ -6,6 +6,7 @@ import FixedCostsCard from '../components/FixedCostsCard'
 import { useAuth } from '../context/AuthContext'
 import { useMonthlyEntries } from '../hooks/useMonthlyEntries'
 import { aggregateWeeklySpending, useWeeklySpending } from '../hooks/useWeeklySpending'
+import { lastDayOfMonth } from '../utils/weeks'
 import { useFixedCosts } from '../hooks/useFixedCosts'
 import { useSavingsPots } from '../hooks/useSavingsPots'
 import { useSpendingCategories } from '../hooks/useSpendingCategories'
@@ -55,7 +56,14 @@ export default function DataEntryPage() {
   const { user } = useAuth()
   const { entries, loading, error, saveEntry, deleteEntry } = useMonthlyEntries(user?.id)
   const [selectedMonth, setSelectedMonth] = useState(currentMonthValue())
-  const { buckets, weeks, loading: weeksLoading, error: weeksError, saveWeek } = useWeeklySpending(user?.id, selectedMonth)
+  const [periodStart, setPeriodStart] = useState(monthValueToDate(currentMonthValue()))
+  const [periodEnd, setPeriodEnd] = useState(lastDayOfMonth(currentMonthValue()))
+  const { buckets, weeks, loading: weeksLoading, error: weeksError, saveWeek } = useWeeklySpending(
+    user?.id,
+    selectedMonth,
+    periodStart,
+    periodEnd,
+  )
   const {
     activeCosts: fixedCosts,
     total: fixedCostsTotal,
@@ -93,10 +101,36 @@ export default function DataEntryPage() {
       setClosingBalances(latestClosingBalances(entries, pots, selectedMonth))
     }
     setActualSplit({ ...emptyGoalSplit(pots), ...existingEntry?.goal_contributions })
+    setPeriodStart(existingEntry?.period_start ?? monthValueToDate(selectedMonth))
+    setPeriodEnd(existingEntry?.period_end ?? lastDayOfMonth(selectedMonth))
     setSaved(false)
     setSaveError(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, existingEntry, entries, pots])
+
+  // Keeps a saved month's payday dates in sync as soon as they're edited,
+  // the same way fixedCostsTotal below syncs itself -- no separate save step.
+  useEffect(() => {
+    if (!existingEntry) return
+    const storedStart = existingEntry.period_start ?? monthValueToDate(selectedMonth)
+    const storedEnd = existingEntry.period_end ?? lastDayOfMonth(selectedMonth)
+    if (storedStart === periodStart && storedEnd === periodEnd) return
+
+    saveEntry({
+      id: existingEntry.id,
+      month: existingEntry.month,
+      income: existingEntry.income,
+      spending: existingEntry.spending ?? {},
+      account_balances: existingEntry.account_balances ?? {},
+      goal_contributions: existingEntry.goal_contributions ?? {},
+      house_contribution_me: existingEntry.house_contribution_me ?? 0,
+      house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
+      notes: existingEntry.notes,
+      period_start: periodStart,
+      period_end: periodEnd,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodStart, periodEnd, existingEntry])
 
   const weeksByStart = useMemo(
     () => Object.fromEntries(weeks.map((w) => [w.week_start, w])),
@@ -131,6 +165,8 @@ export default function DataEntryPage() {
       house_contribution_me: existingEntry.house_contribution_me ?? 0,
       house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
       notes: existingEntry.notes,
+      period_start: existingEntry.period_start ?? null,
+      period_end: existingEntry.period_end ?? null,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixedCostsTotal, fixedCostsLoading, existingEntry])
@@ -158,6 +194,8 @@ export default function DataEntryPage() {
         house_contribution_me: existingEntry?.house_contribution_me ?? 0,
         house_contribution_partner: existingEntry?.house_contribution_partner ?? 0,
         notes: existingEntry?.notes ?? '',
+        period_start: periodStart,
+        period_end: periodEnd,
       })
     } catch (err) {
       setWeekSaveError(err.message)
@@ -185,6 +223,8 @@ export default function DataEntryPage() {
         house_contribution_me: existingEntry?.house_contribution_me ?? 0,
         house_contribution_partner: existingEntry?.house_contribution_partner ?? 0,
         notes: form.notes,
+        period_start: periodStart,
+        period_end: periodEnd,
       })
       setSaved(true)
     } catch (err) {
@@ -246,6 +286,26 @@ export default function DataEntryPage() {
             <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
               Log spending week by week. No need to wait until the month's over.
             </p>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label className="text-sm">
+                <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Payday from</span>
+                <input
+                  type="date"
+                  value={periodStart}
+                  onChange={(e) => setPeriodStart(e.target.value)}
+                  className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Payday to</span>
+                <input
+                  type="date"
+                  value={periodEnd}
+                  onChange={(e) => setPeriodEnd(e.target.value)}
+                  className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
+                />
+              </label>
+            </div>
             {weeksError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{weeksError}</p>}
             {weekSaveError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{weekSaveError}</p>}
             {weeksLoading ? (

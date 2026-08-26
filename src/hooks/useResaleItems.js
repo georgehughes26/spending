@@ -55,17 +55,21 @@ export function useResaleItems(userId) {
   )
 
   const markSold = useCallback(
-    (id, soldPrice, soldDate) =>
+    (id, soldPrice, soldDate, shippingOut) =>
       updateItem(id, {
         status: 'sold',
         payment_status: 'awaiting_payment',
+        shipping_status: 'not_shipped',
         sold_price: soldPrice,
         sold_date: soldDate || new Date().toISOString().slice(0, 10),
+        shipping_out: shippingOut || null,
       }),
     [updateItem],
   )
 
   const markPaid = useCallback((id) => updateItem(id, { payment_status: 'paid' }), [updateItem])
+
+  const markShipped = useCallback((id) => updateItem(id, { shipping_status: 'shipped' }), [updateItem])
 
   const addItemCost = useCallback(async (itemId, label, amount) => {
     const { error: insertError } = await supabase.from('resale_item_costs').insert({ item_id: itemId, label, amount })
@@ -90,6 +94,7 @@ export function useResaleItems(userId) {
     markListed,
     markSold,
     markPaid,
+    markShipped,
     addItemCost,
     deleteItemCost,
     refresh,
