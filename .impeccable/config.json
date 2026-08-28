@@ -173,6 +173,15 @@
         ],
         "createdAt": "2026-08-26T14:00:05.550Z",
         "reason": "same cross-theme false positive as other buttons this session: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against light-theme bg-pink-600 in the same ternary/template string -- this is the active-tab styling on the mobile stage filter pills"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/pages/DataEntryPage.jsx"
+        ],
+        "createdAt": "2026-08-28T07:05:17.946Z",
+        "reason": "same cross-theme false positive as elsewhere this session: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against light-theme bg-pink-600 in the same template string -- pre-existing 'Update month' button, unrelated to this turn's edit"
       }
     ]
   }

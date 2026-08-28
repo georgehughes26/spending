@@ -14,6 +14,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.110.5",
     "canvas-confetti": "^1.9.4",
+    "fast-xml-parser": "^5.11.0",
     "framer-motion": "^13.1.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

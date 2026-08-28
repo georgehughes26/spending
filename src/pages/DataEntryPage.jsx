@@ -167,8 +167,13 @@ export default function DataEntryPage() {
       house_contribution_me: existingEntry.house_contribution_me ?? 0,
       house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
       notes: existingEntry.notes,
-      period_start: existingEntry.period_start ?? null,
-      period_end: existingEntry.period_end ?? null,
+      // Live state, not existingEntry's -- this effect can fire around the
+      // same time as the payday sync above (both re-trigger off the same
+      // existingEntry reference change), and writing existingEntry's own
+      // stale period dates here would silently undo whatever payday edit
+      // just landed.
+      period_start: periodStart,
+      period_end: periodEnd,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixedCostsTotal, fixedCostsLoading, existingEntry])
