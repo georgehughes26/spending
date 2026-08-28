@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import RunningTypeBadge from './RunningTypeBadge'
 import RunningVerdictBadge from './RunningVerdictBadge'
 import RunningScoreBadge from './RunningScoreBadge'
@@ -27,6 +28,9 @@ export default function RunningPlanCard({ run, completedSummary, onMarkDone, onS
   const isDone = run.status === 'completed'
   const isSkipped = run.status === 'skipped'
   const [busy, setBusy] = useState(false)
+  const detailHref = isDone && completedSummary
+    ? `/training/running/history/${completedSummary.completedRunId}`
+    : `/training/running/runs/${run.id}`
 
   async function act(fn) {
     setBusy(true)
@@ -45,13 +49,15 @@ export default function RunningPlanCard({ run, completedSummary, onMarkDone, onS
           : 'border-zinc-200 bg-white dark:border-white/10 dark:bg-white/5'
       }`}
     >
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <RunningTypeBadge runType={run.run_type} />
-        <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">Week {run.week_number}</span>
-      </div>
+      <Link to={detailHref} className="block">
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <RunningTypeBadge runType={run.run_type} />
+          <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">Week {run.week_number}</span>
+        </div>
 
-      <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{prescriptionTargetDistanceKm(prescription)}km</div>
-      <div className="text-xs text-zinc-500 dark:text-zinc-400">{summaryLine(prescription)}</div>
+        <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{prescriptionTargetDistanceKm(prescription)}km</div>
+        <div className="text-xs text-zinc-500 dark:text-zinc-400">{summaryLine(prescription)}</div>
+      </Link>
 
       <div className="mt-2.5 border-t border-zinc-100 pt-2.5 dark:border-white/10">
         {isDone && completedSummary ? (

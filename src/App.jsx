@@ -8,6 +8,8 @@ import SignInPage from './pages/SignInPage'
 import OnboardingPage from './pages/OnboardingPage'
 import ResalePage from './pages/ResalePage'
 import RunningDashboardPage from './pages/RunningDashboardPage'
+import RunningPlanPage from './pages/RunningPlanPage'
+import RunningRunDetailPage from './pages/RunningRunDetailPage'
 import RunningUploadPage from './pages/RunningUploadPage'
 import RunningSettingsPage from './pages/RunningSettingsPage'
 import RunningHistoryPage from './pages/RunningHistoryPage'
@@ -273,6 +275,26 @@ function AppRoutes() {
             <PageTransition>
               <RequireTrainingAccess>
                 <Shell><RunningDashboardPage /></Shell>
+              </RequireTrainingAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/training/running/plan"
+          element={
+            <PageTransition>
+              <RequireTrainingAccess>
+                <Shell><RunningPlanPage /></Shell>
+              </RequireTrainingAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/training/running/runs/:id"
+          element={
+            <PageTransition>
+              <RequireTrainingAccess>
+                <Shell><RunningRunDetailPage /></Shell>
               </RequireTrainingAccess>
             </PageTransition>
           }

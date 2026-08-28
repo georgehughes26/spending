@@ -3,6 +3,7 @@ import TrainingAreaSwitch from './TrainingAreaSwitch'
 
 const TABS = [
   { to: '/training/running', label: 'Dashboard', end: true },
+  { to: '/training/running/plan', label: 'Plan' },
   { to: '/training/running/upload', label: 'Upload' },
   { to: '/training/running/history', label: 'History' },
   { to: '/training/running/settings', label: 'Settings' },
