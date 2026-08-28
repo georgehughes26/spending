@@ -15,7 +15,7 @@ const inputClass =
 function buildInitialSets(exercise) {
   return Array.from({ length: exercise.target_sets }, () => ({
     reps: String(exercise.target_reps),
-    weight_kg: String(exercise.target_weight_kg),
+    weight_kg: exercise.target_weight_kg > 0 ? String(exercise.target_weight_kg) : '',
   }))
 }
 
@@ -39,7 +39,7 @@ function applyGarminSets(dayExercises, activeSets) {
         const weightKg = g.weight != null ? Math.round((g.weight / 1000) * 2) / 2 : ex.target_weight_kg
         sets.push({ reps: String(g.repetitionCount ?? ex.target_reps), weight_kg: String(weightKg) })
       } else {
-        sets.push({ reps: String(ex.target_reps), weight_kg: String(ex.target_weight_kg) })
+        sets.push({ reps: String(ex.target_reps), weight_kg: ex.target_weight_kg > 0 ? String(ex.target_weight_kg) : '' })
       }
     }
     logs[ex.id] = sets
@@ -133,7 +133,8 @@ function ExerciseLogRows({ exercise, sets, onChange }) {
       <div className="mb-2 flex items-baseline justify-between">
         <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">{exercise.name}</h3>
         <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          Target: {exercise.target_sets} &times; {exercise.target_reps} @ {exercise.target_weight_kg}kg
+          {exercise.target_sets} &times; {exercise.target_reps}
+          {exercise.target_weight_kg > 0 ? ` -- last time: ${exercise.target_weight_kg}kg` : ' -- first time logging this'}
         </span>
       </div>
       <div className="flex flex-col gap-2">
@@ -224,22 +225,32 @@ export default function StrengthLogPage() {
 
       const rows = []
       const exerciseScores = []
+      const weightUpdates = []
       for (const ex of day.exercises) {
         const sets = logsByExercise[ex.id] ?? []
         const setScores = []
+        let maxWeight = 0
         sets.forEach((s, i) => {
           const reps = Number(s.reps) || 0
           const weight = Number(s.weight_kg) || 0
           rows.push({ session_id: session.id, exercise_id: ex.id, set_number: i + 1, reps, weight_kg: weight })
+          // Score against the weight you did *last* time (ex.target_weight_kg,
+          // read before this session), not a fixed goal -- there isn't one.
           setScores.push(computeSetScore(reps, weight, ex.target_reps, ex.target_weight_kg))
+          if (weight > maxWeight) maxWeight = weight
         })
         exerciseScores.push(computeExerciseScore(setScores))
+        // Roll the exercise's tracked weight forward to what was actually
+        // lifted, so next time's comparison/prefill reflects reality --
+        // there's no fixed target to hold it at.
+        if (maxWeight > 0) weightUpdates.push({ id: ex.id, weight: maxWeight })
       }
 
       await db.insertSetLogs(user.id, rows)
       const sessionScore = computeSessionScore(exerciseScores)
       await db.updateSessionScore(user.id, session.id, sessionScore)
       if (plannedSession) await db.markPlannedSessionStatus(user.id, plannedSession.id, 'completed')
+      await Promise.all(weightUpdates.map((u) => db.updateExercise(user.id, u.id, { target_weight_kg: u.weight })))
 
       navigate(`/training/strength/history/${session.id}`)
     } catch (err) {

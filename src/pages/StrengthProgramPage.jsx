@@ -82,7 +82,7 @@ function ExerciseRow({ exercise, onUpdate, onRemove }) {
         <input type="number" min="1" value={form.target_sets} onChange={(e) => setForm((f) => ({ ...f, target_sets: e.target.value }))} className={inputClass} placeholder="Sets" />
         <input type="number" min="1" value={form.target_reps} onChange={(e) => setForm((f) => ({ ...f, target_reps: e.target.value }))} className={inputClass} placeholder="Reps" />
         <div className="flex gap-1.5">
-          <input type="number" min="0" step="0.5" value={form.target_weight_kg} onChange={(e) => setForm((f) => ({ ...f, target_weight_kg: e.target.value }))} className={inputClass} placeholder="kg" />
+          <input type="number" min="0" step="0.5" value={form.target_weight_kg} onChange={(e) => setForm((f) => ({ ...f, target_weight_kg: e.target.value }))} className={inputClass} placeholder="kg (optional)" />
           <button type="button" disabled={busy} onClick={save} className="shrink-0 rounded-lg bg-pink-600 dark:bg-emerald-400 px-3 text-xs font-medium text-white dark:text-zinc-950 disabled:opacity-50">
             Save
           </button>
@@ -96,7 +96,8 @@ function ExerciseRow({ exercise, onUpdate, onRemove }) {
       <div>
         <span className="font-medium text-zinc-900 dark:text-zinc-100">{exercise.name}</span>
         <span className="ml-2 text-zinc-500 dark:text-zinc-400">
-          {exercise.target_sets} &times; {exercise.target_reps} @ {exercise.target_weight_kg}kg
+          {exercise.target_sets} &times; {exercise.target_reps}
+          {exercise.target_weight_kg > 0 ? ` @ ${exercise.target_weight_kg}kg` : ' -- not logged yet'}
         </span>
       </div>
       <div className="flex shrink-0 gap-3 text-xs font-medium">
@@ -151,7 +152,7 @@ function DayCard({ day, onAddExercise, onUpdateExercise, onRemoveExercise, onRem
           <input type="number" min="1" value={form.target_sets} onChange={(e) => setForm((f) => ({ ...f, target_sets: e.target.value }))} className={inputClass} placeholder="Sets" />
           <input type="number" min="1" value={form.target_reps} onChange={(e) => setForm((f) => ({ ...f, target_reps: e.target.value }))} className={inputClass} placeholder="Reps" />
           <div className="flex gap-1.5">
-            <input type="number" min="0" step="0.5" value={form.target_weight_kg} onChange={(e) => setForm((f) => ({ ...f, target_weight_kg: e.target.value }))} className={inputClass} placeholder="kg" />
+            <input type="number" min="0" step="0.5" value={form.target_weight_kg} onChange={(e) => setForm((f) => ({ ...f, target_weight_kg: e.target.value }))} className={inputClass} placeholder="kg (optional)" />
             <button type="submit" disabled={adding || !form.name.trim()} className="shrink-0 rounded-lg bg-pink-600 dark:bg-emerald-400 px-3 text-xs font-medium text-white dark:text-zinc-950 disabled:opacity-50">
               Add
             </button>
@@ -190,7 +191,8 @@ export default function StrengthProgramPage() {
           <div>
             <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Strength program</h1>
             <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-              Set this up once with your actual programme -- days, exercises, target sets/reps/weight. Log against it from the dashboard.
+              Set this up once with your actual programme -- days, exercises, sets/reps. Weight isn't a fixed target: leave it blank or put in
+              wherever you're starting, and it'll track itself upward from what you actually log each time.
             </p>
           </div>
         </FadeInItem>
