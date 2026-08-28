@@ -6,16 +6,25 @@ import { FadeInItem, FadeInStagger, tapScale } from '../components/motion'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import * as db from '../lib/strength/db'
-import { computeExerciseScore, computeSessionScore, computeSetScore } from '../lib/strength/scoring'
+import { computeExerciseScore, computeSessionScore, computeSetScore, suggestProgression } from '../lib/strength/scoring'
 import { fetchExerciseSets, listStrengthActivities } from '../lib/garmin/edgeClient'
 
 const inputClass =
   'min-h-10 w-20 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-center text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
-function buildInitialSets(exercise) {
+/**
+ * Prefills each set with what you should actually be doing today, not just
+ * a repeat of last time -- if suggestProgression says you're ready to go up,
+ * that means a new (heavier) weight *and* dropping back to the bottom of
+ * the rep range, per double-progression: add weight, then rebuild the reps.
+ */
+function buildInitialSets(exercise, suggestion) {
+  const willIncrease = suggestion?.action === 'increase'
+  const weight = willIncrease ? suggestion.suggestedWeightKg : exercise.target_weight_kg
+  const reps = willIncrease ? exercise.target_reps_min : exercise.target_reps_max
   return Array.from({ length: exercise.target_sets }, () => ({
-    reps: String(exercise.target_reps_max),
-    weight_kg: exercise.target_weight_kg > 0 ? String(exercise.target_weight_kg) : '',
+    reps: String(reps),
+    weight_kg: weight > 0 ? String(weight) : '',
   }))
 }
 
@@ -127,7 +136,13 @@ function GarminFetchPanel({ userId, dayExercises, onApply }) {
   )
 }
 
-function ExerciseLogRows({ exercise, sets, onChange }) {
+const SUGGESTION_CLASS = {
+  increase: 'text-emerald-600 dark:text-emerald-400',
+  hold_or_reduce: 'text-amber-600 dark:text-amber-400',
+  hold: 'text-zinc-500 dark:text-zinc-400',
+}
+
+function ExerciseLogRows({ exercise, sets, suggestion, onChange }) {
   return (
     <Card>
       <div className="mb-2 flex items-baseline justify-between">
@@ -137,6 +152,11 @@ function ExerciseLogRows({ exercise, sets, onChange }) {
           {exercise.target_weight_kg > 0 ? ` -- last time: ${exercise.target_weight_kg}kg` : ' -- first time logging this'}
         </span>
       </div>
+      {suggestion && suggestion.action !== 'no_data' && (
+        <p className={`mb-2 text-xs ${SUGGESTION_CLASS[suggestion.action] ?? SUGGESTION_CLASS.hold}`}>
+          <span className="font-medium">Target today:</span> {suggestion.reason}
+        </p>
+      )}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 text-xs font-medium text-zinc-400 dark:text-zinc-500">
           <span className="w-10">Set</span>
@@ -178,6 +198,7 @@ export default function StrengthLogPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [logsByExercise, setLogsByExercise] = useState({})
+  const [suggestionsByExercise, setSuggestionsByExercise] = useState({})
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -188,10 +209,25 @@ export default function StrengthLogPage() {
       if (cancelled || !planned) return
       const d = await db.getDayWithExercises(user.id, planned.day_id)
       if (cancelled || !d) return
+
+      const suggestionEntries = await Promise.all(
+        d.exercises.map(async (ex) => {
+          const recent = await db.getRecentLogsForExercise(user.id, ex.id, 2)
+          const suggestion = suggestProgression(
+            { target_reps_min: ex.target_reps_min, target_reps_max: ex.target_reps_max, target_weight_kg: ex.target_weight_kg },
+            recent,
+          )
+          return [ex.id, suggestion]
+        }),
+      )
+      if (cancelled) return
+      const suggestions = Object.fromEntries(suggestionEntries)
+
       setPlannedSession(planned)
       setDay(d)
+      setSuggestionsByExercise(suggestions)
       const initial = {}
-      for (const ex of d.exercises) initial[ex.id] = buildInitialSets(ex)
+      for (const ex of d.exercises) initial[ex.id] = buildInitialSets(ex, suggestions[ex.id])
       setLogsByExercise(initial)
     }
     load()
@@ -283,7 +319,12 @@ export default function StrengthLogPage() {
 
           {day.exercises.map((ex) => (
             <FadeInItem key={ex.id}>
-              <ExerciseLogRows exercise={ex} sets={logsByExercise[ex.id] ?? []} onChange={(i, next) => updateSet(ex.id, i, next)} />
+              <ExerciseLogRows
+                exercise={ex}
+                sets={logsByExercise[ex.id] ?? []}
+                suggestion={suggestionsByExercise[ex.id]}
+                onChange={(i, next) => updateSet(ex.id, i, next)}
+              />
             </FadeInItem>
           ))}
 

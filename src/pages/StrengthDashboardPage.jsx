@@ -143,27 +143,41 @@ function BestProgressTile({ progression }) {
   )
 }
 
-function RelativeStrengthTile({ relativeStrength, hasBodyweight }) {
-  const top = relativeStrength.slice(0, 3)
+const TIER_CLASS = {
+  Elite: 'text-emerald-600 dark:text-emerald-400',
+  Advanced: 'text-emerald-600 dark:text-emerald-400',
+  Intermediate: 'text-zinc-600 dark:text-zinc-300',
+  Novice: 'text-amber-600 dark:text-amber-400',
+  Beginner: 'text-amber-600 dark:text-amber-400',
+  Untrained: 'text-amber-600 dark:text-amber-400',
+}
+
+function PopulationCompareTile({ populationComparison, hasBodyweight, hasAge }) {
+  const top = populationComparison.slice(0, 4)
   return (
-    <Card title="Genuinely strongest at">
-      {!hasBodyweight ? (
+    <Card title="How you compare">
+      {!hasBodyweight || !hasAge ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Add your weight on the <Link to="/training/strength/program" className="text-pink-600 hover:underline dark:text-emerald-400">Program page</Link> to see this.
+          Add your weight and age on the <Link to="/training/strength/program" className="text-pink-600 hover:underline dark:text-emerald-400">Program page</Link> to see this.
         </p>
       ) : top.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Log a weight for an exercise to see this.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">None of your exercises have published population standards to compare against yet.</p>
       ) : (
         <>
           <div className="flex flex-col gap-2">
             {top.map((row) => (
               <div key={row.exercise.id} className="flex items-baseline justify-between text-sm">
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{row.exercise.name}</span>
-                <span className="text-zinc-600 dark:text-zinc-300">{row.weightKg}kg &middot; {row.ratio.toFixed(2)}&times; bodyweight</span>
+                <span className={TIER_CLASS[row.tier] ?? ''}>
+                  {row.tier}{row.next ? <span className="text-zinc-400 dark:text-zinc-500"> ({row.progressPct}% to {row.next})</span> : ''}
+                  {row.approx && <span className="text-zinc-400 dark:text-zinc-500"> *</span>}
+                </span>
               </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">Ranked by weight relative to bodyweight, not raw kg -- a small isolation lift can rank above a machine press here. Height/limb length isn't factored in.</p>
+          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+            Against published strength standards for men, adjusted for your age and bodyweight. * = closest available standard, not an exact match for that exercise.
+          </p>
         </>
       )}
     </Card>
@@ -233,7 +247,11 @@ export default function StrengthDashboardPage() {
         <FadeInItem className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <OverallProgressionTile overall={insights.overall} />
           <BestProgressTile progression={insights.progression} />
-          <RelativeStrengthTile relativeStrength={insights.relativeStrength} hasBodyweight={!!insights.profile?.weight_kg} />
+          <PopulationCompareTile
+            populationComparison={insights.populationComparison}
+            hasBodyweight={!!insights.profile?.weight_kg}
+            hasAge={!!insights.profile?.age}
+          />
           <NeedsAttentionTile ready={insights.ready} struggling={insights.struggling} />
         </FadeInItem>
 

@@ -191,13 +191,14 @@ function DayCard({ day, onAddExercise, onUpdateExercise, onRemoveExercise, onRem
 function StatsForm({ profile, onSave }) {
   const [height, setHeight] = useState(profile?.height_cm ? String(profile.height_cm) : '')
   const [weight, setWeight] = useState(profile?.weight_kg ? String(profile.weight_kg) : '')
+  const [age, setAge] = useState(profile?.age ? String(profile.age) : '')
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
     try {
-      await onSave({ height_cm: Number(height) || null, weight_kg: Number(weight) || null })
+      await onSave({ height_cm: Number(height) || null, weight_kg: Number(weight) || null, age: Number(age) || null })
     } finally {
       setSaving(false)
     }
@@ -212,6 +213,10 @@ function StatsForm({ profile, onSave }) {
       <label className="text-sm">
         <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Weight (kg)</span>
         <input type="number" min="0" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} className={inputClass} placeholder="95" />
+      </label>
+      <label className="text-sm">
+        <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Age</span>
+        <input type="number" min="0" value={age} onChange={(e) => setAge(e.target.value)} className={inputClass} placeholder="30" />
       </label>
       <motion.button
         {...tapScale}
@@ -253,7 +258,7 @@ export default function StrengthProgramPage() {
 
         <FadeInItem>
           <Card title="Your stats">
-            <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">Used for the relative-strength insight on the Dashboard -- weight-to-bodyweight ratio, not just raw kg.</p>
+            <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">Used for the "How you compare" insight on the Dashboard -- weight, age and bodyweight against published population strength standards.</p>
             <StatsForm profile={profile} onSave={saveProfile} />
           </Card>
         </FadeInItem>

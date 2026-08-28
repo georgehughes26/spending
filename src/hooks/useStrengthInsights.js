@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as db from '../lib/strength/db'
-import { exercisesNeedingAttention, overallProgression, rankProgression, rankRelativeStrength } from '../lib/strength/insights'
+import { exercisesNeedingAttention, overallProgression, rankProgression } from '../lib/strength/insights'
+import { rankPopulationComparison } from '../lib/strength/strengthStandards'
 
 export function useStrengthInsights(userId) {
   const [profile, setProfile] = useState(null)
@@ -48,6 +49,7 @@ export function useStrengthInsights(userId) {
   )
 
   const bodyweightKg = profile?.weight_kg ?? null
+  const age = profile?.age ?? null
 
   return {
     profile,
@@ -56,7 +58,7 @@ export function useStrengthInsights(userId) {
     saveProfile,
     progression: rankProgression(exercises, setLogs),
     overall: overallProgression(exercises, setLogs),
-    relativeStrength: rankRelativeStrength(exercises, bodyweightKg),
+    populationComparison: rankPopulationComparison(exercises, bodyweightKg, age),
     ...exercisesNeedingAttention(exercises, setLogs),
   }
 }

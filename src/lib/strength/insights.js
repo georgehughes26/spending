@@ -70,26 +70,6 @@ export function overallProgression(exercises, allSetLogs) {
   return { trackedCount: ranked.length, up, flat, down, avgPct }
 }
 
-/**
- * Current weight as a multiple of bodyweight, ranked highest first -- a
- * genuine relative-strength comparison rather than just "biggest number",
- * since a small isolation movement will never out-lift a leg press in
- * absolute kg but can easily be the one you're proportionally strongest
- * at. Only bodyweight factors into the ratio; height isn't, deliberately
- * -- there's no reliable way to fold limb-length/range-of-motion into a
- * single number without real biomechanical data, and a fabricated-looking
- * "adjustment" would be worse than being upfront that it's not accounted
- * for. If anything, a taller lifter moving weight through a longer range
- * is understated by a raw ratio, not flattered by it.
- */
-export function rankRelativeStrength(exercises, bodyweightKg) {
-  if (!bodyweightKg) return []
-  return exercises
-    .filter((ex) => ex.target_weight_kg > 0)
-    .map((ex) => ({ exercise: ex, weightKg: ex.target_weight_kg, ratio: ex.target_weight_kg / bodyweightKg }))
-    .sort((a, b) => b.ratio - a.ratio)
-}
-
 /** Exercises suggestProgression currently says are ready for more weight, or have fallen off and need easing back. */
 export function exercisesNeedingAttention(exercises, allSetLogs) {
   const sessionsByExercise = groupByExercise(allSetLogs)
