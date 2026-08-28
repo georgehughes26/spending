@@ -164,14 +164,14 @@ function PopulationCompareTile({ populationComparison, hasBodyweight, hasAge }) 
         <p className="text-sm text-zinc-500 dark:text-zinc-400">None of your exercises have published population standards to compare against yet.</p>
       ) : (
         <>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             {top.map((row) => (
-              <div key={row.exercise.id} className="flex items-baseline justify-between text-sm">
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">{row.exercise.name}</span>
-                <span className={TIER_CLASS[row.tier] ?? ''}>
+              <div key={row.exercise.id} className="text-sm">
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">{row.exercise.name}</div>
+                <div className={TIER_CLASS[row.tier] ?? ''}>
                   {row.tier}{row.next ? <span className="text-zinc-400 dark:text-zinc-500"> ({row.progressPct}% to {row.next})</span> : ''}
                   {row.approx && <span className="text-zinc-400 dark:text-zinc-500"> *</span>}
-                </span>
+                </div>
               </div>
             ))}
           </div>
