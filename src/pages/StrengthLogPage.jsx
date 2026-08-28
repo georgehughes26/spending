@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import * as db from '../lib/strength/db'
 import { computeExerciseScore, computeSessionScore, computeSetScore } from '../lib/strength/scoring'
+import { fetchExerciseSets, listStrengthActivities } from '../lib/garmin/edgeClient'
 
 const inputClass =
   'min-h-10 w-20 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-center text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
@@ -16,6 +17,114 @@ function buildInitialSets(exercise) {
     reps: String(exercise.target_reps),
     weight_kg: String(exercise.target_weight_kg),
   }))
+}
+
+/**
+ * Maps Garmin's ACTIVE sets onto the day's exercises in order -- the
+ * exerciseSets endpoint returns sets chronologically, which matches the
+ * program's exercise/set order as long as they were done in that order.
+ * Anything beyond what Garmin returned keeps its target-prefilled default,
+ * so a mismatch (extra/missing sets) is just left for manual review rather
+ * than silently dropped or guessed at.
+ */
+function applyGarminSets(dayExercises, activeSets) {
+  const logs = {}
+  let cursor = 0
+  for (const ex of dayExercises) {
+    const sets = []
+    for (let i = 0; i < ex.target_sets; i++) {
+      const g = activeSets[cursor]
+      cursor++
+      if (g) {
+        const weightKg = g.weight != null ? Math.round((g.weight / 1000) * 2) / 2 : ex.target_weight_kg
+        sets.push({ reps: String(g.repetitionCount ?? ex.target_reps), weight_kg: String(weightKg) })
+      } else {
+        sets.push({ reps: String(ex.target_reps), weight_kg: String(ex.target_weight_kg) })
+      }
+    }
+    logs[ex.id] = sets
+  }
+  return { logs, totalSlots: cursor }
+}
+
+function GarminFetchPanel({ userId, dayExercises, onApply }) {
+  const [open, setOpen] = useState(false)
+  const [activities, setActivities] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [message, setMessage] = useState(null)
+
+  async function handleOpen() {
+    setOpen(true)
+    setError(null)
+    if (activities) return
+    setLoading(true)
+    try {
+      setActivities(await listStrengthActivities(userId, 8))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handlePick(activityId) {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const sets = await fetchExerciseSets(userId, activityId)
+      const active = sets.filter((s) => s.setType === 'ACTIVE')
+      const { logs, totalSlots } = applyGarminSets(dayExercises, active)
+      onApply(logs)
+      setMessage(
+        active.length === totalSlots
+          ? `Matched all ${totalSlots} sets from Garmin.`
+          : `Matched ${Math.min(active.length, totalSlots)} of ${totalSlots} sets from Garmin (${active.length} found on the activity) -- check the rest before saving.`,
+      )
+      setOpen(false)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <motion.button
+        {...tapScale}
+        type="button"
+        onClick={handleOpen}
+        className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-white/15 dark:text-zinc-300 dark:hover:bg-white/5"
+      >
+        Fetch from Garmin
+      </motion.button>
+
+      {message && <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">{message}</p>}
+      {error && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
+
+      {open && (
+        <div className="mt-2 flex flex-col gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+          {loading && <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading…</p>}
+          {!loading && activities?.length === 0 && <p className="text-xs text-zinc-500 dark:text-zinc-400">No recent strength activities found on Garmin.</p>}
+          {!loading && activities?.map((a) => (
+            <button
+              key={a.activityId}
+              type="button"
+              onClick={() => handlePick(a.activityId)}
+              className="rounded-md px-2 py-1.5 text-left text-xs text-zinc-700 hover:bg-white dark:text-zinc-300 dark:hover:bg-white/5"
+            >
+              {a.name} -- {new Date(a.startTimeLocal).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </button>
+          ))}
+          <button type="button" onClick={() => setOpen(false)} className="mt-1 text-left text-xs text-zinc-400 hover:underline dark:text-zinc-500">
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function ExerciseLogRows({ exercise, sets, onChange }) {
@@ -97,6 +206,10 @@ export default function StrengthLogPage() {
     }))
   }
 
+  function applyFetchedLogs(logs) {
+    setLogsByExercise(logs)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     if (!day) return
@@ -148,9 +261,12 @@ export default function StrengthLogPage() {
         <FadeInStagger className="flex flex-col gap-5">
           <FadeInItem className="flex flex-col gap-3">
             <StrengthSubNav />
-            <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Log: {day.label}</h1>
-              <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">Pre-filled with target reps/weight -- edit whatever you actually did.</p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Log: {day.label}</h1>
+                <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">Pre-filled with target reps/weight -- edit whatever you actually did, or fetch it from a completed Garmin session.</p>
+              </div>
+              <GarminFetchPanel userId={user.id} dayExercises={day.exercises} onApply={applyFetchedLogs} />
             </div>
           </FadeInItem>
 
