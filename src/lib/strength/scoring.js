@@ -43,6 +43,10 @@ const HOLD_THRESHOLD = 0.8 // avg reps below 80% of target => suggest holding/re
  * recent first, each `{ session_date, sets: [{reps, weight_kg}, ...] }`.
  */
 export function suggestProgression(target, recentSessions) {
+  if (!target.target_weight_kg) {
+    return { action: 'no_target', reason: 'Set a target weight for this exercise on the Program page to get progression suggestions.' }
+  }
+
   const withSets = recentSessions.filter((s) => s.sets.length > 0)
 
   if (withSets.length === 0) {

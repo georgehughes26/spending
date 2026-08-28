@@ -21,6 +21,7 @@ const ACTION_LABEL = {
   hold: 'Hold this weight',
   hold_or_reduce: 'Hold or ease back',
   no_data: 'Not enough data',
+  no_target: 'No target weight set',
 }
 
 const ACTION_CLASS = {
@@ -28,6 +29,7 @@ const ACTION_CLASS = {
   hold: 'text-zinc-600 dark:text-zinc-300',
   hold_or_reduce: 'text-amber-600 dark:text-amber-400',
   no_data: 'text-zinc-400 dark:text-zinc-500',
+  no_target: 'text-zinc-400 dark:text-zinc-500',
 }
 
 function ExerciseBlock({ name, sets, suggestion }) {
