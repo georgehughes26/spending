@@ -50,7 +50,7 @@ export default function StrengthHistoryPage() {
                     <span className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(s.session_date)}</span>
                   </div>
                   <span className={`text-sm font-semibold ${scoreClass(s.score)}`}>
-                    {s.score ?? '—'}<span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">/100</span>
+                    {s.score != null ? <>{s.score}<span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">/100</span></> : <span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">no score yet</span>}
                   </span>
                 </Link>
               ))}

@@ -159,9 +159,13 @@ export default function StrengthHistoryDetailPage() {
                 <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{formatDate(session.session_date)}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-2xl font-bold ${scoreClass(session.score)}`}>
-                  {session.score ?? '—'}<span className="text-sm font-normal text-zinc-400 dark:text-zinc-500">/100</span>
-                </span>
+                {session.score != null ? (
+                  <span className={`text-2xl font-bold ${scoreClass(session.score)}`}>
+                    {session.score}<span className="text-sm font-normal text-zinc-400 dark:text-zinc-500">/100</span>
+                  </span>
+                ) : (
+                  <span className="text-xs text-zinc-400 dark:text-zinc-500">No score -- first time logging, nothing to compare yet</span>
+                )}
                 <motion.button
                   {...tapScale}
                   type="button"

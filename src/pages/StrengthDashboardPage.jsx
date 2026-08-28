@@ -39,7 +39,7 @@ function SessionCard({ planned, session, onMarkDoneNoFile, onSkip, onUnskip }) {
         </div>
         {session && (
           <div className={`text-right text-sm font-semibold ${scoreClass(session.score)}`}>
-            {session.score ?? '—'}<span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">/100</span>
+            {session.score != null ? <>{session.score}<span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">/100</span></> : <span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">no score yet</span>}
           </div>
         )}
       </div>
