@@ -98,13 +98,28 @@ function SessionCard({ planned, session, onMarkDoneNoFile, onSkip, onUnskip }) {
 
 export default function StrengthDashboardPage() {
   const { user } = useAuth()
-  const { week, plannedSessions, sessionsByPlanned, loading, error, markDoneNoFile, skip, unskip } = useStrengthWeek(user?.id)
+  const { week, plannedSessions, sessionsByPlanned, loading, error, markDoneNoFile, skip, unskip, startNextWeek } = useStrengthWeek(user?.id)
+  const [advancing, setAdvancing] = useState(false)
 
   if (loading) {
     return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
   }
   if (error) {
     return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-red-600 dark:text-red-400">Couldn't load this week: {error}</p>
+  }
+
+  // Required (non-optional) days all resolved -- ready to move on without
+  // waiting for the calendar to actually reach next Monday.
+  const requiredSessions = plannedSessions.filter((p) => !p.is_optional)
+  const allRequiredDone = requiredSessions.length > 0 && requiredSessions.every((p) => p.status !== 'upcoming')
+
+  async function handleStartNextWeek() {
+    setAdvancing(true)
+    try {
+      await startNextWeek()
+    } finally {
+      setAdvancing(false)
+    }
   }
 
   return (
@@ -137,6 +152,25 @@ export default function StrengthDashboardPage() {
             </div>
           )}
         </FadeInItem>
+
+        {allRequiredDone && (
+          <FadeInItem>
+            <Card>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-zinc-600 dark:text-zinc-300">All done for this week -- ready to move on?</p>
+                <motion.button
+                  {...tapScale}
+                  type="button"
+                  disabled={advancing}
+                  onClick={handleStartNextWeek}
+                  className="min-h-10 rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 disabled:opacity-50"
+                >
+                  {advancing ? 'Starting…' : 'Start next week'}
+                </motion.button>
+              </div>
+            </Card>
+          </FadeInItem>
+        )}
       </FadeInStagger>
     </main>
   )

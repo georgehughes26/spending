@@ -183,6 +183,12 @@ export async function getWeekByStartDate(userId, startDate) {
   return data
 }
 
+export async function getLatestWeek(userId) {
+  const { data, error } = await supabase.from(T.weeks).select('*').eq('user_id', userId).order('start_date', { ascending: false }).limit(1).maybeSingle()
+  check(error)
+  return data
+}
+
 export async function createWeek(userId, startDate) {
   const { data, error } = await supabase.from(T.weeks).insert({ user_id: userId, start_date: startDate }).select().single()
   check(error)

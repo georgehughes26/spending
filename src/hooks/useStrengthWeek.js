@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as db from '../lib/strength/db'
-import { ensureCurrentStrengthWeek } from '../lib/strength/bootstrap'
+import { ensureCurrentStrengthWeek, getDisplayWeek, startNextWeek as startNextWeekInDb } from '../lib/strength/bootstrap'
 
 /** This week's (WC <date>) planned sessions, one per current program day, plus whatever's been logged against each so far. */
 export function useStrengthWeek(userId) {
@@ -21,7 +21,11 @@ export function useStrengthWeek(userId) {
     setLoading(true)
     setError(null)
     try {
-      const w = await ensureCurrentStrengthWeek(userId)
+      await ensureCurrentStrengthWeek(userId)
+      // The week actually shown is the latest one that exists, not
+      // necessarily today's calendar week -- lets startNextWeek move things
+      // on ahead of schedule rather than being stuck until Monday.
+      const w = await getDisplayWeek(userId)
       const planned = await db.getPlannedSessionsForWeek(userId, w.id)
       const sessions = await db.getSessionsByPlannedSessionIds(userId, planned.map((p) => p.id))
       const map = {}
@@ -72,5 +76,11 @@ export function useStrengthWeek(userId) {
     [userId, refresh],
   )
 
-  return { week, plannedSessions, sessionsByPlanned, loading, error, markDoneNoFile, skip, unskip, refresh }
+  const startNextWeek = useCallback(async () => {
+    if (!week) return
+    await startNextWeekInDb(userId, week.start_date)
+    await refresh()
+  }, [userId, week, refresh])
+
+  return { week, plannedSessions, sessionsByPlanned, loading, error, markDoneNoFile, skip, unskip, startNextWeek, refresh }
 }
