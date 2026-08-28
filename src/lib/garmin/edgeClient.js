@@ -2,7 +2,14 @@ import { supabase } from '../supabaseClient'
 
 async function invoke(action, body) {
   const { data, error } = await supabase.functions.invoke('garmin', { body: { action, ...body } })
-  if (error) throw new Error(error.message)
+  if (error) {
+    // supabase-js's own error.message for a non-2xx response is a generic
+    // "Edge Function returned a non-2xx status code" -- the actual message
+    // we returned in the response body is on error.context (the raw
+    // Response), which needs reading separately.
+    const detail = await error.context?.json?.().catch(() => null)
+    throw new Error(detail?.error ?? error.message)
+  }
   if (data?.error) throw new Error(data.error)
   return data
 }
