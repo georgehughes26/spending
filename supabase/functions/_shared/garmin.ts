@@ -5,7 +5,13 @@
 // cache-in-a-table pattern _shared/gocardless.ts already uses for
 // GoCardless -- necessary because an Edge Function is stateless between
 // invocations, unlike the standalone app's local-file token cache.
-import { GarminConnect } from 'npm:garmin-connect'
+//
+// The `npm:garmin-connect` import is deliberately dynamic (inside a
+// function, not at module top level) and wrapped in try/catch -- if Deno's
+// npm compat layer can't load it, a top-level import crashes the whole
+// function at boot with an opaque BOOT_ERROR and no response body at all.
+// A dynamic import turns that into a normal JSON error response instead,
+// so the actual failure is visible without needing dashboard log access.
 
 export function corsHeaders() {
   return {
@@ -22,12 +28,21 @@ export function jsonResponse(body: unknown, status = 200) {
   })
 }
 
+async function loadGarminConnect() {
+  try {
+    const mod = await import('npm:garmin-connect')
+    return mod.GarminConnect
+  } catch (err) {
+    throw new Error(`Failed to load npm:garmin-connect under Deno: ${err instanceof Error ? err.message : String(err)}`)
+  }
+}
+
 async function loadCachedSession(supabaseAdmin: any, userId: string) {
   const { data } = await supabaseAdmin.from('running_garmin_sessions').select('*').eq('user_id', userId).maybeSingle()
   return data
 }
 
-async function saveSession(supabaseAdmin: any, userId: string, client: GarminConnect) {
+async function saveSession(supabaseAdmin: any, userId: string, client: any) {
   const tokens = client.exportToken()
   await supabaseAdmin.from('running_garmin_sessions').upsert({
     user_id: userId,
@@ -38,11 +53,12 @@ async function saveSession(supabaseAdmin: any, userId: string, client: GarminCon
 }
 
 /** Returns a logged-in GarminConnect client, restoring the cached session if it still works, logging in fresh otherwise. */
-export async function getGarminClient(supabaseAdmin: any, userId: string): Promise<GarminConnect> {
+export async function getGarminClient(supabaseAdmin: any, userId: string): Promise<any> {
   const email = Deno.env.get('GARMIN_EMAIL')
   const password = Deno.env.get('GARMIN_PASSWORD')
   if (!email || !password) throw new Error('Missing GARMIN_EMAIL / GARMIN_PASSWORD function secrets')
 
+  const GarminConnect = await loadGarminConnect()
   const client = new GarminConnect({ username: email, password })
 
   const cached = await loadCachedSession(supabaseAdmin, userId)
@@ -68,8 +84,8 @@ export async function getGarminClient(supabaseAdmin: any, userId: string): Promi
  * TRAINING.md). Returns raw entries: { exercises, duration, repetitionCount,
  * weight (grams), setType: 'ACTIVE'|'REST', startTime }.
  */
-export async function fetchExerciseSets(client: GarminConnect, activityId: string | number) {
+export async function fetchExerciseSets(client: any, activityId: string | number) {
   const url = `https://connectapi.garmin.com/activity-service/activity/${activityId}/exerciseSets`
-  const data = await (client as any).client.get(url)
+  const data = await client.client.get(url)
   return data.exerciseSets ?? []
 }
