@@ -4,8 +4,8 @@ import { computeRating, deriveExecutionFlags } from './analysis'
 function deriveRating(run) {
   if (run.verdict === null || run.verdict === undefined) return null
 
-  const prescription = JSON.parse(run.prescription_json)
-  const analysisJson = run.analysis_json ? JSON.parse(run.analysis_json) : {}
+  const prescription = run.prescription_json
+  const analysisJson = run.analysis_json ?? {}
   const fadePct = typeof analysisJson.fadePct === 'number' ? analysisJson.fadePct : null
   const { faded, shortfall } = deriveExecutionFlags(
     prescription,

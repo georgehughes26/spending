@@ -105,7 +105,7 @@ function distanceShortfall(parsed, targetDistanceKm, toleranceRatio = 0.85) {
 }
 
 export function analyzeCompletedRun(parsed, plannedRun, profile, totalWeeks) {
-  const prescription = JSON.parse(plannedRun.prescription_json)
+  const prescription = plannedRun.prescription_json
   const runType = plannedRun.run_type
   const targetPaceSecPerKm = plannedRun.target_pace_sec_per_km ?? 0
   const targetDistanceKm = plannedRun.target_distance_km

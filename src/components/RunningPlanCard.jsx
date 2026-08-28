@@ -23,7 +23,7 @@ function summaryLine(prescription) {
 }
 
 export default function RunningPlanCard({ run, completedSummary, onMarkDone, onSkip, onUnskip }) {
-  const prescription = JSON.parse(run.prescription_json)
+  const prescription = run.prescription_json
   const isDone = run.status === 'completed'
   const isSkipped = run.status === 'skipped'
   const [busy, setBusy] = useState(false)

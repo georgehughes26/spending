@@ -38,11 +38,9 @@ export async function processRunUpload(userId, content, fileName, plannedRunId) 
     avg_heart_rate_bpm: parsed.avgHeartRateBpm,
     max_heart_rate_bpm: parsed.maxHeartRateBpm,
     elevation_gain_m: parsed.elevationGainM,
-    splits_json: JSON.stringify(parsed.splits),
-    raw_trackpoints_json: JSON.stringify(
-      parsed.points.map((p) => ({ lat: p.lat, lon: p.lon, t: p.time.toISOString(), ele: p.elevationM, hr: p.heartRateBpm }))
-    ),
-    analysis_json: JSON.stringify(analysis.analysisJson),
+    splits_json: parsed.splits,
+    raw_trackpoints_json: parsed.points.map((p) => ({ lat: p.lat, lon: p.lon, t: p.time.toISOString(), ele: p.elevationM, hr: p.heartRateBpm })),
+    analysis_json: analysis.analysisJson,
     verdict: analysis.verdict,
     rating: analysis.rating,
     performance_vs_target_pct: analysis.performanceVsTargetPct,
@@ -62,12 +60,12 @@ export async function processRunUpload(userId, content, fileName, plannedRunId) 
   if (analysis.localNudge) {
     const nextSameType = await getNextUpcomingByType(userId, plannedRun.run_type, plannedRun.week_number)
     if (nextSameType) {
-      const currentPrescription = JSON.parse(nextSameType.prescription_json)
+      const currentPrescription = nextSameType.prescription_json
       const nudged = applyNudgeToPrescription(currentPrescription, analysis.localNudge)
       await updatePlannedRunPrescription(userId, nextSameType.id, {
         target_distance_km: prescriptionTargetDistanceKm(nudged),
         target_pace_sec_per_km: prescriptionTargetPaceSecPerKm(nudged),
-        prescription_json: JSON.stringify(nudged),
+        prescription_json: nudged,
       })
     }
   }

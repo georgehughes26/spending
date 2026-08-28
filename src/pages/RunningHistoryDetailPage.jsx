@@ -117,9 +117,9 @@ export default function RunningHistoryDetailPage() {
     return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-red-600 dark:text-red-400">{error ?? 'Run not found.'}</p>
   }
 
-  const splits = JSON.parse(run.splits_json)
-  const prescription = JSON.parse(run.prescription_json)
-  const analysis = run.analysis_json ? JSON.parse(run.analysis_json) : {}
+  const splits = run.splits_json
+  const prescription = run.prescription_json
+  const analysis = run.analysis_json ?? {}
   const { faded, shortfall } = deriveExecutionFlags(
     prescription,
     run.distance_km,

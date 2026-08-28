@@ -56,7 +56,7 @@ async function writeWeekPrescriptions(userId, week, totalWeeks, anchorPaceSecPer
       run_type: runType,
       target_distance_km: prescriptionTargetDistanceKm(prescription),
       target_pace_sec_per_km: prescriptionTargetPaceSecPerKm(prescription),
-      prescription_json: JSON.stringify(prescription),
+      prescription_json: prescription,
     })
   }
 }
