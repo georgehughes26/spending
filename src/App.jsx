@@ -12,6 +12,11 @@ import RunningUploadPage from './pages/RunningUploadPage'
 import RunningSettingsPage from './pages/RunningSettingsPage'
 import RunningHistoryPage from './pages/RunningHistoryPage'
 import RunningHistoryDetailPage from './pages/RunningHistoryDetailPage'
+import StrengthDashboardPage from './pages/StrengthDashboardPage'
+import StrengthProgramPage from './pages/StrengthProgramPage'
+import StrengthLogPage from './pages/StrengthLogPage'
+import StrengthHistoryPage from './pages/StrengthHistoryPage'
+import StrengthHistoryDetailPage from './pages/StrengthHistoryDetailPage'
 import BankPage from './pages/BankPage'
 import BankCallbackPage from './pages/BankCallbackPage'
 import { PageTransition, tapScale } from './components/motion'
@@ -89,7 +94,10 @@ function RequireResaleAccess({ children }) {
   return children
 }
 
-function RequireRunningAccess({ children }) {
+// Gates the whole "Training" area (Running + Strength) -- still driven by
+// the running_access flag rather than a new column, since it's the same
+// single-user gate just covering more ground now.
+function RequireTrainingAccess({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
   if (!user) return <Navigate to="/signin" replace />
@@ -128,8 +136,8 @@ function Shell({ children }) {
         </NavLink>
       )}
       {user?.running_access && (
-        <NavLink to="/running" className={navItemClass}>
-          {icons.running} Running
+        <NavLink to="/training" className={navItemClass}>
+          {icons.running} Training
         </NavLink>
       )}
     </>
@@ -192,9 +200,9 @@ function Shell({ children }) {
           </NavLink>
         )}
         {user?.running_access && (
-          <NavLink to="/running" className={mobileTabItemClass}>
+          <NavLink to="/training" className={mobileTabItemClass}>
             {icons.running}
-            Running
+            Training
           </NavLink>
         )}
       </nav>
@@ -258,53 +266,104 @@ function AppRoutes() {
             </PageTransition>
           }
         />
+        <Route path="/training" element={<Navigate to="/training/running" replace />} />
         <Route
-          path="/running"
+          path="/training/running"
           element={
             <PageTransition>
-              <RequireRunningAccess>
+              <RequireTrainingAccess>
                 <Shell><RunningDashboardPage /></Shell>
-              </RequireRunningAccess>
+              </RequireTrainingAccess>
             </PageTransition>
           }
         />
         <Route
-          path="/running/upload"
+          path="/training/running/upload"
           element={
             <PageTransition>
-              <RequireRunningAccess>
+              <RequireTrainingAccess>
                 <Shell><RunningUploadPage /></Shell>
-              </RequireRunningAccess>
+              </RequireTrainingAccess>
             </PageTransition>
           }
         />
         <Route
-          path="/running/history"
+          path="/training/running/history"
           element={
             <PageTransition>
-              <RequireRunningAccess>
+              <RequireTrainingAccess>
                 <Shell><RunningHistoryPage /></Shell>
-              </RequireRunningAccess>
+              </RequireTrainingAccess>
             </PageTransition>
           }
         />
         <Route
-          path="/running/history/:id"
+          path="/training/running/history/:id"
           element={
             <PageTransition>
-              <RequireRunningAccess>
+              <RequireTrainingAccess>
                 <Shell><RunningHistoryDetailPage /></Shell>
-              </RequireRunningAccess>
+              </RequireTrainingAccess>
             </PageTransition>
           }
         />
         <Route
-          path="/running/settings"
+          path="/training/running/settings"
           element={
             <PageTransition>
-              <RequireRunningAccess>
+              <RequireTrainingAccess>
                 <Shell><RunningSettingsPage /></Shell>
-              </RequireRunningAccess>
+              </RequireTrainingAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/training/strength"
+          element={
+            <PageTransition>
+              <RequireTrainingAccess>
+                <Shell><StrengthDashboardPage /></Shell>
+              </RequireTrainingAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/training/strength/program"
+          element={
+            <PageTransition>
+              <RequireTrainingAccess>
+                <Shell><StrengthProgramPage /></Shell>
+              </RequireTrainingAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/training/strength/log/:dayId"
+          element={
+            <PageTransition>
+              <RequireTrainingAccess>
+                <Shell><StrengthLogPage /></Shell>
+              </RequireTrainingAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/training/strength/history"
+          element={
+            <PageTransition>
+              <RequireTrainingAccess>
+                <Shell><StrengthHistoryPage /></Shell>
+              </RequireTrainingAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/training/strength/history/:id"
+          element={
+            <PageTransition>
+              <RequireTrainingAccess>
+                <Shell><StrengthHistoryDetailPage /></Shell>
+              </RequireTrainingAccess>
             </PageTransition>
           }
         />

@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
+import TrainingAreaSwitch from './TrainingAreaSwitch'
 
 const TABS = [
-  { to: '/running', label: 'Dashboard', end: true },
-  { to: '/running/upload', label: 'Upload' },
-  { to: '/running/history', label: 'History' },
-  { to: '/running/settings', label: 'Settings' },
+  { to: '/training/running', label: 'Dashboard', end: true },
+  { to: '/training/running/upload', label: 'Upload' },
+  { to: '/training/running/history', label: 'History' },
+  { to: '/training/running/settings', label: 'Settings' },
 ]
 
 const tabClass = ({ isActive }) =>
@@ -16,12 +17,15 @@ const tabClass = ({ isActive }) =>
 
 export default function RunningSubNav() {
   return (
-    <nav className="flex flex-wrap gap-1.5">
-      {TABS.map((tab) => (
-        <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabClass}>
-          {tab.label}
-        </NavLink>
-      ))}
-    </nav>
+    <div className="flex flex-col gap-2.5">
+      <TrainingAreaSwitch />
+      <nav className="flex flex-wrap gap-1.5">
+        {TABS.map((tab) => (
+          <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabClass}>
+            {tab.label}
+          </NavLink>
+        ))}
+      </nav>
+    </div>
   )
 }

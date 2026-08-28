@@ -103,7 +103,7 @@ export default function RunningHistoryDetailPage() {
     setDeleting(true)
     try {
       await deleteRun(run.id)
-      navigate('/running/history')
+      navigate('/training/running/history')
     } catch (err) {
       setError(err.message)
       setDeleting(false)

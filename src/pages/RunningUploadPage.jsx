@@ -78,7 +78,7 @@ export default function RunningUploadPage() {
     try {
       const content = await file.text()
       const outcome = await uploadRun(content, file.name, plannedRunId)
-      navigate(`/running/history/${outcome.completedRunId}`)
+      navigate(`/training/running/history/${outcome.completedRunId}`)
     } catch (err) {
       setSubmitError(err.message ?? 'Upload failed')
       setSubmitting(false)

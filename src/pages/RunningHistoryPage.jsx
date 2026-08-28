@@ -38,7 +38,7 @@ export default function RunningHistoryPage() {
               {runs.map((run) => (
                 <Link
                   key={run.id}
-                  to={`/running/history/${run.id}`}
+                  to={`/training/running/history/${run.id}`}
                   className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-3 shadow-sm transition hover:border-zinc-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20"
                 >
                   <div className="flex items-center gap-3">
