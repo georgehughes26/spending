@@ -4,7 +4,7 @@ import { getStoredUserId, hashPin, setStoredUserId } from '../lib/auth'
 
 const AuthContext = createContext(null)
 const THEME_KEY = 'layla_theme'
-const USER_COLUMNS = 'id, name, onboarded, theme, resale_access'
+const USER_COLUMNS = 'id, name, onboarded, theme, resale_access, running_access'
 
 function applyTheme(theme) {
   document.documentElement.classList.toggle('dark', theme === 'dark')

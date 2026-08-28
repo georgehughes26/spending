@@ -7,9 +7,15 @@ import SettingsPage from './pages/SettingsPage'
 import SignInPage from './pages/SignInPage'
 import OnboardingPage from './pages/OnboardingPage'
 import ResalePage from './pages/ResalePage'
+import RunningDashboardPage from './pages/RunningDashboardPage'
+import RunningUploadPage from './pages/RunningUploadPage'
+import RunningSettingsPage from './pages/RunningSettingsPage'
+import RunningHistoryPage from './pages/RunningHistoryPage'
+import RunningHistoryDetailPage from './pages/RunningHistoryDetailPage'
 import BankPage from './pages/BankPage'
 import BankCallbackPage from './pages/BankCallbackPage'
 import { PageTransition, tapScale } from './components/motion'
+import { RunningNavIcon } from './components/RunningIcons'
 
 const iconProps = { viewBox: '0 0 20 20', className: 'h-5 w-5 shrink-0', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' }
 
@@ -40,6 +46,7 @@ const icons = {
       <circle cx="7" cy="7" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   ),
+  running: <RunningNavIcon />,
   signOut: (
     <svg {...iconProps}>
       <path d="M8 3H4.5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1H8" />
@@ -82,6 +89,15 @@ function RequireResaleAccess({ children }) {
   return children
 }
 
+function RequireRunningAccess({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
+  if (!user) return <Navigate to="/signin" replace />
+  if (!user.onboarded) return <Navigate to="/onboarding" replace />
+  if (!user.running_access) return <Navigate to="/" replace />
+  return children
+}
+
 function RequireSignedIn({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
@@ -109,6 +125,11 @@ function Shell({ children }) {
       {user?.resale_access && (
         <NavLink to="/resale" className={navItemClass}>
           {icons.resale} Reselling
+        </NavLink>
+      )}
+      {user?.running_access && (
+        <NavLink to="/running" className={navItemClass}>
+          {icons.running} Running
         </NavLink>
       )}
     </>
@@ -170,6 +191,12 @@ function Shell({ children }) {
             Reselling
           </NavLink>
         )}
+        {user?.running_access && (
+          <NavLink to="/running" className={mobileTabItemClass}>
+            {icons.running}
+            Running
+          </NavLink>
+        )}
       </nav>
     </div>
   )
@@ -228,6 +255,56 @@ function AppRoutes() {
               <RequireResaleAccess>
                 <Shell><ResalePage /></Shell>
               </RequireResaleAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/running"
+          element={
+            <PageTransition>
+              <RequireRunningAccess>
+                <Shell><RunningDashboardPage /></Shell>
+              </RequireRunningAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/running/upload"
+          element={
+            <PageTransition>
+              <RequireRunningAccess>
+                <Shell><RunningUploadPage /></Shell>
+              </RequireRunningAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/running/history"
+          element={
+            <PageTransition>
+              <RequireRunningAccess>
+                <Shell><RunningHistoryPage /></Shell>
+              </RequireRunningAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/running/history/:id"
+          element={
+            <PageTransition>
+              <RequireRunningAccess>
+                <Shell><RunningHistoryDetailPage /></Shell>
+              </RequireRunningAccess>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/running/settings"
+          element={
+            <PageTransition>
+              <RequireRunningAccess>
+                <Shell><RunningSettingsPage /></Shell>
+              </RequireRunningAccess>
             </PageTransition>
           }
         />
