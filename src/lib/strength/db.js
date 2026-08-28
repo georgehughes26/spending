@@ -129,14 +129,14 @@ export async function insertSetLogs(userId, rows) {
 export async function getSetLogsForSession(userId, sessionId) {
   const { data, error } = await supabase
     .from(T.logs)
-    .select('*, strength_program_exercises!inner(name, target_sets, target_reps, target_weight_kg)')
+    .select('*, strength_program_exercises!inner(name, target_sets, target_reps_min, target_reps_max, target_weight_kg)')
     .eq('user_id', userId)
     .eq('session_id', sessionId)
     .order('set_number')
   check(error)
   return data.map((row) => {
     const { strength_program_exercises: ex, ...rest } = row
-    return { ...rest, exercise_name: ex.name, target_reps: ex.target_reps, target_weight_kg: ex.target_weight_kg }
+    return { ...rest, exercise_name: ex.name, target_reps_min: ex.target_reps_min, target_reps_max: ex.target_reps_max, target_weight_kg: ex.target_weight_kg }
   })
 }
 

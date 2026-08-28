@@ -10,7 +10,7 @@ const inputClass =
   'min-h-10 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
 function emptyExercise() {
-  return { name: '', target_sets: '3', target_reps: '10', target_weight_kg: '' }
+  return { name: '', target_sets: '3', target_reps_min: '10', target_reps_max: '12', target_weight_kg: '' }
 }
 
 function AddDayForm({ onAdd }) {
@@ -55,7 +55,8 @@ function ExerciseRow({ exercise, onUpdate, onRemove }) {
   const [form, setForm] = useState({
     name: exercise.name,
     target_sets: String(exercise.target_sets),
-    target_reps: String(exercise.target_reps),
+    target_reps_min: String(exercise.target_reps_min),
+    target_reps_max: String(exercise.target_reps_max),
     target_weight_kg: String(exercise.target_weight_kg),
   })
   const [busy, setBusy] = useState(false)
@@ -63,10 +64,13 @@ function ExerciseRow({ exercise, onUpdate, onRemove }) {
   async function save() {
     setBusy(true)
     try {
+      const min = Number(form.target_reps_min) || 1
+      const max = Math.max(Number(form.target_reps_max) || min, min)
       await onUpdate(exercise.id, {
         name: form.name.trim(),
         target_sets: Number(form.target_sets) || 1,
-        target_reps: Number(form.target_reps) || 1,
+        target_reps_min: min,
+        target_reps_max: max,
         target_weight_kg: Number(form.target_weight_kg) || 0,
       })
       setEditing(false)
@@ -77,10 +81,14 @@ function ExerciseRow({ exercise, onUpdate, onRemove }) {
 
   if (editing) {
     return (
-      <div className="grid grid-cols-2 gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-2.5 dark:border-white/10 dark:bg-white/[0.03] sm:grid-cols-5 sm:items-center">
+      <div className="grid grid-cols-2 gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-2.5 dark:border-white/10 dark:bg-white/[0.03] sm:grid-cols-6 sm:items-center">
         <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={`${inputClass} sm:col-span-2`} placeholder="Exercise" />
         <input type="number" min="1" value={form.target_sets} onChange={(e) => setForm((f) => ({ ...f, target_sets: e.target.value }))} className={inputClass} placeholder="Sets" />
-        <input type="number" min="1" value={form.target_reps} onChange={(e) => setForm((f) => ({ ...f, target_reps: e.target.value }))} className={inputClass} placeholder="Reps" />
+        <div className="flex items-center gap-1">
+          <input type="number" min="1" value={form.target_reps_min} onChange={(e) => setForm((f) => ({ ...f, target_reps_min: e.target.value }))} className={inputClass} placeholder="Reps min" />
+          <span className="text-zinc-400">-</span>
+          <input type="number" min="1" value={form.target_reps_max} onChange={(e) => setForm((f) => ({ ...f, target_reps_max: e.target.value }))} className={inputClass} placeholder="max" />
+        </div>
         <div className="flex gap-1.5">
           <input type="number" min="0" step="0.5" value={form.target_weight_kg} onChange={(e) => setForm((f) => ({ ...f, target_weight_kg: e.target.value }))} className={inputClass} placeholder="kg (optional)" />
           <button type="button" disabled={busy} onClick={save} className="shrink-0 rounded-lg bg-pink-600 dark:bg-emerald-400 px-3 text-xs font-medium text-white dark:text-zinc-950 disabled:opacity-50">
@@ -96,7 +104,7 @@ function ExerciseRow({ exercise, onUpdate, onRemove }) {
       <div>
         <span className="font-medium text-zinc-900 dark:text-zinc-100">{exercise.name}</span>
         <span className="ml-2 text-zinc-500 dark:text-zinc-400">
-          {exercise.target_sets} &times; {exercise.target_reps}
+          {exercise.target_sets} &times; {exercise.target_reps_min}-{exercise.target_reps_max}
           {exercise.target_weight_kg > 0 ? ` @ ${exercise.target_weight_kg}kg` : ' -- not logged yet'}
         </span>
       </div>
@@ -122,10 +130,13 @@ function DayCard({ day, onAddExercise, onUpdateExercise, onRemoveExercise, onRem
     if (!form.name.trim()) return
     setAdding(true)
     try {
+      const min = Number(form.target_reps_min) || 1
+      const max = Math.max(Number(form.target_reps_max) || min, min)
       await onAddExercise(day.id, {
         name: form.name.trim(),
         target_sets: Number(form.target_sets) || 1,
-        target_reps: Number(form.target_reps) || 1,
+        target_reps_min: min,
+        target_reps_max: max,
         target_weight_kg: Number(form.target_weight_kg) || 0,
       })
       setForm(emptyExercise())
@@ -147,10 +158,14 @@ function DayCard({ day, onAddExercise, onUpdateExercise, onRemoveExercise, onRem
       </div>
 
       {showAdd ? (
-        <form onSubmit={handleAdd} className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-dashed border-zinc-300 p-2.5 dark:border-white/15 sm:grid-cols-5 sm:items-center">
+        <form onSubmit={handleAdd} className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-dashed border-zinc-300 p-2.5 dark:border-white/15 sm:grid-cols-6 sm:items-center">
           <input autoFocus value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={`${inputClass} sm:col-span-2`} placeholder="Exercise name" />
           <input type="number" min="1" value={form.target_sets} onChange={(e) => setForm((f) => ({ ...f, target_sets: e.target.value }))} className={inputClass} placeholder="Sets" />
-          <input type="number" min="1" value={form.target_reps} onChange={(e) => setForm((f) => ({ ...f, target_reps: e.target.value }))} className={inputClass} placeholder="Reps" />
+          <div className="flex items-center gap-1">
+            <input type="number" min="1" value={form.target_reps_min} onChange={(e) => setForm((f) => ({ ...f, target_reps_min: e.target.value }))} className={inputClass} placeholder="Reps min" />
+            <span className="text-zinc-400">-</span>
+            <input type="number" min="1" value={form.target_reps_max} onChange={(e) => setForm((f) => ({ ...f, target_reps_max: e.target.value }))} className={inputClass} placeholder="max" />
+          </div>
           <div className="flex gap-1.5">
             <input type="number" min="0" step="0.5" value={form.target_weight_kg} onChange={(e) => setForm((f) => ({ ...f, target_weight_kg: e.target.value }))} className={inputClass} placeholder="kg (optional)" />
             <button type="submit" disabled={adding || !form.name.trim()} className="shrink-0 rounded-lg bg-pink-600 dark:bg-emerald-400 px-3 text-xs font-medium text-white dark:text-zinc-950 disabled:opacity-50">

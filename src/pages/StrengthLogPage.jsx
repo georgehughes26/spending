@@ -14,7 +14,7 @@ const inputClass =
 
 function buildInitialSets(exercise) {
   return Array.from({ length: exercise.target_sets }, () => ({
-    reps: String(exercise.target_reps),
+    reps: String(exercise.target_reps_max),
     weight_kg: exercise.target_weight_kg > 0 ? String(exercise.target_weight_kg) : '',
   }))
 }
@@ -37,9 +37,9 @@ function applyGarminSets(dayExercises, activeSets) {
       cursor++
       if (g) {
         const weightKg = g.weight != null ? Math.round((g.weight / 1000) * 2) / 2 : ex.target_weight_kg
-        sets.push({ reps: String(g.repetitionCount ?? ex.target_reps), weight_kg: String(weightKg) })
+        sets.push({ reps: String(g.repetitionCount ?? ex.target_reps_max), weight_kg: String(weightKg) })
       } else {
-        sets.push({ reps: String(ex.target_reps), weight_kg: ex.target_weight_kg > 0 ? String(ex.target_weight_kg) : '' })
+        sets.push({ reps: String(ex.target_reps_max), weight_kg: ex.target_weight_kg > 0 ? String(ex.target_weight_kg) : '' })
       }
     }
     logs[ex.id] = sets
@@ -133,7 +133,7 @@ function ExerciseLogRows({ exercise, sets, onChange }) {
       <div className="mb-2 flex items-baseline justify-between">
         <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">{exercise.name}</h3>
         <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {exercise.target_sets} &times; {exercise.target_reps}
+          {exercise.target_sets} &times; {exercise.target_reps_min}-{exercise.target_reps_max}
           {exercise.target_weight_kg > 0 ? ` -- last time: ${exercise.target_weight_kg}kg` : ' -- first time logging this'}
         </span>
       </div>
@@ -236,7 +236,7 @@ export default function StrengthLogPage() {
           rows.push({ session_id: session.id, exercise_id: ex.id, set_number: i + 1, reps, weight_kg: weight })
           // Score against the weight you did *last* time (ex.target_weight_kg,
           // read before this session), not a fixed goal -- there isn't one.
-          setScores.push(computeSetScore(reps, weight, ex.target_reps, ex.target_weight_kg))
+          setScores.push(computeSetScore(reps, weight, ex.target_reps_max, ex.target_weight_kg))
           if (weight > maxWeight) maxWeight = weight
         })
         exerciseScores.push(computeExerciseScore(setScores))

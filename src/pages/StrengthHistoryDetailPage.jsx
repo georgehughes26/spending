@@ -53,9 +53,9 @@ function ExerciseBlock({ name, sets, suggestion }) {
                 <td className="py-1.5 text-zinc-900 dark:text-zinc-100">{s.set_number}</td>
                 <td className="py-1.5 text-zinc-900 dark:text-zinc-100">{s.reps}</td>
                 <td className="py-1.5 text-zinc-900 dark:text-zinc-100">{s.weight_kg}</td>
-                <td className="py-1.5 text-zinc-500 dark:text-zinc-400">{s.target_reps} @ {s.target_weight_kg}kg</td>
-                <td className={`py-1.5 font-medium ${scoreClass(computeSetScore(s.reps, s.weight_kg, s.target_reps, s.target_weight_kg))}`}>
-                  {computeSetScore(s.reps, s.weight_kg, s.target_reps, s.target_weight_kg)}
+                <td className="py-1.5 text-zinc-500 dark:text-zinc-400">{s.target_reps_min}-{s.target_reps_max} @ {s.target_weight_kg}kg</td>
+                <td className={`py-1.5 font-medium ${scoreClass(computeSetScore(s.reps, s.weight_kg, s.target_reps_max, s.target_weight_kg))}`}>
+                  {computeSetScore(s.reps, s.weight_kg, s.target_reps_max, s.target_weight_kg)}
                 </td>
               </tr>
             ))}
@@ -104,7 +104,7 @@ export default function StrengthHistoryDetailPage() {
             const first = group.sets[0]
             const recent = await db.getRecentLogsForExercise(user.id, exerciseId, 3)
             const suggestion = suggestProgression(
-              { target_reps: first.target_reps, target_weight_kg: first.target_weight_kg },
+              { target_reps_min: first.target_reps_min, target_reps_max: first.target_reps_max, target_weight_kg: first.target_weight_kg },
               recent,
             )
             return { ...group, suggestion }
