@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Card from '../components/Card'
 import NumberField from '../components/NumberField'
 import WeekEntryRow from '../components/WeekEntryRow'
@@ -78,6 +78,10 @@ export default function DataEntryPage() {
   const { categories: categoryRows, loading: categoriesLoading } = useSpendingCategories(user?.id)
   const categories = useMemo(() => categoryRows.map((c) => c.name), [categoryRows])
 
+  // True only when the user has actually typed into a payday input since
+  // the last save -- see the payday-sync effect below for why this exists.
+  const periodEditedRef = useRef(false)
+
   const [form, setForm] = useState(emptyForm())
   const [closingBalances, setClosingBalances] = useState({})
   const [actualSplit, setActualSplit] = useState({})
@@ -105,29 +109,39 @@ export default function DataEntryPage() {
     setActualSplit({ ...emptyGoalSplit(pots), ...existingEntry?.goal_contributions })
     setPeriodStart(existingEntry?.period_start ?? monthValueToDate(selectedMonth))
     setPeriodEnd(existingEntry?.period_end ?? lastDayOfMonth(selectedMonth))
+    periodEditedRef.current = false
     setSaved(false)
     setSaveError(null)
+    // Keyed on the entry's id, not the entry object or the entries array --
+    // those get a new reference on every refetch (including ones triggered
+    // by totally unrelated saves, like the fixedCostsTotal sync below),
+    // which would otherwise re-run this and stomp on an in-progress payday
+    // edit before it's had a chance to save.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth, existingEntry, entries, pots])
+  }, [selectedMonth, existingEntry?.id, pots])
 
   // Keeps a saved month's payday dates in sync as soon as they're edited,
   // the same way fixedCostsTotal below syncs itself -- no separate save step.
+  // Gated on periodEditedRef (set only by the actual input's onChange), not
+  // on comparing periodStart/periodEnd against existingEntry's stored
+  // values -- that comparison raced with the effect above: when existingEntry
+  // first loads, both effects fire in the same commit, and this one would
+  // read periodEnd from *this render's* stale closure (still the pre-load
+  // default) while existingEntry already reflected the freshly-loaded value,
+  // making a load look like an edit and saving the stale default over the
+  // real one. A dirty flag set only by genuine user input sidesteps that
+  // entirely, regardless of effect ordering.
+  //
+  // Only period_start/period_end are sent: saveEntry upserts, and Postgres'
+  // ON CONFLICT DO UPDATE only touches columns actually present in the
+  // payload, so every other field is left exactly as it is in the database.
   useEffect(() => {
-    if (!existingEntry) return
-    const storedStart = existingEntry.period_start ?? monthValueToDate(selectedMonth)
-    const storedEnd = existingEntry.period_end ?? lastDayOfMonth(selectedMonth)
-    if (storedStart === periodStart && storedEnd === periodEnd) return
+    if (!existingEntry || !periodEditedRef.current) return
+    periodEditedRef.current = false
 
     saveEntry({
       id: existingEntry.id,
       month: existingEntry.month,
-      income: existingEntry.income,
-      spending: existingEntry.spending ?? {},
-      account_balances: existingEntry.account_balances ?? {},
-      goal_contributions: existingEntry.goal_contributions ?? {},
-      house_contribution_me: existingEntry.house_contribution_me ?? 0,
-      house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
-      notes: existingEntry.notes,
       period_start: periodStart,
       period_end: periodEnd,
     })
@@ -157,23 +171,13 @@ export default function DataEntryPage() {
     const storedFixed = Number(existingEntry.spending?.[FIXED_COSTS_CATEGORY]) || 0
     if (storedFixed === fixedCostsTotal) return
 
+    // Only id/month/spending -- see the comment on the payday-sync effect
+    // above for why every other field, including period_start/period_end,
+    // is deliberately left out of this payload.
     saveEntry({
       id: existingEntry.id,
       month: existingEntry.month,
-      income: existingEntry.income,
       spending: { ...existingEntry.spending, [FIXED_COSTS_CATEGORY]: fixedCostsTotal },
-      account_balances: existingEntry.account_balances ?? {},
-      goal_contributions: existingEntry.goal_contributions ?? {},
-      house_contribution_me: existingEntry.house_contribution_me ?? 0,
-      house_contribution_partner: existingEntry.house_contribution_partner ?? 0,
-      notes: existingEntry.notes,
-      // Live state, not existingEntry's -- this effect can fire around the
-      // same time as the payday sync above (both re-trigger off the same
-      // existingEntry reference change), and writing existingEntry's own
-      // stale period dates here would silently undo whatever payday edit
-      // just landed.
-      period_start: periodStart,
-      period_end: periodEnd,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixedCostsTotal, fixedCostsLoading, existingEntry])
@@ -299,7 +303,10 @@ export default function DataEntryPage() {
                 <input
                   type="date"
                   value={periodStart}
-                  onChange={(e) => setPeriodStart(e.target.value)}
+                  onChange={(e) => {
+                    periodEditedRef.current = true
+                    setPeriodStart(e.target.value)
+                  }}
                   className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
                 />
               </label>
@@ -308,7 +315,10 @@ export default function DataEntryPage() {
                 <input
                   type="date"
                   value={periodEnd}
-                  onChange={(e) => setPeriodEnd(e.target.value)}
+                  onChange={(e) => {
+                    periodEditedRef.current = true
+                    setPeriodEnd(e.target.value)
+                  }}
                   className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
                 />
               </label>
