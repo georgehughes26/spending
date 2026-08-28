@@ -5,6 +5,8 @@ const T = {
   exercises: 'strength_program_exercises',
   sessions: 'strength_sessions',
   logs: 'strength_set_logs',
+  weeks: 'strength_program_weeks',
+  planned: 'strength_planned_sessions',
 }
 
 function check(error) {
@@ -88,6 +90,13 @@ export async function createSession(userId, fields) {
   return data
 }
 
+export async function getSessionsByPlannedSessionIds(userId, plannedSessionIds) {
+  if (plannedSessionIds.length === 0) return []
+  const { data, error } = await supabase.from(T.sessions).select('*').eq('user_id', userId).in('planned_session_id', plannedSessionIds)
+  check(error)
+  return data
+}
+
 export async function updateSessionScore(userId, sessionId, score) {
   const { error } = await supabase.from(T.sessions).update({ score }).eq('user_id', userId).eq('id', sessionId)
   check(error)
@@ -164,4 +173,48 @@ export async function getLatestSessionPerDay(userId) {
     if (!map[s.day_id]) map[s.day_id] = s
   }
   return map
+}
+
+// ---- program weeks + planned sessions ----
+
+export async function getWeekByStartDate(userId, startDate) {
+  const { data, error } = await supabase.from(T.weeks).select('*').eq('user_id', userId).eq('start_date', startDate).maybeSingle()
+  check(error)
+  return data
+}
+
+export async function createWeek(userId, startDate) {
+  const { data, error } = await supabase.from(T.weeks).insert({ user_id: userId, start_date: startDate }).select().single()
+  check(error)
+  return data
+}
+
+export async function createPlannedSession(userId, fields) {
+  const { data, error } = await supabase.from(T.planned).insert({ user_id: userId, ...fields }).select().single()
+  check(error)
+  return data
+}
+
+function flattenPlanned(row) {
+  const { strength_program_days: day, ...rest } = row
+  return { ...rest, day_label: day.label, is_optional: day.is_optional, day_sort_order: day.sort_order }
+}
+
+const PLANNED_SELECT = '*, strength_program_days!inner(label, is_optional, sort_order)'
+
+export async function getPlannedSessionsForWeek(userId, weekId) {
+  const { data, error } = await supabase.from(T.planned).select(PLANNED_SELECT).eq('user_id', userId).eq('week_id', weekId)
+  check(error)
+  return data.map(flattenPlanned).sort((a, b) => a.day_sort_order - b.day_sort_order)
+}
+
+export async function getPlannedSessionById(userId, id) {
+  const { data, error } = await supabase.from(T.planned).select(PLANNED_SELECT).eq('user_id', userId).eq('id', id).maybeSingle()
+  check(error)
+  return data ? flattenPlanned(data) : null
+}
+
+export async function markPlannedSessionStatus(userId, id, status) {
+  const { error } = await supabase.from(T.planned).update({ status }).eq('user_id', userId).eq('id', id)
+  check(error)
 }

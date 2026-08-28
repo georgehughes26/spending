@@ -60,9 +60,10 @@ function ExerciseLogRows({ exercise, sets, onChange }) {
 
 export default function StrengthLogPage() {
   const { user } = useAuth()
-  const { dayId } = useParams()
+  const { plannedSessionId } = useParams()
   const navigate = useNavigate()
 
+  const [plannedSession, setPlannedSession] = useState(null)
   const [day, setDay] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -72,18 +73,22 @@ export default function StrengthLogPage() {
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    db.getDayWithExercises(user.id, dayId)
-      .then((d) => {
-        if (cancelled || !d) return
-        setDay(d)
-        const initial = {}
-        for (const ex of d.exercises) initial[ex.id] = buildInitialSets(ex)
-        setLogsByExercise(initial)
-      })
+    async function load() {
+      const planned = await db.getPlannedSessionById(user.id, plannedSessionId)
+      if (cancelled || !planned) return
+      const d = await db.getDayWithExercises(user.id, planned.day_id)
+      if (cancelled || !d) return
+      setPlannedSession(planned)
+      setDay(d)
+      const initial = {}
+      for (const ex of d.exercises) initial[ex.id] = buildInitialSets(ex)
+      setLogsByExercise(initial)
+    }
+    load()
       .catch((err) => { if (!cancelled) setError(err.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [user?.id, dayId])
+  }, [user?.id, plannedSessionId])
 
   function updateSet(exerciseId, setIndex, next) {
     setLogsByExercise((prev) => ({
@@ -98,7 +103,11 @@ export default function StrengthLogPage() {
     setSubmitting(true)
     setError(null)
     try {
-      const session = await db.createSession(user.id, { day_id: day.id, session_date: new Date().toISOString().slice(0, 10) })
+      const session = await db.createSession(user.id, {
+        day_id: day.id,
+        planned_session_id: plannedSession?.id ?? null,
+        session_date: new Date().toISOString().slice(0, 10),
+      })
 
       const rows = []
       const exerciseScores = []
@@ -117,6 +126,7 @@ export default function StrengthLogPage() {
       await db.insertSetLogs(user.id, rows)
       const sessionScore = computeSessionScore(exerciseScores)
       await db.updateSessionScore(user.id, session.id, sessionScore)
+      if (plannedSession) await db.markPlannedSessionStatus(user.id, plannedSession.id, 'completed')
 
       navigate(`/training/strength/history/${session.id}`)
     } catch (err) {

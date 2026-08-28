@@ -30,8 +30,8 @@ export function useStrengthProgram(userId) {
   }, [refresh])
 
   const addDay = useCallback(
-    async (label) => {
-      await db.createDay(userId, { label, sort_order: days.length })
+    async (label, isOptional = false) => {
+      await db.createDay(userId, { label, is_optional: isOptional, sort_order: days.length })
       await refresh()
     },
     [userId, days.length, refresh],

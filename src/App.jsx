@@ -360,7 +360,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/training/strength/log/:dayId"
+          path="/training/strength/log/:plannedSessionId"
           element={
             <PageTransition>
               <RequireTrainingAccess>

@@ -15,6 +15,7 @@ function emptyExercise() {
 
 function AddDayForm({ onAdd }) {
   const [label, setLabel] = useState('')
+  const [isOptional, setIsOptional] = useState(false)
   const [adding, setAdding] = useState(false)
 
   async function handleSubmit(e) {
@@ -22,16 +23,21 @@ function AddDayForm({ onAdd }) {
     if (!label.trim()) return
     setAdding(true)
     try {
-      await onAdd(label.trim())
+      await onAdd(label.trim(), isOptional)
       setLabel('')
+      setIsOptional(false)
     } finally {
       setAdding(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Push Day" className={inputClass} />
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
+      <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Upper" className={inputClass} />
+      <label className="flex shrink-0 items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+        <input type="checkbox" checked={isOptional} onChange={(e) => setIsOptional(e.target.checked)} className="h-4 w-4 rounded" />
+        Optional
+      </label>
       <motion.button
         {...tapScale}
         type="submit"
@@ -129,7 +135,7 @@ function DayCard({ day, onAddExercise, onUpdateExercise, onRemoveExercise, onRem
   }
 
   return (
-    <Card title={day.label}>
+    <Card title={day.is_optional ? `${day.label} (optional)` : day.label}>
       <div className="flex flex-col gap-2">
         {day.exercises.length === 0 && !showAdd && (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">No exercises yet.</p>
