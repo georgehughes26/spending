@@ -41,6 +41,34 @@ export function deriveAssets(entries, pots) {
   return (pots ?? []).map((pot) => ({ label: pot.name, value: latestPotBalance(entries, pot) }))
 }
 
+function entryHasAnyStoredBalance(entry, pots) {
+  return (pots ?? []).some((pot) => {
+    const stored = entry?.account_balances?.[pot.id]
+    return stored !== undefined && stored !== null
+  })
+}
+
+// The "monthly change" figure shown under Net Worth. netWorthHistory's
+// latest point is a carried-forward copy of the prior month's total for as
+// long as the current month has no real balances entered -- comparing it
+// to itself would always read as a misleading £0. When that's the case,
+// fall back to the last real month-over-month change instead, labelled
+// "last month" rather than "this month" so it doesn't read as this month's
+// (nonexistent) real change.
+export function deriveNetWorthChange(entries, pots, netWorthHistory) {
+  const len = netWorthHistory.length
+  if (len < 2) return { amount: 0, label: 'this month' }
+
+  const latestEntry = entries[entries.length - 1]
+  const latestHasData = latestEntry ? entryHasAnyStoredBalance(latestEntry, pots) : false
+
+  if (latestHasData || len < 3) {
+    return { amount: netWorthHistory[len - 1].value - netWorthHistory[len - 2].value, label: 'this month' }
+  }
+
+  return { amount: netWorthHistory[len - 2].value - netWorthHistory[len - 3].value, label: 'last month' }
+}
+
 // Income is only ever entered once, at month-end -- until then an entry
 // sits at 0, so fall back to the previous entry's income as a working
 // estimate rather than showing a misleading £0.

@@ -14,6 +14,7 @@ import {
   deriveContributions,
   deriveMonthlyComparison,
   deriveMonthlyOverview,
+  deriveNetWorthChange,
   deriveNetWorthHistory,
   deriveSavingsGoals,
   deriveTotalSavingsHistory,
@@ -48,6 +49,7 @@ export default function DashboardPage() {
   const savingsHistory = deriveTotalSavingsHistory(entries, pots)
   const assets = deriveAssets(entries, pots)
   const netWorthHistory = deriveNetWorthHistory(entries, pots)
+  const netWorthChange = deriveNetWorthChange(entries, pots, netWorthHistory)
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-6">
@@ -59,7 +61,7 @@ export default function DashboardPage() {
 
       <FadeInStagger className="flex flex-col gap-5">
         <FadeInItem>
-          <NetWorthCard assets={assets} liabilities={LIABILITIES} netWorthHistory={netWorthHistory} />
+          <NetWorthCard assets={assets} liabilities={LIABILITIES} netWorthHistory={netWorthHistory} change={netWorthChange} />
         </FadeInItem>
 
         {/* A bento mix of spans instead of a uniform grid -- the fuller

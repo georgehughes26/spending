@@ -5,7 +5,7 @@ import { formatGBP } from '../utils/format'
 // The one headline moment on the dashboard -- a solid-color hero rather than
 // another white card, so the single most important number actually reads as
 // the most important number.
-export default function NetWorthCard({ assets, liabilities, netWorthHistory }) {
+export default function NetWorthCard({ assets, liabilities, netWorthHistory, change }) {
   const totalAssets = assets.reduce((sum, a) => sum + a.value, 0)
   const totalLiabilities = liabilities.reduce((sum, l) => sum + l.value, 0)
 
@@ -14,8 +14,8 @@ export default function NetWorthCard({ assets, liabilities, netWorthHistory }) {
   // figure must come from there, not a second assets-liabilities calc that
   // can silently drift from it.
   const current = netWorthHistory[netWorthHistory.length - 1]?.value ?? (totalAssets - totalLiabilities)
-  const previous = netWorthHistory[netWorthHistory.length - 2]?.value ?? current
-  const monthlyChange = current - previous
+  const monthlyChange = change?.amount ?? 0
+  const changeLabel = change?.label ?? 'this month'
 
   return (
     <Card
@@ -26,7 +26,7 @@ export default function NetWorthCard({ assets, liabilities, netWorthHistory }) {
       <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
         <AnimatedNumber value={current} className="block text-5xl font-bold tracking-tight tabular-nums text-white sm:text-6xl" />
         <span className={`text-sm font-semibold ${monthlyChange >= 0 ? 'text-emerald-100' : 'text-rose-100'}`}>
-          {formatGBP(monthlyChange, { showSign: true })} this month
+          {formatGBP(monthlyChange, { showSign: true })} {changeLabel}
         </span>
       </div>
 
