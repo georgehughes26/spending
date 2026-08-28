@@ -29,12 +29,26 @@ export function jsonResponse(body: unknown, status = 200) {
 }
 
 async function loadGarminConnect() {
+  let mod: any
   try {
-    const mod = await import('npm:garmin-connect')
-    return mod.GarminConnect
+    mod = await import('npm:garmin-connect')
   } catch (err) {
     throw new Error(`Failed to load npm:garmin-connect under Deno: ${err instanceof Error ? err.message : String(err)}`)
   }
+
+  // CJS packages re-exporting a default sometimes don't unwrap the same way
+  // under Deno's npm compat as they do under Node -- try the shapes that
+  // are actually plausible here rather than assuming the first one.
+  const candidates = [mod.GarminConnect, mod.default?.GarminConnect, mod.default, mod]
+  for (const candidate of candidates) {
+    if (typeof candidate === 'function') return candidate
+  }
+
+  throw new Error(
+    `Could not resolve a GarminConnect constructor from npm:garmin-connect. ` +
+      `mod keys: [${Object.keys(mod).join(', ')}], ` +
+      `mod.default: ${typeof mod.default} ${mod.default ? `keys: [${Object.keys(mod.default).join(', ')}]` : ''}`,
+  )
 }
 
 async function loadCachedSession(supabaseAdmin: any, userId: string) {
