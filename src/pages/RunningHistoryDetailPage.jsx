@@ -91,7 +91,7 @@ export default function RunningHistoryDetailPage() {
     if (!user?.id) return
     let cancelled = false
     setLoading(true)
-    db.getCompletedRunById(user.id, Number(id))
+    db.getCompletedRunById(user.id, id)
       .then((r) => { if (!cancelled) setRun(r) })
       .catch((err) => { if (!cancelled) setError(err.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
