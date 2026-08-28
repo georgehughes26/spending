@@ -5,6 +5,7 @@ import { FadeInItem, FadeInStagger, tapScale } from '../components/motion'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useStrengthProgram } from '../hooks/useStrengthProgram'
+import { useStrengthInsights } from '../hooks/useStrengthInsights'
 
 const inputClass =
   'min-h-10 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
@@ -187,9 +188,47 @@ function DayCard({ day, onAddExercise, onUpdateExercise, onRemoveExercise, onRem
   )
 }
 
+function StatsForm({ profile, onSave }) {
+  const [height, setHeight] = useState(profile?.height_cm ? String(profile.height_cm) : '')
+  const [weight, setWeight] = useState(profile?.weight_kg ? String(profile.weight_kg) : '')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await onSave({ height_cm: Number(height) || null, weight_kg: Number(weight) || null })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2">
+      <label className="text-sm">
+        <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Height (cm)</span>
+        <input type="number" min="0" value={height} onChange={(e) => setHeight(e.target.value)} className={inputClass} placeholder="189" />
+      </label>
+      <label className="text-sm">
+        <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Weight (kg)</span>
+        <input type="number" min="0" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} className={inputClass} placeholder="95" />
+      </label>
+      <motion.button
+        {...tapScale}
+        type="submit"
+        disabled={saving}
+        className="min-h-10 shrink-0 rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 disabled:opacity-50"
+      >
+        {saving ? 'Saving…' : 'Save'}
+      </motion.button>
+    </form>
+  )
+}
+
 export default function StrengthProgramPage() {
   const { user } = useAuth()
   const { days, loading, error, addDay, removeDay, addExercise, updateExercise, removeExercise } = useStrengthProgram(user?.id)
+  const { profile, saveProfile } = useStrengthInsights(user?.id)
 
   if (loading) {
     return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
@@ -210,6 +249,13 @@ export default function StrengthProgramPage() {
               wherever you're starting, and it'll track itself upward from what you actually log each time.
             </p>
           </div>
+        </FadeInItem>
+
+        <FadeInItem>
+          <Card title="Your stats">
+            <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">Used for the relative-strength insight on the Dashboard -- weight-to-bodyweight ratio, not just raw kg.</p>
+            <StatsForm profile={profile} onSave={saveProfile} />
+          </Card>
         </FadeInItem>
 
         {days.map((day) => (

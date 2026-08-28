@@ -7,6 +7,7 @@ import { FadeInItem, FadeInStagger, tapScale } from '../components/motion'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useStrengthWeek } from '../hooks/useStrengthWeek'
+import { useStrengthInsights } from '../hooks/useStrengthInsights'
 import { weekCommencingLabel } from '../lib/strength/format'
 
 function scoreClass(score) {
@@ -96,9 +97,108 @@ function SessionCard({ planned, session, onMarkDoneNoFile, onSkip, onUnskip }) {
   )
 }
 
+function OverallProgressionTile({ overall }) {
+  if (!overall) {
+    return (
+      <Card title="Overall progression">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Log the same exercise twice to start seeing progression.</p>
+      </Card>
+    )
+  }
+  const pctText = `${overall.avgPct >= 0 ? '+' : ''}${(overall.avgPct * 100).toFixed(1)}%`
+  return (
+    <Card title="Overall progression">
+      <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{pctText}</div>
+      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">average weight change across {overall.trackedCount} tracked exercise{overall.trackedCount === 1 ? '' : 's'}</p>
+      <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="text-emerald-600 dark:text-emerald-400 font-medium">{overall.up} up</span>
+        {' · '}
+        <span>{overall.flat} flat</span>
+        {' · '}
+        <span className="text-amber-600 dark:text-amber-400 font-medium">{overall.down} down</span>
+      </p>
+    </Card>
+  )
+}
+
+function BestProgressTile({ progression }) {
+  const top = progression.slice(0, 3)
+  return (
+    <Card title="Progressing best">
+      {top.length === 0 ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Not enough history yet.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {top.map((row) => (
+            <div key={row.exercise.id} className="flex items-baseline justify-between text-sm">
+              <span className="font-medium text-zinc-900 dark:text-zinc-100">{row.exercise.name}</span>
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {row.firstWeightKg}kg &rarr; {row.currentWeightKg}kg ({row.deltaPct >= 0 ? '+' : ''}{(row.deltaPct * 100).toFixed(0)}%)
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function RelativeStrengthTile({ relativeStrength, hasBodyweight }) {
+  const top = relativeStrength.slice(0, 3)
+  return (
+    <Card title="Genuinely strongest at">
+      {!hasBodyweight ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Add your weight on the <Link to="/training/strength/program" className="text-pink-600 hover:underline dark:text-emerald-400">Program page</Link> to see this.
+        </p>
+      ) : top.length === 0 ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Log a weight for an exercise to see this.</p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2">
+            {top.map((row) => (
+              <div key={row.exercise.id} className="flex items-baseline justify-between text-sm">
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">{row.exercise.name}</span>
+                <span className="text-zinc-600 dark:text-zinc-300">{row.weightKg}kg &middot; {row.ratio.toFixed(2)}&times; bodyweight</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">Ranked by weight relative to bodyweight, not raw kg -- a small isolation lift can rank above a machine press here. Height/limb length isn't factored in.</p>
+        </>
+      )}
+    </Card>
+  )
+}
+
+function NeedsAttentionTile({ ready, struggling }) {
+  return (
+    <Card title="Needs upping / attention">
+      {ready.length === 0 && struggling.length === 0 ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Nothing flagged right now.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {ready.map(({ exercise, suggestion }) => (
+            <div key={exercise.id} className="text-sm">
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">{exercise.name}</span>
+              <span className="text-zinc-500 dark:text-zinc-400"> -- try {suggestion.suggestedWeightKg}kg next time</span>
+            </div>
+          ))}
+          {struggling.map(({ exercise }) => (
+            <div key={exercise.id} className="text-sm">
+              <span className="font-medium text-amber-600 dark:text-amber-400">{exercise.name}</span>
+              <span className="text-zinc-500 dark:text-zinc-400"> -- hold or ease back</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 export default function StrengthDashboardPage() {
   const { user } = useAuth()
   const { week, plannedSessions, sessionsByPlanned, loading, error, markDoneNoFile, skip, unskip, startNextWeek } = useStrengthWeek(user?.id)
+  const insights = useStrengthInsights(user?.id)
   const [advancing, setAdvancing] = useState(false)
 
   if (loading) {
@@ -128,6 +228,13 @@ export default function StrengthDashboardPage() {
         <FadeInItem className="flex flex-col gap-3">
           <StrengthSubNav />
           <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{week ? weekCommencingLabel(week.start_date) : 'Strength'}</h1>
+        </FadeInItem>
+
+        <FadeInItem className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <OverallProgressionTile overall={insights.overall} />
+          <BestProgressTile progression={insights.progression} />
+          <RelativeStrengthTile relativeStrength={insights.relativeStrength} hasBodyweight={!!insights.profile?.weight_kg} />
+          <NeedsAttentionTile ready={insights.ready} struggling={insights.struggling} />
         </FadeInItem>
 
         <FadeInItem>

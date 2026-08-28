@@ -7,10 +7,24 @@ const T = {
   logs: 'strength_set_logs',
   weeks: 'strength_program_weeks',
   planned: 'strength_planned_sessions',
+  profile: 'strength_profile',
 }
 
 function check(error) {
   if (error) throw new Error(error.message)
+}
+
+// ---- body stats ----
+
+export async function getStrengthProfile(userId) {
+  const { data, error } = await supabase.from(T.profile).select('*').eq('user_id', userId).maybeSingle()
+  check(error)
+  return data
+}
+
+export async function upsertStrengthProfile(userId, fields) {
+  const { error } = await supabase.from(T.profile).upsert({ user_id: userId, ...fields, updated_at: new Date().toISOString() })
+  check(error)
 }
 
 // ---- program: days ----
@@ -223,4 +237,26 @@ export async function getPlannedSessionById(userId, id) {
 export async function markPlannedSessionStatus(userId, id, status) {
   const { error } = await supabase.from(T.planned).update({ status }).eq('user_id', userId).eq('id', id)
   check(error)
+}
+
+// ---- insights ----
+
+/**
+ * Every logged set for the user, each tagged with its session's date --
+ * the raw material the insights tiles reduce down from (earliest weight
+ * per exercise for progression, current weight vs bodyweight for relative
+ * strength). One query for the whole program rather than one per exercise,
+ * since the insight tiles need all of them at once anyway.
+ */
+export async function getAllSetLogsWithDates(userId) {
+  const { data, error } = await supabase
+    .from(T.logs)
+    .select('*, strength_sessions!inner(session_date)')
+    .eq('user_id', userId)
+    .order('session_date', { foreignTable: 'strength_sessions', ascending: true })
+  check(error)
+  return data.map((row) => {
+    const { strength_sessions, ...rest } = row
+    return { ...rest, session_date: strength_sessions.session_date }
+  })
 }
