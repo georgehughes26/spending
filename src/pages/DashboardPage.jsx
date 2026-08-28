@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const savingsHistory = deriveTotalSavingsHistory(entries, pots)
   const assets = deriveAssets(entries, pots)
   const netWorthHistory = deriveNetWorthHistory(entries, pots)
-  const netWorthChange = deriveNetWorthChange(entries, pots, netWorthHistory)
+  const netWorthChange = deriveNetWorthChange(netWorthHistory)
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-6">

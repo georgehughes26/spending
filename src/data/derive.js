@@ -41,30 +41,21 @@ export function deriveAssets(entries, pots) {
   return (pots ?? []).map((pot) => ({ label: pot.name, value: latestPotBalance(entries, pot) }))
 }
 
-function entryHasAnyStoredBalance(entry, pots) {
-  return (pots ?? []).some((pot) => {
-    const stored = entry?.account_balances?.[pot.id]
-    return stored !== undefined && stored !== null
-  })
-}
-
 // The "monthly change" figure shown under Net Worth. netWorthHistory's
 // latest point is a carried-forward copy of the prior month's total for as
 // long as the current month has no real balances entered -- comparing it
-// to itself would always read as a misleading £0. When that's the case,
-// fall back to the last real month-over-month change instead, labelled
-// "last month" rather than "this month" so it doesn't read as this month's
-// (nonexistent) real change.
-export function deriveNetWorthChange(entries, pots, netWorthHistory) {
+// to itself always reads as a misleading £0, whether that's because
+// nothing's been entered yet or because a save happened to write back the
+// same carried-forward defaults it was pre-filled with. Either way, a
+// month-over-month change of exactly zero isn't informative, so fall back
+// to the last real change instead, labelled "last month" rather than "this
+// month" so it doesn't read as this month's (nonexistent) real change.
+export function deriveNetWorthChange(netWorthHistory) {
   const len = netWorthHistory.length
   if (len < 2) return { amount: 0, label: 'this month' }
 
-  const latestEntry = entries[entries.length - 1]
-  const latestHasData = latestEntry ? entryHasAnyStoredBalance(latestEntry, pots) : false
-
-  if (latestHasData || len < 3) {
-    return { amount: netWorthHistory[len - 1].value - netWorthHistory[len - 2].value, label: 'this month' }
-  }
+  const latestChange = netWorthHistory[len - 1].value - netWorthHistory[len - 2].value
+  if (latestChange !== 0 || len < 3) return { amount: latestChange, label: 'this month' }
 
   return { amount: netWorthHistory[len - 2].value - netWorthHistory[len - 3].value, label: 'last month' }
 }
@@ -154,10 +145,17 @@ function potContributionForEntry(entries, index, pot) {
 // had to reach back further than that) otherwise -- a freshly-created,
 // still-empty current month shouldn't get last month's figure mislabelled
 // as its own.
+//
+// A stored literal 0 is treated the same as "not entered" -- the actual
+// split form defaults every pot to 0 until touched, so a genuinely unedited
+// month saves explicit zeros rather than leaving the key absent. Skipping
+// them means an intentional £0 contribution one month reads the same as
+// not having entered one, which is the accepted trade-off for not showing
+// a wall of fabricated zeros instead.
 function resolvedContribution(entries, pot) {
   for (let i = entries.length - 1; i >= 0; i--) {
     const stored = entries[i].goal_contributions?.[pot.id]
-    if (stored !== undefined && stored !== null) return { value: Number(stored) || 0, index: i }
+    if (stored !== undefined && stored !== null && Number(stored) !== 0) return { value: Number(stored) || 0, index: i }
   }
   const latestIndex = entries.length - 1
   if (latestIndex < 0) return { value: 0, index: -1 }

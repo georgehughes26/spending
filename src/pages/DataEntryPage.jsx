@@ -82,6 +82,15 @@ export default function DataEntryPage() {
   // the last save -- see the payday-sync effect below for why this exists.
   const periodEditedRef = useRef(false)
 
+  // Which pots' closing-balance / actual-split fields the user has actually
+  // typed into this month -- see handleSubmit for why this matters: the
+  // inputs are pre-filled with carried-forward/guide defaults for
+  // convenience, and saving unedited defaults as if they were confirmed
+  // figures is exactly the bug that made every pot's September balance and
+  // contribution look "real" when nothing had actually been entered.
+  const editedBalancePotsRef = useRef(new Set())
+  const editedSplitPotsRef = useRef(new Set())
+
   const [form, setForm] = useState(emptyForm())
   const [closingBalances, setClosingBalances] = useState({})
   const [actualSplit, setActualSplit] = useState({})
@@ -110,6 +119,8 @@ export default function DataEntryPage() {
     setPeriodStart(existingEntry?.period_start ?? monthValueToDate(selectedMonth))
     setPeriodEnd(existingEntry?.period_end ?? lastDayOfMonth(selectedMonth))
     periodEditedRef.current = false
+    editedBalancePotsRef.current = new Set()
+    editedSplitPotsRef.current = new Set()
     setSaved(false)
     setSaveError(null)
     // Keyed on the entry's id, not the entry object or the entries array --
@@ -200,7 +211,11 @@ export default function DataEntryPage() {
         month: monthValueToDate(selectedMonth),
         income: existingEntry?.income ?? 0,
         spending: totals,
-        account_balances: existingEntry?.account_balances ?? latestClosingBalances(entries, pots, selectedMonth),
+        // Never fabricated from carried-forward defaults -- a brand new
+        // month with no closing balance entered yet should stay empty here
+        // so the dashboard's "no real data yet" fallbacks kick in, rather
+        // than silently locking in last month's numbers as if confirmed.
+        account_balances: existingEntry?.account_balances ?? {},
         goal_contributions: existingEntry?.goal_contributions ?? {},
         house_contribution_me: existingEntry?.house_contribution_me ?? 0,
         house_contribution_partner: existingEntry?.house_contribution_partner ?? 0,
@@ -220,17 +235,31 @@ export default function DataEntryPage() {
     setSaveError(null)
     setSaved(false)
     try {
+      // Only pots the user actually typed into this session go in, merged
+      // over whatever was already stored -- the fields are pre-filled with
+      // carried-forward/guide defaults for convenience, and every pot used
+      // to get saved regardless of whether it was touched, which made an
+      // untouched default look exactly like a confirmed real figure (the
+      // dashboard has no way to tell the two apart once they're both just
+      // "a number in the column").
+      const editedBalances = Object.fromEntries(
+        pots
+          .filter((p) => editedBalancePotsRef.current.has(p.id))
+          .map((p) => [p.id, Number(closingBalances[p.id]) || 0]),
+      )
+      const editedSplit = Object.fromEntries(
+        pots
+          .filter((p) => editedSplitPotsRef.current.has(p.id))
+          .map((p) => [p.id, Number(actualSplit[p.id]) || 0]),
+      )
+
       await saveEntry({
         ...(existingEntry ? { id: existingEntry.id } : {}),
         month: monthValueToDate(selectedMonth),
         income: Number(form.income) || 0,
         spending: existingEntry?.spending ?? {},
-        account_balances: Object.fromEntries(
-          pots.map((p) => [p.id, Number(closingBalances[p.id]) || 0]),
-        ),
-        goal_contributions: Object.fromEntries(
-          pots.map((p) => [p.id, Number(actualSplit[p.id]) || 0]),
-        ),
+        account_balances: { ...(existingEntry?.account_balances ?? {}), ...editedBalances },
+        goal_contributions: { ...(existingEntry?.goal_contributions ?? {}), ...editedSplit },
         house_contribution_me: existingEntry?.house_contribution_me ?? 0,
         house_contribution_partner: existingEntry?.house_contribution_partner ?? 0,
         notes: form.notes,
@@ -386,7 +415,10 @@ export default function DataEntryPage() {
                       id={`closing-${pot.id}`}
                       label={pot.name}
                       value={closingBalances[pot.id] ?? 0}
-                      onChange={(v) => setClosingBalances((prev) => ({ ...prev, [pot.id]: v }))}
+                      onChange={(v) => {
+                        editedBalancePotsRef.current.add(pot.id)
+                        setClosingBalances((prev) => ({ ...prev, [pot.id]: v }))
+                      }}
                     />
                   ))}
                 </div>
@@ -429,13 +461,14 @@ export default function DataEntryPage() {
                     </p>
                     <motion.button {...tapScale}
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        for (const p of pots) editedSplitPotsRef.current.add(p.id)
                         setActualSplit(
                           Object.fromEntries(
                             pots.map((p) => [p.id, Math.round(Math.max(0, saved_) * p.percentage)]),
                           ),
                         )
-                      }
+                      }}
                       className="min-h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 dark:border-emerald-500/40 px-3 text-sm font-medium text-pink-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-pink-100 dark:hover:bg-emerald-500/10"
                     >
                       Copy guide amounts
@@ -448,7 +481,10 @@ export default function DataEntryPage() {
                         id={`actual-${pot.id}`}
                         label={pot.name}
                         value={actualSplit[pot.id] ?? 0}
-                        onChange={(v) => setActualSplit((prev) => ({ ...prev, [pot.id]: v }))}
+                        onChange={(v) => {
+                          editedSplitPotsRef.current.add(pot.id)
+                          setActualSplit((prev) => ({ ...prev, [pot.id]: v }))
+                        }}
                       />
                     ))}
                   </div>
