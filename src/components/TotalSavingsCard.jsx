@@ -12,6 +12,11 @@ function ChartTooltip({ active, payload }) {
     <div className="rounded-lg border border-pink-200 dark:border-[var(--border-dark)] bg-white dark:bg-[var(--surface-dark)] px-3 py-2 text-xs shadow-sm">
       <div className="text-zinc-500 dark:text-zinc-400">{formatMonthYear(point.month)}</div>
       <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(point.total)}</div>
+      {point.delta != null && (
+        <div className={`mt-0.5 font-medium ${point.delta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+          {formatGBP(point.delta, { showSign: true })} vs last month
+        </div>
+      )}
     </div>
   )
 }
@@ -21,7 +26,11 @@ export default function TotalSavingsCard({ goals, history = [] }) {
   const accent = theme === 'dark' ? '#34d399' : '#db2777'
   const axisColor = theme === 'dark' ? '#a1a1aa' : '#71717a'
   const total = goals.reduce((t, g) => t + g.current, 0)
-  const chartData = history.length > 0 ? history : [{ month: new Date().toISOString(), total }]
+  const baseData = history.length > 0 ? history : [{ month: new Date().toISOString(), total }]
+  const chartData = baseData.map((point, i) => ({
+    ...point,
+    delta: i > 0 ? point.total - baseData[i - 1].total : null,
+  }))
 
   return (
     <Card title="Total Savings">

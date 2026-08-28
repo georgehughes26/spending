@@ -20,7 +20,7 @@ export default function ContributionsCard({ contributions }) {
             </span>
             <div className="text-right">
               <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(c.totalContributed)}</div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">{formatGBP(c.monthlyContribution)} this month</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">{formatGBP(c.monthlyContribution)} {c.monthlyContributionLabel}</div>
             </div>
           </li>
         ))}

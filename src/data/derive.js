@@ -115,19 +115,32 @@ function potContributionForEntry(entries, index, pot) {
   return monthlyLeftover(entries, index) * pot.percentage
 }
 
-// The "this month" contribution figure shown on the dashboard: the actual
-// amount entered for the latest month if there is one, otherwise the most
-// recent month that actually had one entered (not a guide estimate for the
-// in-progress month) — same "carry the last real figure forward" rule as
+// The contribution figure shown on the dashboard: the actual amount entered
+// for the latest month if there is one, otherwise the most recent month
+// that actually had one entered (not a guide estimate for the in-progress
+// month) — same "carry the last real figure forward" rule as
 // effectiveIncome, since a guide computed from a still-£0 income just shows
-// a wrong number instead of last month's real one.
-function displayContribution(entries, pot) {
+// a wrong number instead of last month's real one. Also returns which
+// month it actually came from, so the UI can say "this month" only when
+// that's literally true, and "last month" (or the real month name, if it
+// had to reach back further than that) otherwise -- a freshly-created,
+// still-empty current month shouldn't get last month's figure mislabelled
+// as its own.
+function resolvedContribution(entries, pot) {
   for (let i = entries.length - 1; i >= 0; i--) {
     const stored = entries[i].goal_contributions?.[pot.id]
-    if (stored !== undefined && stored !== null) return Number(stored) || 0
+    if (stored !== undefined && stored !== null) return { value: Number(stored) || 0, index: i }
   }
   const latestIndex = entries.length - 1
-  return latestIndex >= 0 ? potContributionForEntry(entries, latestIndex, pot) : 0
+  if (latestIndex < 0) return { value: 0, index: -1 }
+  return { value: potContributionForEntry(entries, latestIndex, pot), index: latestIndex }
+}
+
+function contributionLabel(entries, index) {
+  const latestIndex = entries.length - 1
+  if (index < 0 || index === latestIndex) return 'this month'
+  if (index === latestIndex - 1) return 'last month'
+  return formatMonthLabel(entries[index].month)
 }
 
 // A pot's value always comes from the closing balance you actually enter —
@@ -144,7 +157,7 @@ function latestPotBalance(entries, pot) {
 
 export function deriveSavingsGoals(entries, pots) {
   return (pots ?? []).map((pot) => {
-    const monthlyContribution = displayContribution(entries, pot)
+    const { value: monthlyContribution, index } = resolvedContribution(entries, pot)
 
     return {
       id: pot.id,
@@ -154,6 +167,7 @@ export function deriveSavingsGoals(entries, pots) {
       targetDate: pot.target_date,
       current: latestPotBalance(entries, pot),
       monthlyContribution,
+      monthlyContributionLabel: contributionLabel(entries, index),
     }
   })
 }
@@ -163,7 +177,7 @@ export function deriveSavingsGoals(entries, pots) {
 export function deriveContributions(entries, pots) {
   return (pots ?? []).map((pot) => {
     const totalContributed = entries.reduce((total, e, i) => total + potContributionForEntry(entries, i, pot), 0)
-    const monthlyContribution = displayContribution(entries, pot)
+    const { value: monthlyContribution, index } = resolvedContribution(entries, pot)
 
     return {
       id: pot.id,
@@ -171,6 +185,7 @@ export function deriveContributions(entries, pots) {
       percentage: pot.percentage,
       totalContributed,
       monthlyContribution,
+      monthlyContributionLabel: contributionLabel(entries, index),
     }
   })
 }
