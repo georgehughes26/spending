@@ -31,13 +31,20 @@ export function computeSessionScore(exerciseScores) {
 const WEIGHT_STEP_KG = 2.5
 
 /**
- * Real double-progression rule, driven purely by reps -- weight doesn't
- * gate it (a naturally lighter warm-up set ramping to a heavier working set
- * shouldn't block "did you hit the top of your rep range"):
+ * Real double-progression rule. `hitTop` only counts a session as "hit top"
+ * if at least half its sets were actually done at (or above) the tracked
+ * working weight *and* those sets hit target_reps_max -- not just "reps
+ * were hit somewhere in the session" (too loose: crediting a single top
+ * single as if the whole session was done at that weight is exactly how a
+ * 40/40/44 ramp session got treated the same as a 44/44/44 session -- see
+ * the bug this replaced), and not "every single set including warm-ups"
+ * (too strict: a naturally lighter first set ramping up to a heavier
+ * working weight would fail this even on a genuinely good session).
  *
- *   - every set at/above target_reps_max, 2 sessions running => go up a step
- *   - every set at/above target_reps_max last session (but not 2 running
- *     yet) => hold, you're one good session from earning the increase
+ *   - majority of sets at/above tracked weight all hit target_reps_max,
+ *     2 sessions running => go up a step
+ *   - same, but only true for the latest session (not 2 running yet) =>
+ *     hold, you're one good session from earning the increase
  *   - average reps below target_reps_min => hold or ease back, you've
  *     fallen out of the range entirely
  *   - otherwise => still working through the range at this weight
@@ -56,7 +63,11 @@ export function suggestProgression(target, recentSessions) {
     return { action: 'no_data', reason: 'No logged sessions yet for this exercise.' }
   }
 
-  const hitTop = (session) => session.sets.every((s) => s.reps >= target.target_reps_max)
+  const hitTop = (session) => {
+    const atWorkingWeight = session.sets.filter((s) => s.weight_kg >= target.target_weight_kg)
+    if (atWorkingWeight.length < Math.ceil(session.sets.length / 2)) return false
+    return atWorkingWeight.every((s) => s.reps >= target.target_reps_max)
+  }
   const avgReps = (session) => session.sets.reduce((sum, s) => sum + s.reps, 0) / session.sets.length
 
   if (withSets.length >= 2 && withSets.slice(0, 2).every(hitTop)) {

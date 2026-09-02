@@ -170,13 +170,15 @@ export async function getRecentLogsForExercise(userId, exerciseId, sessionCount 
     .select('*, strength_sessions!inner(session_date)')
     .eq('user_id', userId)
     .eq('exercise_id', exerciseId)
-    .order('session_date', { foreignTable: 'strength_sessions', ascending: false })
   check(error)
   const withDate = data.map((row) => {
     const { strength_sessions, ...rest } = row
     return { ...rest, session_date: strength_sessions.session_date }
   })
-  const recentDates = [...new Set(withDate.map((r) => r.session_date))].slice(0, sessionCount)
+  // PostgREST doesn't honour ascending/descending when ordering by a joined
+  // table's column (confirmed: .order(..., { foreignTable, ascending: false })
+  // still comes back oldest-first) -- sort client-side instead of trusting it.
+  const recentDates = [...new Set(withDate.map((r) => r.session_date))].sort().reverse().slice(0, sessionCount)
   const bySession = recentDates.map((date) => ({
     session_date: date,
     sets: withDate.filter((r) => r.session_date === date),
@@ -254,11 +256,13 @@ export async function markPlannedSessionStatus(userId, id, status) {
  * since the insight tiles need all of them at once anyway.
  */
 export async function getAllSetLogsWithDates(userId) {
+  // Not ordering here -- PostgREST doesn't honour order() on a joined
+  // table's column (see getRecentLogsForExercise), and insights.js's
+  // groupByExercise already sorts by session_date itself.
   const { data, error } = await supabase
     .from(T.logs)
     .select('*, strength_sessions!inner(session_date)')
     .eq('user_id', userId)
-    .order('session_date', { foreignTable: 'strength_sessions', ascending: true })
   check(error)
   return data.map((row) => {
     const { strength_sessions, ...rest } = row
