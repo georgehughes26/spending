@@ -140,6 +140,11 @@ export async function insertSetLogs(userId, rows) {
   check(error)
 }
 
+export async function updateSetLog(userId, id, fields) {
+  const { error } = await supabase.from(T.logs).update(fields).eq('user_id', userId).eq('id', id)
+  check(error)
+}
+
 export async function getSetLogsForSession(userId, sessionId) {
   const { data, error } = await supabase
     .from(T.logs)
