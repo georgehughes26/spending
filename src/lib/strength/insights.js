@@ -24,8 +24,26 @@ function groupByExercise(allSetLogs) {
   return result
 }
 
-function maxWeight(sets) {
-  return sets.reduce((max, s) => Math.max(max, s.weight_kg), 0)
+/**
+ * The weight you actually trained at in a session -- whichever weight
+ * shows up on the most sets, not just the single heaviest thing you
+ * touched. Same reasoning as suggestProgression's hitTop: a 40/40/44 ramp
+ * session's real working weight is 40kg, not 44kg, so comparing it to a
+ * later 44/44/44 session by raw max weight (both "44kg") hides the
+ * progression that actually happened. Ties go to the heavier weight.
+ */
+function workingWeight(sets) {
+  const counts = new Map()
+  for (const s of sets) counts.set(s.weight_kg, (counts.get(s.weight_kg) ?? 0) + 1)
+  let best = 0
+  let bestCount = -1
+  for (const [weight, count] of counts) {
+    if (count > bestCount || (count === bestCount && weight > best)) {
+      best = weight
+      bestCount = count
+    }
+  }
+  return best
 }
 
 /**
@@ -40,8 +58,8 @@ export function rankProgression(exercises, allSetLogs) {
   for (const ex of exercises) {
     const sessions = sessionsByExercise.get(ex.id)
     if (!sessions || sessions.length < 2) continue
-    const first = maxWeight(sessions[sessions.length - 1].sets)
-    const current = maxWeight(sessions[0].sets)
+    const first = workingWeight(sessions[sessions.length - 1].sets)
+    const current = workingWeight(sessions[0].sets)
     if (first <= 0) continue
     rows.push({
       exercise: ex,
