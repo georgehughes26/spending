@@ -31,20 +31,24 @@ export function computeSessionScore(exerciseScores) {
 const WEIGHT_STEP_KG = 2.5
 
 /**
- * Real double-progression rule. `hitTop` only counts a session as "hit top"
- * if at least half its sets were actually done at (or above) the tracked
- * working weight *and* those sets hit target_reps_max -- not just "reps
- * were hit somewhere in the session" (too loose: crediting a single top
- * single as if the whole session was done at that weight is exactly how a
- * 40/40/44 ramp session got treated the same as a 44/44/44 session -- see
- * the bug this replaced), and not "every single set including warm-ups"
- * (too strict: a naturally lighter first set ramping up to a heavier
- * working weight would fail this even on a genuinely good session).
+ * Real double-progression rule: hit the top of your rep range on every
+ * working set in a single session and you're ready to go up next time --
+ * there's no "prove it twice" requirement, that was an invented add-on
+ * that made genuine progress (e.g. going from one top set at a weight to
+ * a full session at it) read as "hold, do it again" instead of "go up".
  *
- *   - majority of sets at/above tracked weight all hit target_reps_max,
- *     2 sessions running => go up a step
- *   - same, but only true for the latest session (not 2 running yet) =>
- *     hold, you're one good session from earning the increase
+ * `hitTop` only counts a session as "hit top" if at least half its sets
+ * were actually done at (or above) the tracked working weight *and* those
+ * sets hit target_reps_max -- not just "reps were hit somewhere in the
+ * session" (too loose: crediting a single top single as if the whole
+ * session was done at that weight is exactly how a 40/40/44 ramp session
+ * got treated the same as a 44/44/44 session), and not "every single set
+ * including warm-ups" (too strict: a naturally lighter first set ramping
+ * up to a heavier working weight would fail this even on a genuinely good
+ * session).
+ *
+ *   - majority of sets at/above tracked weight all hit target_reps_max
+ *     last session => go up a step
  *   - average reps below target_reps_min => hold or ease back, you've
  *     fallen out of the range entirely
  *   - otherwise => still working through the range at this weight
@@ -70,28 +74,21 @@ export function suggestProgression(target, recentSessions) {
   }
   const avgReps = (session) => session.sets.reduce((sum, s) => sum + s.reps, 0) / session.sets.length
 
-  if (withSets.length >= 2 && withSets.slice(0, 2).every(hitTop)) {
+  const latest = withSets[0]
+
+  if (hitTop(latest)) {
     const next = Math.round((target.target_weight_kg + WEIGHT_STEP_KG) * 2) / 2
     return {
       action: 'increase',
       suggestedWeightKg: next,
-      reason: `Hit ${target.target_reps_max} reps on every set across your last 2 sessions at ${target.target_weight_kg}kg -- try ${next}kg next time.`,
+      reason: `Hit ${target.target_reps_max} reps on every set at ${target.target_weight_kg}kg last session -- try ${next}kg next time.`,
     }
   }
-
-  const latest = withSets[0]
 
   if (avgReps(latest) < target.target_reps_min) {
     return {
       action: 'hold_or_reduce',
       reason: `Fell below your ${target.target_reps_min}-${target.target_reps_max} rep range last session (avg ${avgReps(latest).toFixed(1)}) -- hold this weight or ease back slightly.`,
-    }
-  }
-
-  if (hitTop(latest)) {
-    return {
-      action: 'hold',
-      reason: `Hit the top of your range (${target.target_reps_max} reps) at ${target.target_weight_kg}kg last session -- do it again next time and you'll be ready to go up.`,
     }
   }
 
