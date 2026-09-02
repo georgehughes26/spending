@@ -1,4 +1,8 @@
-import { suggestProgression } from './scoring'
+import { suggestProgression, WEIGHT_STEP_KG } from './scoring'
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
 
 /**
  * Groups a flat list of set logs (db.getAllSetLogsWithDates's shape) into
@@ -47,10 +51,47 @@ function workingWeight(sets) {
 }
 
 /**
- * Weight increase per exercise since the first time it was logged, ranked
- * biggest first -- "which exercises am I progressing best at". Needs at
- * least 2 distinct logged sessions to say anything (a single session has
- * nothing to compare against, same as the per-session progression call).
+ * How far through its rep range a session's working-weight sets got, as a
+ * 0-1 fraction -- e.g. hitting the bottom of the range is 0, the top is 1.
+ * Used so a session's "progress score" (see rankProgression) can credit
+ * genuine progress made *within* a weight (working up through the rep
+ * range) and not just weight increases, without that credit reversing
+ * itself the moment reps correctly reset after a real weight increase.
+ */
+function repProgressFraction(sets, weight, targetRepsMin, targetRepsMax) {
+  if (targetRepsMax <= targetRepsMin) return 0
+  const atWeight = sets.filter((s) => s.weight_kg === weight)
+  if (atWeight.length === 0) return 0
+  const avgReps = atWeight.reduce((sum, s) => sum + s.reps, 0) / atWeight.length
+  return clamp((avgReps - targetRepsMin) / (targetRepsMax - targetRepsMin), 0, 1)
+}
+
+/**
+ * A session's "effective weight": the weight you trained at, plus a
+ * fraction of a weight-step credited for how far through the rep range you
+ * got at that weight. Raw volume (reps x weight) was considered and
+ * rejected -- it *drops* the moment you correctly increase weight and reset
+ * reps to the bottom of the range per double progression, which would show
+ * as regression at exactly the moment real progress happened. Raw working
+ * weight alone was also considered -- it's right for the "should I go up"
+ * question (suggestProgression), but stays flat while you're legitimately
+ * climbing the rep range at an unchanged weight, which this metric credits
+ * as partial progress instead of hiding it.
+ */
+function sessionProgressScore(session, targetRepsMin, targetRepsMax) {
+  const weight = workingWeight(session.sets)
+  const fraction = repProgressFraction(session.sets, weight, targetRepsMin, targetRepsMax)
+  return { weight, score: weight + WEIGHT_STEP_KG * fraction }
+}
+
+/**
+ * Progress per exercise since the first time it was logged, ranked biggest
+ * first -- "which exercises am I progressing best at". Needs at least 2
+ * distinct logged sessions to say anything (a single session has nothing
+ * to compare against, same as the per-session progression call). Displayed
+ * weights are real (the weight you actually trained at each time); the
+ * ranking and % are based on the progress score above, which can move even
+ * when the displayed weight hasn't -- see sessionProgressScore.
  */
 export function rankProgression(exercises, allSetLogs) {
   const sessionsByExercise = groupByExercise(allSetLogs)
@@ -58,15 +99,15 @@ export function rankProgression(exercises, allSetLogs) {
   for (const ex of exercises) {
     const sessions = sessionsByExercise.get(ex.id)
     if (!sessions || sessions.length < 2) continue
-    const first = workingWeight(sessions[sessions.length - 1].sets)
-    const current = workingWeight(sessions[0].sets)
-    if (first <= 0) continue
+    const first = sessionProgressScore(sessions[sessions.length - 1], ex.target_reps_min, ex.target_reps_max)
+    const current = sessionProgressScore(sessions[0], ex.target_reps_min, ex.target_reps_max)
+    if (first.weight <= 0) continue
     rows.push({
       exercise: ex,
-      firstWeightKg: first,
-      currentWeightKg: current,
-      deltaKg: Math.round((current - first) * 10) / 10,
-      deltaPct: (current - first) / first,
+      firstWeightKg: first.weight,
+      currentWeightKg: current.weight,
+      deltaKg: Math.round((current.score - first.score) * 10) / 10,
+      deltaPct: (current.score - first.score) / first.score,
       sessionsLogged: sessions.length,
     })
   }

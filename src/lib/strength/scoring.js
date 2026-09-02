@@ -28,7 +28,7 @@ export function computeSessionScore(exerciseScores) {
   return Math.round(valid.reduce((sum, s) => sum + s, 0) / valid.length)
 }
 
-const WEIGHT_STEP_KG = 2.5
+export const WEIGHT_STEP_KG = 2.5
 
 /**
  * Real double-progression rule: hit the top of your rep range on every

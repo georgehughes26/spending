@@ -128,16 +128,19 @@ function BestProgressTile({ progression }) {
       {top.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Not enough history yet.</p>
       ) : (
-        <div className="flex flex-col gap-2">
-          {top.map((row) => (
-            <div key={row.exercise.id} className="flex items-baseline justify-between text-sm">
-              <span className="font-medium text-zinc-900 dark:text-zinc-100">{row.exercise.name}</span>
-              <span className="text-emerald-600 dark:text-emerald-400">
-                {row.firstWeightKg}kg &rarr; {row.currentWeightKg}kg ({row.deltaPct >= 0 ? '+' : ''}{(row.deltaPct * 100).toFixed(0)}%)
-              </span>
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-2">
+            {top.map((row) => (
+              <div key={row.exercise.id} className="flex items-baseline justify-between text-sm">
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">{row.exercise.name}</span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {row.firstWeightKg}kg &rarr; {row.currentWeightKg}kg ({row.deltaPct >= 0 ? '+' : ''}{(row.deltaPct * 100).toFixed(0)}%)
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">The % also credits reps climbing toward the top of your range at the same weight, so it can move even when the kg shown hasn't.</p>
+        </>
       )}
     </Card>
   )
