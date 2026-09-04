@@ -49,14 +49,21 @@ export const INTERVAL_SPEC_BY_PHASE = {
 // Sized to stay the longest run of the week at every point in the plan --
 // tempo's core grows at the same rate as this range but always adds a
 // further TEMPO_PAD_KM*2 of fixed warmup/cooldown on top, so the long run
-// needs a real head start (not just matching the core-vs-core numbers) to
-// come out ahead once tempo's padding is counted. Confirmed against a real
-// generated plan and against the worst case (a deload week, where the
-// fixed-ish padding eats further into the gap): this margin holds up in
-// both. See buildTempoPrescription for the other half of this fix (deload
-// now scales tempo's padding down too, not just its core).
-export const EASY_START_KM = 7.0
-export const EASY_END_KM = 10.5
+// needs a real head start to come out ahead once tempo's padding is
+// counted. Deliberately a small head start (~1km), not a large one --
+// the first version of this fix pushed the START of the range up by 2km
+// to guarantee a comfortable margin everywhere, which fixed the ordering
+// but ignored that week 1's absolute volume has to match someone coming
+// back from a lapse in training, not just satisfy the tempo-vs-long-run
+// inequality. Most of the gap this needs to close was TEMPO_PAD_KM being
+// disproportionately large early in the plan (see there) -- shrinking
+// that meant this range barely needed to move at all. Confirmed against
+// a real generated plan and against the worst case (a deload week, where
+// the fixed-ish padding eats further into the gap): this margin holds up
+// in both. See buildTempoPrescription for the other half of this fix
+// (deload now scales tempo's padding down too, not just its core).
+export const EASY_START_KM = 6.0
+export const EASY_END_KM = 9.5
 // 18% slower than current 5k pace: a real long run, not a junk-mileage
 // recovery jog. With only 3 running days/week there's no volume to spare on
 // a throwaway session (the FIRST/Furman "3plus2" methodology's rationale for
@@ -67,7 +74,12 @@ export const EASY_PACE_RATIO = 1.18
 
 export const TEMPO_CORE_START_KM = 3.0
 export const TEMPO_CORE_END_KM = 6.5
-export const TEMPO_PAD_KM = 1.5 // warmup and cooldown, each
+// Warmup and cooldown, each. 10min at easy pace either side of the tempo
+// core -- plenty to prep for and recover from it without, early in the
+// plan, nearly doubling a short tempo session's total distance on padding
+// alone (at a 3km core this was previously 3km of fixed padding on top,
+// i.e. as much distance as the actual workout).
+export const TEMPO_PAD_KM = 1.0
 export const TEMPO_PACE_RATIO = 1.12
 
 export const TIME_TRIAL_DISTANCE_KM = 5
