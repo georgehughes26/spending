@@ -30,14 +30,19 @@ export function buildEasyPrescription(ctx, anchorPaceSecPerKm) {
 }
 
 export function buildTempoPrescription(ctx, anchorPaceSecPerKm) {
-  const coreKm =
-    (TEMPO_CORE_START_KM + (TEMPO_CORE_END_KM - TEMPO_CORE_START_KM) * ctx.progressFraction) * volumeFactor(ctx)
+  const vf = volumeFactor(ctx)
+  const coreKm = (TEMPO_CORE_START_KM + (TEMPO_CORE_END_KM - TEMPO_CORE_START_KM) * ctx.progressFraction) * vf
+  // Deload is meant to be a pure volume reduction (see DELOAD_VOLUME_FACTOR),
+  // so the padding scales down with it too, not just the core -- otherwise
+  // the fixed padding stops shrinking exactly when everything else does,
+  // eating into the long run's margin on the week it's most needed.
+  const padKm = round1(TEMPO_PAD_KM * vf)
   return {
     kind: 'tempo',
-    warmupKm: TEMPO_PAD_KM,
+    warmupKm: padKm,
     coreKm: round1(coreKm),
     targetPaceSecPerKm: Math.round(anchorPaceSecPerKm * TEMPO_PACE_RATIO),
-    cooldownKm: TEMPO_PAD_KM,
+    cooldownKm: padKm,
   }
 }
 

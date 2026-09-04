@@ -46,8 +46,17 @@ export const INTERVAL_SPEC_BY_PHASE = {
   test: { repDistanceM: 200, paceRatio: 0.9, recoveryRatio: 1.5, reps: 4 },
 }
 
-export const EASY_START_KM = 5.0
-export const EASY_END_KM = 8.5
+// Sized to stay the longest run of the week at every point in the plan --
+// tempo's core grows at the same rate as this range but always adds a
+// further TEMPO_PAD_KM*2 of fixed warmup/cooldown on top, so the long run
+// needs a real head start (not just matching the core-vs-core numbers) to
+// come out ahead once tempo's padding is counted. Confirmed against a real
+// generated plan and against the worst case (a deload week, where the
+// fixed-ish padding eats further into the gap): this margin holds up in
+// both. See buildTempoPrescription for the other half of this fix (deload
+// now scales tempo's padding down too, not just its core).
+export const EASY_START_KM = 7.0
+export const EASY_END_KM = 10.5
 // 18% slower than current 5k pace: a real long run, not a junk-mileage
 // recovery jog. With only 3 running days/week there's no volume to spare on
 // a throwaway session (the FIRST/Furman "3plus2" methodology's rationale for
