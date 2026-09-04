@@ -101,7 +101,7 @@ export default function ResaleLogisticsCard({ logistics }) {
           />
           <SquareStat
             icon={ICONS.price}
-            label="Sale price"
+            label="Avg sale price"
             value={avgSalePrice != null ? formatGBP(avgSalePrice, { pence: true }) : '—'}
             caption="Average sold price"
           />

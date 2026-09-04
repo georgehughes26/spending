@@ -10,7 +10,7 @@
           "src/App.jsx"
         ],
         "createdAt": "2026-08-26T08:19:22.810Z",
-        "reason": "false positive: detector cross-matched dark:text-zinc-950 (dark theme, on dark:bg-emerald-400) against bg-pink-600 (light theme) from the same ternary string; the two never render together, and each theme's actual pairing (white-on-pink, near-black-on-emerald) has strong contrast"
+        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same ternary branch; they never render together"
       },
       {
         "rule": "gradient-text",
