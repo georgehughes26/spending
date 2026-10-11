@@ -180,7 +180,7 @@ export default function TrainingDayPage() {
             streak={streakFor({ kind: 'number', key: 'water' })}
             onCommit={(v) => t.setLogField(date, 'water', v)}
           />
-          <DrinksStepper value={log?.drinks ?? 0} onChange={(v) => t.setLogField(date, 'drinks', v)} />
+          <DrinksStepper value={log?.drinks ?? 0} onChange={(v) => t.setDrinks(date, v)} />
 
           {customHabits.map((custom) =>
             custom.type === 'tick' ? (

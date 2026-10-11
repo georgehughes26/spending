@@ -43,11 +43,21 @@ export function isMonday(dateString) {
   return parseISODate(dateString).getUTCDay() === 1
 }
 
-// "Mon 12" -- used in the check-in export's daily table.
+// "Mon 12" -- used around the UI (chart ticks, week header, diff preview).
 export function formatShortDay(dateString) {
   const d = parseISODate(dateString)
   const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(d)
   return `${weekday} ${d.getUTCDate()}`
+}
+
+// "Mon 12 Oct" -- used in the check-in export, which can span a month
+// boundary or be read well after the fact, so the bare day number alone is
+// ambiguous there in a way it isn't for an on-screen date next to today.
+export function formatShortDayMonth(dateString) {
+  const d = parseISODate(dateString)
+  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(d)
+  const month = new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'UTC' }).format(d)
+  return `${weekday} ${d.getUTCDate()} ${month}`
 }
 
 // "Sat 19 Dec 2026"

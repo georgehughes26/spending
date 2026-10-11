@@ -1,4 +1,4 @@
-import { weekDatesFor, weekNumberFor, totalWeeksFor, formatShortDay, formatLongDay, addDays } from './dates'
+import { weekDatesFor, weekNumberFor, totalWeeksFor, formatShortDayMonth, formatLongDay, addDays } from './dates'
 import { resolveDayPlan } from './dayPlan'
 import { goalLineWeight, trendWeight, onTrackStatus, neededPerWeek } from './goalLine'
 import { isNumberHabitHit, caloriesStatus } from './builtInHabits'
@@ -22,22 +22,32 @@ function statusLabel(status) {
   return DASH
 }
 
+// Every planned session gets marked, done or not -- a bare name without a
+// ✗ would read as ambiguous once the list mixes done and not-done entries.
 function sessionsCell(dayPlan, log) {
   if (dayPlan.sessions.length === 0) return 'Rest'
   return dayPlan.sessions
-    .map((name, i) => (log?.session_ticks?.[i] ? `${name} ✓` : name))
+    .map((name, i) => `${name} ${log?.session_ticks?.[i] ? '✓' : '✗'}`)
     .join(', ')
 }
 
+// The target always shows, even with no actual logged -- a coach reading
+// "—/2,900" still knows what the day called for.
 function pairCell(actual, target, decimals = 0) {
   const a = fmtNum(actual, decimals)
   const t = fmtNum(target, decimals)
-  if (a == null) return DASH
-  return `${a}/${t ?? DASH}`
+  return `${a ?? DASH}/${t ?? DASH}`
 }
 
 function tickCell(value) {
   return value ? '✓' : DASH
+}
+
+// drinks_touched is what lets this tell "never logged" apart from
+// "explicitly logged as 0" -- the drinks column itself defaults to 0 in the
+// database regardless, so the raw value alone can't make that distinction.
+function drinksCell(log) {
+  return log?.drinks_touched ? String(log.drinks ?? 0) : DASH
 }
 
 function buildDailyRows(dates, weekPlans, template, dailyLogsByDate) {
@@ -45,14 +55,14 @@ function buildDailyRows(dates, weekPlans, template, dailyLogsByDate) {
     const plan = resolveDayPlan(date, weekPlans, template)
     const log = dailyLogsByDate[date] ?? null
     const cells = [
-      formatShortDay(date),
+      formatShortDayMonth(date),
       sessionsCell(plan, log),
       pairCell(log?.calories, plan.calories, 0),
       pairCell(log?.protein, plan.protein, 0),
       pairCell(log?.steps, plan.steps, 0),
       pairCell(log?.water, plan.water, 1),
       log?.weight != null ? fmtNum(log.weight, 1) : DASH,
-      String(log?.drinks ?? 0),
+      drinksCell(log),
       tickCell(log?.creatine),
       tickCell(log?.vit_d),
       log?.note ? log.note : DASH,
@@ -78,9 +88,9 @@ export function weekTotals(dates, weekPlans, template, dailyLogsByDate, settings
     const log = dailyLogsByDate[date] ?? null
 
     if (isNumberHabitHit('protein', log?.protein ?? null, plan.protein, settings.calorie_tolerance)) proteinHit += 1
+    caloriesTargets.push(plan.calories)
     if (log?.calories != null) {
       caloriesLogged.push(log.calories)
-      caloriesTargets.push(plan.calories)
       const status = caloriesStatus(log.calories, plan.calories, settings.calorie_tolerance)
       if (status === 'under') under += 1
       else if (status === 'on') on += 1
@@ -135,11 +145,11 @@ export function buildCheckIn({ weekStart, settings, template, weekPlans, dailyLo
 
   const lines = []
   lines.push('=== CHECK-IN v1 ===')
-  lines.push(`Week ${weekNum} of ${totalWeeks} (${formatShortDay(dates[0])} – ${formatShortDay(dates[6])} ${dates[6].slice(0, 4)})`)
+  lines.push(`Week ${weekNum} of ${totalWeeks} (${formatShortDayMonth(dates[0])} – ${formatShortDayMonth(dates[6])} ${dates[6].slice(0, 4)})`)
   if (plan?.summary) lines.push(`Plan summary: ${plan.summary}`)
   lines.push('')
   lines.push('GOAL')
-  lines.push(`Goal: ${fmtKg(settings.goal_weight)} by ${formatLongDay(settings.goal_date)} (start ${fmtKg(settings.start_weight)} on ${formatShortDay(settings.plan_start)})`)
+  lines.push(`Goal: ${fmtKg(settings.goal_weight)} by ${formatLongDay(settings.goal_date)} (start ${fmtKg(settings.start_weight)} on ${formatShortDayMonth(settings.plan_start)})`)
   lines.push(
     `Trend weight (7-day avg): ${trend != null ? fmtKg(trend) : DASH} | Goal line today: ${fmtKg(goalLine)} | Status: ${
       track ? `${statusLabel(track.status)} (${fmtNum(Math.abs(track.diff), 1)} ${track.diff <= 0 ? 'ahead' : 'behind'})` : DASH

@@ -10,7 +10,7 @@ export const DEFAULT_TEMPLATE = [
   { weekday: 3, sessions: ['Easy run'], calories: 2500, protein: 190, steps: 8000, water: 3.0 },
   { weekday: 4, sessions: [], calories: 2300, protein: 190, steps: 10000, water: 2.5 },
   { weekday: 5, sessions: ['Football match'], calories: 2800, protein: 190, steps: 8000, water: 3.5 },
-  { weekday: 6, sessions: ['Back & Bis (gym)'], calories: 2600, protein: 190, steps: 8000, water: 3.0 },
+  { weekday: 6, sessions: ['Back & Bis'], calories: 2600, protein: 190, steps: 8000, water: 3.0 },
 ]
 
 export const SEED_WEEK_PLAN = {
@@ -25,7 +25,7 @@ export const SEED_WEEK_PLAN = {
     { date: '2026-10-15', sessions: [], calories: 2800, protein: 190, steps: 8000, water: 3.0, note: 'Work drinks (~6 pints ≈ 1,300 kcal, included). Protein-heavy meal before. Shake and toast at home, not a takeaway' },
     { date: '2026-10-16', sessions: [], calories: 2300, protein: 190, steps: 10000, water: 2.5, note: 'Rest day. Still hit protein and steps' },
     { date: '2026-10-17', sessions: ['5k time trial'], calories: 2500, protein: 190, steps: 8000, water: 3.0, note: 'Baseline 5k. 10 min easy warm-up first, then run it properly. Log the time in today’s note' },
-    { date: '2026-10-18', sessions: ['Back & Bis (gym)'], calories: 2500, protein: 190, steps: 8000, water: 3.0 },
+    { date: '2026-10-18', sessions: ['Back & Bis'], calories: 2500, protein: 190, steps: 8000, water: 3.0 },
   ],
 }
 

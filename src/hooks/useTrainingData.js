@@ -83,11 +83,21 @@ export function useTrainingData(userId) {
     await refresh()
   }, [refresh])
 
-  // Simple scalar fields (weight, calories, protein, steps, water, drinks,
-  // creatine, vit_d, note) -- safe to upsert as a partial-looking payload
-  // since none of these are jsonb columns.
+  // Simple scalar fields (weight, calories, protein, steps, water, creatine,
+  // vit_d, note) -- safe to upsert as a partial-looking payload since none
+  // of these are jsonb columns. Drinks goes through setDrinks instead, since
+  // it also needs to flip drinks_touched.
   const setLogField = useCallback(async (date, field, value) => {
     await db.saveDailyLog(userId, date, { [field]: value })
+    await refresh()
+  }, [userId, refresh])
+
+  // drinks_touched distinguishes "never logged" from "explicitly logged as
+  // 0" -- the drinks column itself defaults to 0 in the database, so it
+  // alone can't tell the two apart once any other field on the day has
+  // created the row.
+  const setDrinks = useCallback(async (date, value) => {
+    await db.saveDailyLog(userId, date, { drinks: value, drinks_touched: true })
     await refresh()
   }, [userId, refresh])
 
@@ -111,6 +121,6 @@ export function useTrainingData(userId) {
     settings, template, weekPlans, customHabits, dailyLogs, dailyLogsByDate,
     loading, error, refresh,
     saveSettings, saveTemplateDay, importWeekPlan, revertWeekPlan,
-    addCustomHabit, deleteCustomHabit, setLogField, toggleSessionTick, setCustomValue,
+    addCustomHabit, deleteCustomHabit, setLogField, setDrinks, toggleSessionTick, setCustomValue,
   }
 }

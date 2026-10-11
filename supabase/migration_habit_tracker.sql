@@ -71,6 +71,7 @@ create table if not exists habit_daily_logs (
   steps numeric,
   water numeric,
   drinks numeric not null default 0,
+  drinks_touched boolean not null default false,
   creatine boolean not null default false,
   vit_d boolean not null default false,
   note text,
