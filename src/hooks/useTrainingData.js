@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as db from '../lib/habits/db'
 
 // One hook owns every mutation to habit_daily_logs so the jsonb-merge rule
@@ -15,6 +15,14 @@ export function useTrainingData(userId) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Only the very first load should block the page behind "Loading…" --
+  // every page gates its whole render on `loading`, so re-setting it true
+  // on every refresh() call (including the one after each tick/edit) made
+  // the entire page flash back to the loading placeholder on every single
+  // interaction. A ref (not state) tracks this so flipping it doesn't
+  // itself cause a re-render or change refresh's identity.
+  const hasLoadedOnceRef = useRef(false)
+
   const refresh = useCallback(async () => {
     if (!userId) {
       setSettings(null)
@@ -25,7 +33,7 @@ export function useTrainingData(userId) {
       setLoading(false)
       return
     }
-    setLoading(true)
+    if (!hasLoadedOnceRef.current) setLoading(true)
     setError(null)
     try {
       const [s, t, wp, ch, dl] = await Promise.all([
@@ -43,7 +51,8 @@ export function useTrainingData(userId) {
     } catch (e) {
       setError(e.message)
     } finally {
-      setLoading(false)
+      if (!hasLoadedOnceRef.current) setLoading(false)
+      hasLoadedOnceRef.current = true
     }
   }, [userId])
 
@@ -53,35 +62,44 @@ export function useTrainingData(userId) {
 
   const dailyLogsByDate = useMemo(() => Object.fromEntries(dailyLogs.map((l) => [l.date, l])), [dailyLogs])
 
+  // Each mutator below re-fetches only the one slice it actually touched,
+  // instead of refresh()'s full five-table reload -- a tick or a number
+  // entry only ever changes dailyLogs, so refetching settings/template/
+  // weekPlans/customHabits too was pure unnecessary network round-trips on
+  // every interaction, on top of the loading-flag issue above.
+  const refreshDailyLogs = useCallback(async () => {
+    setDailyLogs(await db.fetchDailyLogs(userId))
+  }, [userId])
+
   const saveSettings = useCallback(async (fields) => {
     await db.saveHabitSettings(userId, fields)
-    await refresh()
-  }, [userId, refresh])
+    setSettings(await db.fetchHabitSettings(userId))
+  }, [userId])
 
   const saveTemplateDay = useCallback(async (weekday, fields) => {
     await db.saveTemplateDay(userId, weekday, fields)
-    await refresh()
-  }, [userId, refresh])
+    setTemplate(await db.fetchHabitTemplate(userId))
+  }, [userId])
 
   const importWeekPlan = useCallback(async (plan) => {
     await db.importWeekPlan(userId, plan)
-    await refresh()
-  }, [userId, refresh])
+    setWeekPlans(await db.fetchWeekPlans(userId))
+  }, [userId])
 
   const revertWeekPlan = useCallback(async (weekStart) => {
     await db.revertWeekPlan(userId, weekStart)
-    await refresh()
-  }, [userId, refresh])
+    setWeekPlans(await db.fetchWeekPlans(userId))
+  }, [userId])
 
   const addCustomHabit = useCallback(async (habit) => {
     await db.addCustomHabit(userId, habit)
-    await refresh()
-  }, [userId, refresh])
+    setCustomHabits(await db.fetchCustomHabits(userId))
+  }, [userId])
 
   const deleteCustomHabit = useCallback(async (id) => {
     await db.deleteCustomHabit(id)
-    await refresh()
-  }, [refresh])
+    setCustomHabits(await db.fetchCustomHabits(userId))
+  }, [userId])
 
   // Simple scalar fields (weight, calories, protein, steps, water, creatine,
   // vit_d, note) -- safe to upsert as a partial-looking payload since none
@@ -89,8 +107,8 @@ export function useTrainingData(userId) {
   // it also needs to flip drinks_touched.
   const setLogField = useCallback(async (date, field, value) => {
     await db.saveDailyLog(userId, date, { [field]: value })
-    await refresh()
-  }, [userId, refresh])
+    await refreshDailyLogs()
+  }, [userId, refreshDailyLogs])
 
   // drinks_touched distinguishes "never logged" from "explicitly logged as
   // 0" -- the drinks column itself defaults to 0 in the database, so it
@@ -98,8 +116,8 @@ export function useTrainingData(userId) {
   // created the row.
   const setDrinks = useCallback(async (date, value) => {
     await db.saveDailyLog(userId, date, { drinks: value, drinks_touched: true })
-    await refresh()
-  }, [userId, refresh])
+    await refreshDailyLogs()
+  }, [userId, refreshDailyLogs])
 
   // session_ticks is jsonb -- always write the full array, built from
   // whatever's already stored for that date.
@@ -107,15 +125,15 @@ export function useTrainingData(userId) {
     const existing = dailyLogsByDate[date]?.session_ticks ?? []
     const next = Array.from({ length: sessionsLength }, (_, i) => (i === index ? !existing[i] : !!existing[i]))
     await db.saveDailyLog(userId, date, { session_ticks: next })
-    await refresh()
-  }, [userId, dailyLogsByDate, refresh])
+    await refreshDailyLogs()
+  }, [userId, dailyLogsByDate, refreshDailyLogs])
 
   // custom_values is jsonb too -- merge the one changed key over the rest.
   const setCustomValue = useCallback(async (date, habitId, value) => {
     const existing = dailyLogsByDate[date]?.custom_values ?? {}
     await db.saveDailyLog(userId, date, { custom_values: { ...existing, [habitId]: value } })
-    await refresh()
-  }, [userId, dailyLogsByDate, refresh])
+    await refreshDailyLogs()
+  }, [userId, dailyLogsByDate, refreshDailyLogs])
 
   return {
     settings, template, weekPlans, customHabits, dailyLogs, dailyLogsByDate,

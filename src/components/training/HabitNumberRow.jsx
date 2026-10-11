@@ -72,17 +72,26 @@ export default function HabitNumberRow({
 
       {quickAdd && quickAdd.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-2">
-          {quickAdd.map((amount) => (
-            <motion.button
-              {...tapScale}
-              key={amount}
-              type="button"
-              onClick={() => onCommit((Number(value) || 0) + amount)}
-              className="min-h-9 cursor-pointer rounded-full bg-pink-100 px-3 text-xs font-medium text-pink-700 dark:bg-emerald-500/15 dark:text-emerald-400"
-            >
-              +{amount}{unit}
-            </motion.button>
-          ))}
+          {quickAdd.map((q, i) => {
+            // A plain number adds itself in the row's own unit (e.g. protein's
+            // +20g). An {amount, label} object adds `amount` in the row's unit
+            // but displays `label` instead -- water's target/total stay in
+            // litres (matching the coach's week-plan JSON contract) while its
+            // buttons read in ml, since that's how a bottle size is known.
+            const amount = typeof q === 'object' ? q.amount : q
+            const label = typeof q === 'object' ? q.label : `+${amount}${unit}`
+            return (
+              <motion.button
+                {...tapScale}
+                key={i}
+                type="button"
+                onClick={() => onCommit((Number(value) || 0) + amount)}
+                className="min-h-9 cursor-pointer rounded-full bg-pink-100 px-3 text-xs font-medium text-pink-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+              >
+                {label}
+              </motion.button>
+            )
+          })}
         </div>
       )}
     </div>

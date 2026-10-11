@@ -11,9 +11,20 @@ export const TICK_HABITS = [
 export const NUMBER_HABITS = [
   { key: 'weight', label: 'Weight', unit: 'kg', decimals: 1, hitRule: 'logged' },
   { key: 'calories', label: 'Calories', unit: 'kcal', decimals: 0, hitRule: 'tolerance' },
-  { key: 'protein', label: 'Protein', unit: 'g', decimals: 0, hitRule: 'atLeast', quickAdd: [20, 25, 40] },
+  { key: 'protein', label: 'Protein', unit: 'g', decimals: 0, hitRule: 'atLeast' },
   { key: 'steps', label: 'Steps', unit: 'steps', decimals: 0, hitRule: 'atLeast' },
-  { key: 'water', label: 'Water', unit: 'L', decimals: 1, hitRule: 'atLeast', quickAdd: [0.25, 0.5] },
+  {
+    key: 'water', label: 'Water', unit: 'L', decimals: 1, hitRule: 'atLeast',
+    // Target/total stay in litres (the coach's week-plan JSON says "water":
+    // 3.0 meaning 3L), but the buttons are labelled in ml since that's how a
+    // bottle size is actually known -- amount is still added in litres.
+    quickAdd: [
+      { amount: 0.25, label: '+250ml' },
+      { amount: 0.5, label: '+500ml' },
+      { amount: 0.568, label: '+568ml (pint)' },
+      { amount: 0.71, label: '+710ml (Owala)' },
+    ],
+  },
   { key: 'drinks', label: 'Drinks', unit: '', decimals: 0, hitRule: 'none' },
 ]
 

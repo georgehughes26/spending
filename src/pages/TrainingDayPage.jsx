@@ -163,7 +163,6 @@ export default function TrainingDayPage() {
           <HabitNumberRow
             label="Protein" value={log?.protein ?? null} target={dayPlan.protein} unit="g" decimals={0}
             status={isNumberHabitHit('protein', log?.protein ?? null, dayPlan.protein, settings.calorie_tolerance) ? 'hit' : 'miss'}
-            quickAdd={[20, 25, 40]}
             streak={streakFor({ kind: 'number', key: 'protein' })}
             onCommit={(v) => t.setLogField(date, 'protein', v)}
           />
@@ -176,7 +175,12 @@ export default function TrainingDayPage() {
           <HabitNumberRow
             label="Water" value={log?.water ?? null} target={dayPlan.water} unit="L" decimals={1}
             status={isNumberHabitHit('water', log?.water ?? null, dayPlan.water, settings.calorie_tolerance) ? 'hit' : 'miss'}
-            quickAdd={[0.25, 0.5]}
+            quickAdd={[
+              { amount: 0.25, label: '+250ml' },
+              { amount: 0.5, label: '+500ml' },
+              { amount: 0.568, label: '+568ml (pint)' },
+              { amount: 0.71, label: '+710ml (Owala)' },
+            ]}
             streak={streakFor({ kind: 'number', key: 'water' })}
             onCommit={(v) => t.setLogField(date, 'water', v)}
           />
