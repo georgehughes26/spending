@@ -45,6 +45,21 @@ export function validateWeekPlan(plan) {
     if (day.sessions !== undefined && !Array.isArray(day.sessions)) {
       errors.push(`${label}'s "sessions" must be an array (use [] for a rest day)`)
     }
+    // lift_targets is optional -- only check its shape when present.
+    if (day.lift_targets !== undefined) {
+      if (!Array.isArray(day.lift_targets)) {
+        errors.push(`${label}'s "lift_targets" must be an array`)
+      } else {
+        day.lift_targets.forEach((t, ti) => {
+          if (!t?.exercise || typeof t.exercise !== 'string') {
+            errors.push(`${label}'s lift_targets[${ti}] is missing "exercise"`)
+          }
+          if (t?.weight === undefined || t?.weight === null || Number.isNaN(Number(t.weight))) {
+            errors.push(`${label}'s lift_targets[${ti}] is missing a numeric "weight"`)
+          }
+        })
+      }
+    }
   })
 
   if (errors.length === 0 && isMonday(plan.week_start)) {
@@ -60,7 +75,9 @@ export function validateWeekPlan(plan) {
 }
 
 // Normalizes a validated plan's days down to the fields we store, dropping
-// anything else the coach's JSON might add later.
+// anything else the coach's JSON might add later. lift_targets (snake_case
+// in the coach's JSON, matching the rest of that schema) becomes
+// liftTargets here, matching resolveDayPlan's own field naming.
 export function normalizeWeekPlanDays(plan) {
   return plan.days.map((day) => ({
     date: day.date,
@@ -70,6 +87,9 @@ export function normalizeWeekPlanDays(plan) {
     steps: Number(day.steps),
     water: Number(day.water),
     note: day.note ?? null,
+    liftTargets: Array.isArray(day.lift_targets)
+      ? day.lift_targets.filter((t) => t?.exercise).map((t) => ({ exercise: String(t.exercise), weight: Number(t.weight) }))
+      : [],
   }))
 }
 
@@ -81,7 +101,7 @@ export function normalizeWeekPlanDays(plan) {
 export function diffWeekPlan(normalizedDays, weekPlans, template, dailyLogsByDate) {
   return normalizedDays.map((incoming) => {
     const current = resolveDayPlan(incoming.date, weekPlans, template)
-    const fields = ['sessions', 'calories', 'protein', 'steps', 'water', 'note']
+    const fields = ['sessions', 'calories', 'protein', 'steps', 'water', 'note', 'liftTargets']
     const changed = {}
     for (const f of fields) {
       changed[f] = JSON.stringify(current[f] ?? null) !== JSON.stringify(incoming[f] ?? null)

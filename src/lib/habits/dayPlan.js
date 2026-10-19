@@ -20,6 +20,10 @@ export function resolveDayPlan(dateString, weekPlans, template) {
         water: day.water ?? null,
         note: day.note ?? null,
         planSummary: plan.summary ?? null,
+        // Only an imported week plan can carry lift targets -- the default
+        // template has no concept of a specific exercise to target a weight
+        // for, only sessions/calories/etc.
+        liftTargets: day.liftTargets ?? [],
       }
     }
   }
@@ -36,5 +40,6 @@ export function resolveDayPlan(dateString, weekPlans, template) {
     water: t?.water ?? null,
     note: null,
     planSummary: null,
+    liftTargets: [],
   }
 }

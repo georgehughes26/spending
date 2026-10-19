@@ -4,6 +4,11 @@ import { tapScale } from '../motion'
 import { validateWeekPlan, normalizeWeekPlanDays, diffWeekPlan } from '../../lib/habits/weekPlan'
 import { formatShortDay } from '../../lib/habits/dates'
 
+function formatLiftTargets(liftTargets) {
+  if (!liftTargets || liftTargets.length === 0) return 'None'
+  return liftTargets.map((t) => `${t.exercise} ${t.weight}kg`).join(', ')
+}
+
 function DiffRow({ row }) {
   const { date, current, incoming, changed, renamedTickedSessions } = row
   return (
@@ -39,6 +44,14 @@ function DiffRow({ row }) {
             <span className="text-zinc-500">Note</span>
             <span className="text-zinc-400 line-through">{current.note ?? '—'}</span>
             <span className="font-medium text-pink-700 dark:text-emerald-400">{incoming.note ?? '—'}</span>
+          </>
+        )}
+
+        {changed.liftTargets && (
+          <>
+            <span className="text-zinc-500">Lift targets</span>
+            <span className="text-zinc-400 line-through">{formatLiftTargets(current.liftTargets)}</span>
+            <span className="font-medium text-pink-700 dark:text-emerald-400">{formatLiftTargets(incoming.liftTargets)}</span>
           </>
         )}
       </div>

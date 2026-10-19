@@ -77,6 +77,10 @@ create table if not exists habit_daily_logs (
   note text,
   session_ticks jsonb not null default '[]',
   custom_values jsonb not null default '{}',
+  -- [{ exercise: string, sets: [{ reps: number, weight: number }] }] -- a
+  -- free-form lift log, not tied to any predefined program/targets, so an
+  -- exercise is identified purely by name across days (see lifts.js).
+  lifts jsonb not null default '[]',
   updated_at timestamptz not null default now(),
   primary key (user_id, date)
 );

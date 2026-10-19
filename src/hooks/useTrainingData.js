@@ -135,10 +135,18 @@ export function useTrainingData(userId) {
     await refreshDailyLogs()
   }, [userId, dailyLogsByDate, refreshDailyLogs])
 
+  // lifts is jsonb too, but unlike session_ticks/custom_values it isn't
+  // keyed against anything external (no plan to merge against) -- the lift
+  // editor owns the whole day's array, so a full replace is correct here.
+  const setLifts = useCallback(async (date, lifts) => {
+    await db.saveDailyLog(userId, date, { lifts })
+    await refreshDailyLogs()
+  }, [userId, refreshDailyLogs])
+
   return {
     settings, template, weekPlans, customHabits, dailyLogs, dailyLogsByDate,
     loading, error, refresh,
     saveSettings, saveTemplateDay, importWeekPlan, revertWeekPlan,
-    addCustomHabit, deleteCustomHabit, setLogField, setDrinks, toggleSessionTick, setCustomValue,
+    addCustomHabit, deleteCustomHabit, setLogField, setDrinks, toggleSessionTick, setCustomValue, setLifts,
   }
 }

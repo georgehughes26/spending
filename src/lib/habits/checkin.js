@@ -2,6 +2,7 @@ import { weekDatesFor, weekNumberFor, totalWeeksFor, formatShortDayMonth, format
 import { resolveDayPlan } from './dayPlan'
 import { goalLineWeight, trendWeight, onTrackStatus, neededPerWeek } from './goalLine'
 import { isNumberHabitHit, caloriesStatus } from './builtInHabits'
+import { weekLiftSummaries } from './lifts'
 
 const DASH = '—'
 
@@ -121,6 +122,21 @@ export function weekTotals(dates, weekPlans, template, dailyLogsByDate, settings
   }
 }
 
+// One line per exercise logged that week -- this week's target weight (if
+// the coach set one via lift_targets), then every entered day's sets
+// (reps@weight). Purely factual, no up/hold/drop verdict -- that judgement
+// happens in a separate coaching conversation, not here. Omitted entirely
+// from the export on a week with no lifts logged.
+function buildLiftLines(lifts) {
+  return lifts.map(({ exercise, targetWeight, entries }) => {
+    const entryText = entries
+      .map(({ date, sets }) => `${formatShortDayMonth(date).split(' ').slice(0, 2).join(' ')} ${sets.map((s) => `${s.reps ?? DASH}@${s.weight ?? DASH}kg`).join(', ')}`)
+      .join('; ')
+    const targetText = targetWeight != null ? ` (target ${targetWeight}kg)` : ''
+    return `${exercise}${targetText} -- ${entryText}`
+  })
+}
+
 // Builds the exact plain-text check-in block described in the brief --
 // every day gets a line (checkin.js's per-field "—" handles the "nothing
 // logged" case automatically), and the marker lines are always present so
@@ -170,6 +186,14 @@ export function buildCheckIn({ weekStart, settings, template, weekPlans, dailyLo
   lines.push('DAILY')
   lines.push('Date | Sessions (done/planned) | Cals (act/tgt) | Protein | Steps | Water | Weight | Drinks | Creatine | VitD | Note')
   lines.push(...buildDailyRows(dates, weekPlans, template, dailyLogsByDate))
+
+  const lifts = weekLiftSummaries(dates, weekPlans, template, dailyLogsByDate)
+  if (lifts.length > 0) {
+    lines.push('')
+    lines.push('LIFTS')
+    lines.push(...buildLiftLines(lifts))
+  }
+
   lines.push('=== END ===')
 
   return lines.join('\n')

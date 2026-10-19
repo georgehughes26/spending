@@ -14,6 +14,7 @@ import StreaksCard from '../components/training/StreaksCard'
 import WeekPlanImportModal from '../components/training/WeekPlanImportModal'
 import CheckInExportButton from '../components/training/CheckInExportButton'
 import TrainingSubNav from '../components/training/TrainingSubNav'
+import LiftLogCard from '../components/training/LiftLogCard'
 import { resolveDayPlan } from '../lib/habits/dayPlan'
 import { scoreDay, isNumberHabitHit, caloriesStatus } from '../lib/habits/builtInHabits'
 import { trendWeight, goalLineWeight, onTrackStatus } from '../lib/habits/goalLine'
@@ -214,6 +215,10 @@ export default function TrainingDayPage() {
           )}
 
           <NoteField value={log?.note ?? ''} onCommit={(v) => t.setLogField(date, 'note', v)} />
+        </FadeInItem>
+
+        <FadeInItem>
+          <LiftLogCard date={date} lifts={log?.lifts ?? []} liftTargets={dayPlan.liftTargets} onChange={(lifts) => t.setLifts(date, lifts)} />
         </FadeInItem>
 
         <FadeInItem>
