@@ -24,9 +24,17 @@ export default function LiftLogCard({ date, lifts, liftTargets = [], onChange })
   // from. This is local only: it isn't written to the database until the
   // user actually touches a field, so an untouched target doesn't silently
   // look like a logged set.
+  //
+  // Keyed on content, not just `date` -- importing a week plan while
+  // already viewing today's day doesn't change `date`, so a date-only key
+  // missed the newly-arrived liftTargets entirely and the card stayed
+  // blank. JSON.stringify as a dependency is deliberate here: these are
+  // small arrays and this is the simplest correct way to react to their
+  // actual content changing, not just their reference.
+  const seedKey = lifts.length > 0 ? JSON.stringify(lifts) : JSON.stringify(liftTargets)
   useEffect(() => {
     setDraft(lifts.length > 0 ? lifts : prefillFromTargets(liftTargets))
-  }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [date, seedKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const commit = (next) => {
     setDraft(next)
