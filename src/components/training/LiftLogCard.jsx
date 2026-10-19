@@ -5,6 +5,10 @@ import Card from '../Card'
 
 const fieldClass = 'min-h-11 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
+function prefillFromTargets(liftTargets) {
+  return liftTargets.map((t) => ({ exercise: t.exercise, sets: [{ reps: null, weight: t.weight }] }))
+}
+
 // Free-form -- no predefined exercise list, and no judgement here on
 // whether to go up/hold/drop (that's a separate coaching conversation).
 // This just captures what was actually lifted per set, and shows whatever
@@ -12,8 +16,17 @@ const fieldClass = 'min-h-11 rounded-lg border border-zinc-300 dark:border-white
 // week plan's lift_targets) alongside the input for it. Reps/weight are
 // kept as null (not filtered out or forced to 0) while a set is mid-entry.
 export default function LiftLogCard({ date, lifts, liftTargets = [], onChange }) {
-  const [draft, setDraft] = useState(lifts)
-  useEffect(() => setDraft(lifts), [date]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [draft, setDraft] = useState(lifts.length > 0 ? lifts : prefillFromTargets(liftTargets))
+
+  // Nothing's been logged for this day yet -- pre-fill a row per target
+  // exercise (weight seeded from the target, reps left blank) so there's
+  // something to fill in rather than a blank "+ Add exercise" to start
+  // from. This is local only: it isn't written to the database until the
+  // user actually touches a field, so an untouched target doesn't silently
+  // look like a logged set.
+  useEffect(() => {
+    setDraft(lifts.length > 0 ? lifts : prefillFromTargets(liftTargets))
+  }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const commit = (next) => {
     setDraft(next)
