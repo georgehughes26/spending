@@ -1,3 +1,5 @@
+import { addDays } from './dates'
+
 // The fixed set of habits every day has, before any custom ones are added
 // in settings. Each number habit's "hit" rule decides what counts as done
 // for scoring, streaks and the check-in export -- kept as data here so all
@@ -9,8 +11,14 @@ export const TICK_HABITS = [
 ]
 
 export const NUMBER_HABITS = [
-  { key: 'weight', label: 'Weight', unit: 'kg', decimals: 1, hitRule: 'logged' },
-  { key: 'calories', label: 'Calories', unit: 'kcal', decimals: 0, hitRule: 'tolerance' },
+  // Not a daily tick -- some days a weigh-in just isn't possible, so this is
+  // "hit" if there's been one at all in the last cadenceDays, not today
+  // specifically. isWeighInOnCadence below is what actually evaluates it;
+  // isNumberHabitHit can't (it has no access to the surrounding days).
+  { key: 'weight', label: 'Weight', unit: 'kg', decimals: 1, hitRule: 'cadence', cadenceDays: 3 },
+  // A ceiling, not a target to land on exactly -- under it is still a hit,
+  // only going over (beyond the tolerance buffer) counts as a miss.
+  { key: 'calories', label: 'Calories', unit: 'kcal', decimals: 0, hitRule: 'atMost' },
   { key: 'protein', label: 'Protein', unit: 'g', decimals: 0, hitRule: 'atLeast' },
   { key: 'steps', label: 'Steps', unit: 'steps', decimals: 0, hitRule: 'atLeast' },
   {
@@ -33,18 +41,32 @@ export function numberHabit(key) {
 }
 
 // true/false/null -- null means "can't tell" (no target, or not logged and
-// the rule isn't 'logged'), which callers treat as not-scored rather than
-// as a miss.
+// the rule isn't 'logged'/'cadence'), which callers treat as not-scored
+// rather than as a miss. 'cadence' (weight) isn't decidable from a single
+// value/target pair at all -- use isWeighInOnCadence for that instead.
 export function isNumberHabitHit(key, value, target, tolerance) {
   const habit = numberHabit(key)
   if (!habit) return null
   if (habit.hitRule === 'logged') return value != null
+  if (habit.hitRule === 'cadence') return null
   if (value == null) return false
-  if (habit.hitRule === 'tolerance') return target != null && Math.abs(value - target) <= tolerance
+  if (habit.hitRule === 'atMost') return target != null && value <= target + tolerance
   if (habit.hitRule === 'atLeast') return target != null && value >= target
   return null
 }
 
+// Needs the surrounding days, not just today's value -- "hit" for weight
+// means a weigh-in anywhere in the last cadenceDays (today included), not
+// specifically today, since not every day allows for one.
+export function isWeighInOnCadence(dateString, dailyLogsByDate, windowDays) {
+  for (let i = 0; i < windowDays; i++) {
+    if (dailyLogsByDate[addDays(dateString, -i)]?.weight != null) return true
+  }
+  return false
+}
+
+// Still under/on/over for the check-in's informational breakdown -- 'under'
+// just no longer counts as a miss for scoring (see isNumberHabitHit above).
 export function caloriesStatus(value, target, tolerance) {
   if (value == null || target == null) return null
   const diff = value - target
@@ -57,7 +79,7 @@ export function caloriesStatus(value, target, tolerance) {
 // column for them.
 const SCORED_NUMBER_KEYS = ['weight', 'calories', 'protein', 'steps', 'water']
 
-export function scoreDay(dayPlan, log, settings, customHabits = []) {
+export function scoreDay(dayPlan, log, settings, customHabits = [], dailyLogsByDate = {}, date = null) {
   let done = 0
   let total = 0
 
@@ -73,6 +95,11 @@ export function scoreDay(dayPlan, log, settings, customHabits = []) {
   })
 
   for (const key of SCORED_NUMBER_KEYS) {
+    if (key === 'weight') {
+      total += 1
+      if (date && isWeighInOnCadence(date, dailyLogsByDate, numberHabit('weight').cadenceDays)) done += 1
+      continue
+    }
     const target = dayPlan?.[key] ?? null
     const value = log?.[key] ?? null
     const hit = isNumberHabitHit(key, value, target, settings?.calorie_tolerance ?? 100)

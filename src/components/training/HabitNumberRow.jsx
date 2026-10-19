@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { tapScale } from '../motion'
 
+// 'under' reads the same as 'on' (calories is a ceiling, not a target to
+// land on exactly -- under it is a hit too), 'over' is the only miss state.
 const STATUS_BAR = {
   hit: 'bg-emerald-500',
   miss: 'bg-zinc-300 dark:bg-white/20',
-  under: 'bg-amber-500',
+  under: 'bg-emerald-500',
   on: 'bg-emerald-500',
   over: 'bg-red-500',
 }
@@ -13,7 +15,7 @@ const STATUS_BAR = {
 const STATUS_TEXT = {
   hit: 'text-emerald-600 dark:text-emerald-400',
   miss: 'text-zinc-500 dark:text-zinc-400',
-  under: 'text-amber-600 dark:text-amber-400',
+  under: 'text-emerald-600 dark:text-emerald-400',
   on: 'text-emerald-600 dark:text-emerald-400',
   over: 'text-red-600 dark:text-red-400',
 }

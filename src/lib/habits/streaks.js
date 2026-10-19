@@ -1,5 +1,5 @@
 import { addDays, todayISODate } from './dates'
-import { isNumberHabitHit, numberHabit } from './builtInHabits'
+import { isNumberHabitHit, isWeighInOnCadence, numberHabit } from './builtInHabits'
 import { resolveDayPlan } from './dayPlan'
 
 // Recomputed from the full log history every time rather than incrementally
@@ -36,6 +36,7 @@ function hitForBuiltInTick(key, dateString, dailyLogsByDate) {
 function hitForBuiltInNumber(key, dateString, dailyLogsByDate, weekPlans, template, settings) {
   const habit = numberHabit(key)
   if (!habit || habit.hitRule === 'none') return null
+  if (habit.hitRule === 'cadence') return isWeighInOnCadence(dateString, dailyLogsByDate, habit.cadenceDays)
   const log = dailyLogsByDate[dateString]
   const target = resolveDayPlan(dateString, weekPlans, template)[key]
   const hit = isNumberHabitHit(key, log?.[key] ?? null, target, settings.calorie_tolerance)

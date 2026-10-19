@@ -44,7 +44,7 @@ export default function TrainingDayPage() {
   const { settings, template, weekPlans, customHabits, dailyLogsByDate } = t
   const dayPlan = resolveDayPlan(date, weekPlans, template)
   const log = dailyLogsByDate[date] ?? null
-  const score = scoreDay(dayPlan, log, settings, customHabits)
+  const score = scoreDay(dayPlan, log, settings, customHabits, dailyLogsByDate, date)
 
   const trend = trendWeight(date, dailyLogsByDate)
   const goalLine = goalLineWeight(date, settings)
@@ -59,12 +59,14 @@ export default function TrainingDayPage() {
 
   const streakFor = (ref) => computeStreak(ref, settings.plan_start, { dailyLogsByDate, weekPlans, template, settings })?.current ?? 0
 
+  // Calories is a ceiling, not a target to land on exactly -- under (or on)
+  // it is a hit, only going over the tolerance buffer is a miss.
   const calStatus = caloriesStatus(log?.calories, dayPlan.calories, settings.calorie_tolerance)
   const calStatusLabel = calStatus == null
     ? undefined
-    : calStatus === 'on'
-      ? `on target (${dayPlan.calories})`
-      : `${calStatus} by ${Math.abs(log.calories - dayPlan.calories)} (target ${dayPlan.calories})`
+    : calStatus === 'over'
+      ? `${Math.abs(log.calories - dayPlan.calories)} over the ${dayPlan.calories} max`
+      : `within the ${dayPlan.calories} max`
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-6 pb-10">
@@ -153,6 +155,7 @@ export default function TrainingDayPage() {
         <FadeInItem className="flex flex-col gap-2">
           <HabitNumberRow
             label="Weight" value={log?.weight ?? null} unit="kg" decimals={1}
+            streak={streakFor({ kind: 'number', key: 'weight' })}
             onCommit={(v) => t.setLogField(date, 'weight', v)}
           />
           <HabitNumberRow
