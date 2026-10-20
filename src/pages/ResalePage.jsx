@@ -122,11 +122,93 @@ function AddItemForm({ items, onAdd, onClose }) {
   )
 }
 
+function GeneralCostRow({ cost, onUpdate, onDelete }) {
+  const [editing, setEditing] = useState(false)
+  const [label, setLabel] = useState(cost.label)
+  const [amount, setAmount] = useState(cost.amount)
+  const [date, setDate] = useState(cost.cost_date)
+  const [boughtFrom, setBoughtFrom] = useState(cost.bought_from ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSave = async () => {
+    setSaving(true)
+    setError(null)
+    try {
+      await onUpdate(cost.id, { label, amount: Number(amount) || 0, cost_date: date, bought_from: boughtFrom.trim() || null })
+      setEditing(false)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <li className="flex flex-col gap-2 py-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Label"
+            className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
+          />
+          <input
+            type="text"
+            value={boughtFrom}
+            onChange={(e) => setBoughtFrom(e.target.value)}
+            placeholder="Bought from (optional)"
+            className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
+          />
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="min-h-11 shrink-0 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
+          />
+          <div className="flex h-11 w-24 shrink-0 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
+            <span className="text-zinc-500 dark:text-zinc-400">£</span>
+            <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
+          </div>
+        </div>
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <div className="flex items-center gap-3">
+          <motion.button {...tapScale} type="button" onClick={handleSave} disabled={saving || !label.trim()} className="min-h-9 cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 disabled:opacity-50">
+            Save
+          </motion.button>
+          <motion.button {...tapScale} type="button" onClick={() => setEditing(false)} className="min-h-9 cursor-pointer px-2 text-sm text-zinc-500 dark:text-zinc-400">
+            Cancel
+          </motion.button>
+        </div>
+      </li>
+    )
+  }
+
+  return (
+    <li className="flex items-center justify-between py-2 text-sm">
+      <span className="text-zinc-700 dark:text-zinc-300">
+        {cost.label} <span className="text-xs text-zinc-500 dark:text-zinc-400">· {cost.cost_date}{cost.bought_from ? ` · ${cost.bought_from}` : ''}</span>
+      </span>
+      <span className="flex items-center gap-3">
+        <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount, { pence: true })}</span>
+        <button type="button" onClick={() => setEditing(true)} className="cursor-pointer text-xs font-medium text-pink-700 dark:text-emerald-400 hover:underline">
+          Edit
+        </button>
+        <button type="button" onClick={() => onDelete(cost.id)} className="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400 hover:underline">
+          Remove
+        </button>
+      </span>
+    </li>
+  )
+}
+
 // Costs that aren't tied to any one item -- packaging, a Vinted
 // subscription, printer ink. Its own visible card on the page, under the
 // stock list, rather than tucked inside the Add Stock flow -- it's part of
 // the real cost picture, not a one-off aside.
-function GeneralCostsCard({ costs, onAdd, onDelete }) {
+function GeneralCostsCard({ costs, onAdd, onUpdate, onDelete }) {
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
@@ -191,19 +273,9 @@ function GeneralCostsCard({ costs, onAdd, onDelete }) {
       </form>
       {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {costs.length > 0 ? (
-        <ul className="flex max-h-48 flex-col divide-y divide-zinc-200 overflow-y-auto dark:divide-white/10">
+        <ul className="flex max-h-96 flex-col divide-y divide-zinc-200 overflow-y-auto dark:divide-white/10">
           {costs.map((cost) => (
-            <li key={cost.id} className="flex items-center justify-between py-2 text-sm">
-              <span className="text-zinc-700 dark:text-zinc-300">
-                {cost.label} <span className="text-xs text-zinc-500 dark:text-zinc-400">· {cost.cost_date}{cost.bought_from ? ` · ${cost.bought_from}` : ''}</span>
-              </span>
-              <span className="flex items-center gap-3">
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount, { pence: true })}</span>
-                <button type="button" onClick={() => onDelete(cost.id)} className="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400 hover:underline">
-                  Remove
-                </button>
-              </span>
-            </li>
+            <GeneralCostRow key={cost.id} cost={cost} onUpdate={onUpdate} onDelete={onDelete} />
           ))}
         </ul>
       ) : (
@@ -287,7 +359,7 @@ export default function ResalePage() {
     markPaid,
     markShipped,
   } = useResaleItems(user?.id)
-  const { costs: generalCosts, addCost: addGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
+  const { costs: generalCosts, addCost: addGeneralCost, updateCost: updateGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
   const [granularity, setGranularity] = useState('week')
   const [addingItem, setAddingItem] = useState(false)
 
@@ -358,7 +430,7 @@ export default function ResalePage() {
           )}
 
           <div className="mt-5">
-            <GeneralCostsCard costs={generalCosts} onAdd={addGeneralCost} onDelete={deleteGeneralCost} />
+            <GeneralCostsCard costs={generalCosts} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
           </div>
         </>
       )}

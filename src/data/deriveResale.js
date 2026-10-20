@@ -1,14 +1,22 @@
+// "Sold" and "Completed" are both past the sale -- Completed just means the
+// payout/shipping side is fully wrapped up too, so anywhere profit or sales
+// totals are calculated, both statuses count the same.
+const SOLD_STATUSES = new Set(['sold', 'completed'])
+export function isSoldStatus(status) {
+  return SOLD_STATUSES.has(status)
+}
+
 export function itemAllInCost(item) {
   return Number(item.cost_price) || 0
 }
 
 export function itemProfit(item) {
-  if (item.status !== 'sold') return null
+  if (!isSoldStatus(item.status)) return null
   return (Number(item.sold_price) || 0) - itemAllInCost(item)
 }
 
 export function itemPotentialProfit(item) {
-  if (item.status === 'sold' || item.target_price == null) return null
+  if (isSoldStatus(item.status) || item.target_price == null) return null
   return Number(item.target_price) - itemAllInCost(item)
 }
 
@@ -20,8 +28,8 @@ export function itemPotentialProfit(item) {
 // item's own profit/potential-profit figure, since they can't be attributed
 // to one sale.
 export function deriveResaleSummary(items, generalCosts = []) {
-  const sold = items.filter((i) => i.status === 'sold')
-  const active = items.filter((i) => i.status !== 'sold')
+  const sold = items.filter((i) => isSoldStatus(i.status))
+  const active = items.filter((i) => !isSoldStatus(i.status))
 
   const generalCostsTotal = generalCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
   const totalCost = items.reduce((t, i) => t + itemAllInCost(i), 0) + generalCostsTotal
@@ -31,7 +39,7 @@ export function deriveResaleSummary(items, generalCosts = []) {
     .filter((i) => i.target_price != null)
     .reduce((t, i) => t + itemPotentialProfit(i), 0)
 
-  const stageCounts = { purchased: 0, listed: 0, sold: 0 }
+  const stageCounts = { purchased: 0, listed: 0, sold: 0, completed: 0 }
   for (const item of items) stageCounts[item.status] = (stageCounts[item.status] ?? 0) + 1
 
   return { totalCost, totalSales, totalProfit, potentialProfit, stageCounts, itemCount: items.length, generalCostsTotal }
@@ -72,7 +80,7 @@ function mostSoldTeam(sold) {
 // How profitable a typical sale is, which team's shirts move the most, and
 // which courier carries most of the outgoing parcels.
 export function deriveResaleLogistics(items) {
-  const sold = items.filter((i) => i.status === 'sold')
+  const sold = items.filter((i) => isSoldStatus(i.status))
 
   const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
   const soldProfit = sold.reduce((t, i) => t + itemProfit(i), 0)
@@ -177,7 +185,7 @@ export function deriveResaleTimeSeries(items, granularity) {
 
   for (const item of items) {
     if (item.purchased_date) addTo(periodKey(item.purchased_date, granularity), 'totalCost', itemAllInCost(item))
-    if (item.status === 'sold' && item.sold_date) addTo(periodKey(item.sold_date, granularity), 'totalSales', Number(item.sold_price) || 0)
+    if (isSoldStatus(item.status) && item.sold_date) addTo(periodKey(item.sold_date, granularity), 'totalSales', Number(item.sold_price) || 0)
   }
 
   const activityDates = items.flatMap((i) => [i.purchased_date, i.sold_date]).filter(Boolean).sort()

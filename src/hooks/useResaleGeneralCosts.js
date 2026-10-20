@@ -40,11 +40,17 @@ export function useResaleGeneralCosts(userId) {
     await refresh()
   }, [userId, refresh])
 
+  const updateCost = useCallback(async (id, fields) => {
+    const { error: updateError } = await supabase.from('resale_general_costs').update(fields).eq('id', id)
+    if (updateError) throw new Error(updateError.message)
+    await refresh()
+  }, [refresh])
+
   const deleteCost = useCallback(async (id) => {
     const { error: deleteError } = await supabase.from('resale_general_costs').delete().eq('id', id)
     if (deleteError) throw new Error(deleteError.message)
     await refresh()
   }, [refresh])
 
-  return { costs, loading, error, addCost, deleteCost, refresh }
+  return { costs, loading, error, addCost, updateCost, deleteCost, refresh }
 }

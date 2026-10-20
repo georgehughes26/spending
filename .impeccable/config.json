@@ -251,6 +251,15 @@
         ],
         "createdAt": "2026-10-19T13:02:20.523Z",
         "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same class string; they never render together"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-zinc-950 on bg-pink-600",
+        "files": [
+          "src/components/CompleteCaptureModal.jsx"
+        ],
+        "createdAt": "2026-10-20T20:32:24.878Z",
+        "reason": "same cross-theme false positive as other confirm buttons this session: dark:text-zinc-950 (paired with dark:bg-emerald-400) never renders against light-theme bg-pink-600 in the same template string"
       }
     ]
   }

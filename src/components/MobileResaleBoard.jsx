@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { ResaleCardVisual, STAGE_META } from './ResaleCard'
 import ResaleDetailModal from './ResaleDetailModal'
 import SoldCaptureModal from './SoldCaptureModal'
+import CompleteCaptureModal from './CompleteCaptureModal'
 import { tapScale } from './motion'
 import { itemAllInCost } from '../data/deriveResale'
 import { COLUMNS, fireConfetti, itemColumn, resolveMove, sortForColumn } from '../utils/resaleStages'
@@ -38,12 +39,17 @@ export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSol
   const [activeStage, setActiveStage] = useState('purchased')
   const [openItem, setOpenItem] = useState(null)
   const [pendingSale, setPendingSale] = useState(null)
+  const [pendingComplete, setPendingComplete] = useState(null)
 
   const applyMove = (item, toColumn) => {
     const move = resolveMove(item, toColumn)
     if (!move) return
     if (move.type === 'needs-sale') {
       setPendingSale(item)
+      return
+    }
+    if (move.type === 'needs-completion') {
+      setPendingComplete(item)
       return
     }
     onUpdate(item.id, move.fields)
@@ -55,9 +61,15 @@ export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSol
     setOpenItem(null)
   }
 
-  const confirmSale = async (price, date, shippingOut, soldOn) => {
-    await onMarkSold(pendingSale.id, price, date, shippingOut, soldOn)
+  const confirmSale = async (price, shippingOut, soldOn) => {
+    await onMarkSold(pendingSale.id, price, shippingOut, soldOn)
     setPendingSale(null)
+    fireConfetti()
+  }
+
+  const confirmComplete = async (date) => {
+    await onUpdate(pendingComplete.id, { status: 'completed', sold_date: date })
+    setPendingComplete(null)
     fireConfetti()
   }
 
@@ -115,6 +127,10 @@ export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSol
 
       {pendingSale && (
         <SoldCaptureModal item={pendingSale} onCancel={() => setPendingSale(null)} onConfirm={confirmSale} />
+      )}
+
+      {pendingComplete && (
+        <CompleteCaptureModal item={pendingComplete} onCancel={() => setPendingComplete(null)} onConfirm={confirmComplete} />
       )}
     </div>
   )

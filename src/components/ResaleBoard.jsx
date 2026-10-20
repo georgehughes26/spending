@@ -3,6 +3,7 @@ import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDroppable, useS
 import ResaleCard, { ResaleCardVisual, STAGE_META } from './ResaleCard'
 import ResaleDetailModal from './ResaleDetailModal'
 import SoldCaptureModal from './SoldCaptureModal'
+import CompleteCaptureModal from './CompleteCaptureModal'
 import { itemAllInCost } from '../data/deriveResale'
 import { COLUMNS, fireConfetti, itemColumn, resolveMove, sortForColumn } from '../utils/resaleStages'
 import { formatGBP } from '../utils/format'
@@ -41,6 +42,7 @@ function Column({ status, label, items, onOpen, itemCount }) {
 export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped }) {
   const [openItem, setOpenItem] = useState(null)
   const [pendingSale, setPendingSale] = useState(null)
+  const [pendingComplete, setPendingComplete] = useState(null)
   const [activeItem, setActiveItem] = useState(null)
 
   const sensors = useSensors(
@@ -57,6 +59,10 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
     if (!move) return
     if (move.type === 'needs-sale') {
       setPendingSale(item) // need a price before it can count as sold
+      return
+    }
+    if (move.type === 'needs-completion') {
+      setPendingComplete(item) // need the completed date before it can count as done
       return
     }
     onUpdate(item.id, move.fields)
@@ -79,9 +85,15 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
     setOpenItem(null)
   }
 
-  const confirmSale = async (price, date, shippingOut, soldOn) => {
-    await onMarkSold(pendingSale.id, price, date, shippingOut, soldOn)
+  const confirmSale = async (price, shippingOut, soldOn) => {
+    await onMarkSold(pendingSale.id, price, shippingOut, soldOn)
     setPendingSale(null)
+    fireConfetti()
+  }
+
+  const confirmComplete = async (date) => {
+    await onUpdate(pendingComplete.id, { status: 'completed', sold_date: date })
+    setPendingComplete(null)
     fireConfetti()
   }
 
@@ -128,6 +140,10 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
 
       {pendingSale && (
         <SoldCaptureModal item={pendingSale} onCancel={() => setPendingSale(null)} onConfirm={confirmSale} />
+      )}
+
+      {pendingComplete && (
+        <CompleteCaptureModal item={pendingComplete} onCancel={() => setPendingComplete(null)} onConfirm={confirmComplete} />
       )}
     </div>
   )

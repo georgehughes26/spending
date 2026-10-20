@@ -53,13 +53,12 @@ export function useResaleItems(userId) {
   )
 
   const markSold = useCallback(
-    (id, soldPrice, soldDate, shippingOut, soldOn) =>
+    (id, soldPrice, shippingOut, soldOn) =>
       updateItem(id, {
         status: 'sold',
         payment_status: 'awaiting_payment',
         shipping_status: 'not_shipped',
         sold_price: soldPrice,
-        sold_date: soldDate || new Date().toISOString().slice(0, 10),
         shipping_out: shippingOut || null,
         sold_on: soldOn || null,
       }),

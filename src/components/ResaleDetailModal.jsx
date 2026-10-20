@@ -9,8 +9,9 @@ const STATUS_STYLES = {
   purchased: 'bg-zinc-100 text-zinc-700 dark:bg-white/10 dark:text-zinc-300',
   listed: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
   sold: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  completed: 'bg-emerald-200 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300',
 }
-const STATUS_LABELS = { purchased: 'Purchased', listed: 'Listed', sold: 'Sold' }
+const STATUS_LABELS = { purchased: 'Purchased', listed: 'Listed', sold: 'Sold', completed: 'Completed' }
 const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
 const BOUGHT_FROM_OPTIONS = ['Vinted', 'eBay', 'Other']
 const SOLD_ON_OPTIONS = ['Vinted', 'eBay', 'Website', 'Other']
@@ -25,11 +26,12 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
   const [shippingIn, setShippingIn] = useState(item.shipping_in ?? '')
   const [shippingOut, setShippingOut] = useState(item.shipping_out ?? '')
   const [boughtFrom, setBoughtFrom] = useState(item.bought_from ?? '')
+  const [purchasedDate, setPurchasedDate] = useState(item.purchased_date ?? '')
   const [costPrice, setCostPrice] = useState(item.cost_price)
   const [targetPrice, setTargetPrice] = useState(item.target_price ?? '')
   const [notes, setNotes] = useState(item.notes ?? '')
   const [soldPrice, setSoldPrice] = useState(item.sold_price ?? '')
-  const [soldDate, setSoldDate] = useState(item.sold_date ?? '')
+  const [completedDate, setCompletedDate] = useState(item.sold_date ?? '')
   const [soldOn, setSoldOn] = useState(item.sold_on ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -50,6 +52,8 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
     }
   }
 
+  const isSoldOrCompleted = item.status === 'sold' || item.status === 'completed'
+
   const handleSaveEdit = () =>
     run(async () => {
       await onUpdate(item.id, {
@@ -57,12 +61,14 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
         sku: sku.trim() || null,
         shipping_in: shippingIn || null,
         bought_from: boughtFrom || null,
+        purchased_date: purchasedDate || null,
         cost_price: Number(costPrice) || 0,
         target_price: targetPrice === '' ? null : Number(targetPrice),
         notes: notes.trim() || null,
-        ...(item.status === 'sold'
-          ? { sold_price: Number(soldPrice) || 0, sold_date: soldDate || null, shipping_out: shippingOut || null, sold_on: soldOn || null }
+        ...(isSoldOrCompleted
+          ? { sold_price: Number(soldPrice) || 0, shipping_out: shippingOut || null, sold_on: soldOn || null }
           : {}),
+        ...(item.status === 'completed' ? { sold_date: completedDate || null } : {}),
       })
       setEditing(false)
     })
@@ -144,15 +150,15 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                     {BOUGHT_FROM_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </label>
-                {item.status === 'sold' && (
+                <label className="text-sm">
+                  <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
+                  <input type="date" value={purchasedDate} onChange={(e) => setPurchasedDate(e.target.value)} className={inputClass} />
+                </label>
+                {isSoldOrCompleted && (
                   <>
                     <label className="text-sm">
                       <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold price</span>
                       <input type="number" min="0" step="0.01" value={soldPrice} onChange={(e) => setSoldPrice(e.target.value)} className={inputClass} />
-                    </label>
-                    <label className="text-sm">
-                      <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold date</span>
-                      <input type="date" value={soldDate} onChange={(e) => setSoldDate(e.target.value)} className={inputClass} />
                     </label>
                     <label className="text-sm">
                       <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold on</span>
@@ -169,6 +175,12 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                       </select>
                     </label>
                   </>
+                )}
+                {item.status === 'completed' && (
+                  <label className="text-sm">
+                    <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Completed date</span>
+                    <input type="date" value={completedDate} onChange={(e) => setCompletedDate(e.target.value)} className={inputClass} />
+                  </label>
                 )}
               </div>
               <textarea
@@ -242,19 +254,19 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
           )}
 
           <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 dark:border-white/10 pt-3">
-            {item.status === 'sold' && item.payment_status !== 'paid' && (
+            {isSoldOrCompleted && item.payment_status !== 'paid' && (
               <motion.button {...tapScale} type="button" onClick={() => run(() => onMarkPaid(item.id))} disabled={saving} className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 disabled:opacity-50">
                 Mark paid
               </motion.button>
             )}
-            {item.status === 'sold' && item.shipping_status !== 'shipped' && (
+            {isSoldOrCompleted && item.shipping_status !== 'shipped' && (
               <motion.button {...tapScale} type="button" onClick={() => run(() => onMarkShipped(item.id))} disabled={saving} className="min-h-11 cursor-pointer rounded-lg border border-pink-300 dark:border-emerald-500/40 px-4 text-sm font-medium text-pink-700 dark:text-emerald-400 disabled:opacity-50">
                 Mark shipped
               </motion.button>
             )}
-            {item.status === 'sold' && (
+            {item.status === 'completed' && (
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                Sold {item.sold_date ? formatMonthYear(item.sold_date) : ''}
+                Completed {item.sold_date ? formatMonthYear(item.sold_date) : ''}
               </span>
             )}
             {!editing && (

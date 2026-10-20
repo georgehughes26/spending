@@ -5,11 +5,10 @@ import { formatDDMM, formatGBP } from '../utils/format'
 
 const COURIER_INITIAL = { Evri: 'E', InPost: 'I', 'Royal Mail': 'R' }
 
-// One colour-coded stage per item, replacing the old scatter of tiny dots
-// (one for payment, one for shipping) with a single box that reads at a
-// glance. Sold items get split further by how far post-sale they've come --
-// shipped is a deeper green than a fresh sale, and only fully paid *and*
-// shipped counts as done (darkest, faded out).
+// One colour-coded stage per item. "Completed" is a real board column now,
+// not derived -- "shipped" is still a lighter sub-badge shown on a Sold
+// item that's part-way there (paid/shipped tracked independently via
+// payment_status/shipping_status, "Mark paid"/"Mark shipped").
 export const STAGE_META = {
   purchased: { label: 'Purchased', box: 'bg-zinc-300 dark:bg-zinc-600', border: 'border-l-zinc-300 dark:border-l-zinc-600' },
   listed: { label: 'Listed', box: 'bg-amber-400 dark:bg-amber-500', border: 'border-l-amber-400 dark:border-l-amber-500' },
@@ -20,7 +19,6 @@ export const STAGE_META = {
 
 export function cardStage(item) {
   if (item.status !== 'sold') return item.status
-  if (item.payment_status === 'paid' && item.shipping_status === 'shipped') return 'completed'
   if (item.shipping_status === 'shipped') return 'shipped'
   return 'sold'
 }
@@ -33,7 +31,7 @@ export function ResaleCardVisual({ item, dragging = false }) {
   const allInCost = itemAllInCost(item)
   const stage = cardStage(item)
   const completed = stage === 'completed'
-  const dateLabel = { purchased: item.purchased_date, listed: item.listed_date, sold: item.sold_date }[item.status]
+  const dateLabel = { purchased: item.purchased_date, listed: item.listed_date, sold: item.sold_date, completed: item.sold_date }[item.status]
 
   const stageBorder = STAGE_META[stage]?.border ?? STAGE_META.purchased.border
 
@@ -54,7 +52,7 @@ export function ResaleCardVisual({ item, dragging = false }) {
 
       <div className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
         {dateLabel ? formatDDMM(dateLabel) : null}
-        {item.status !== 'sold' && item.target_price != null && ` · target ${formatGBP(item.target_price, { pence: true })}`}
+        {(item.status === 'purchased' || item.status === 'listed') && item.target_price != null && ` · target ${formatGBP(item.target_price, { pence: true })}`}
       </div>
 
       <div className="flex items-end justify-between">
