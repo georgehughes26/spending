@@ -20,21 +20,22 @@ export function itemPotentialProfit(item) {
   return Number(item.target_price) - itemAllInCost(item)
 }
 
-// Lifetime totals, unaffected by any time-period filter. totalCost is every
-// item's all-in cost regardless of status -- it doesn't drop an item just
-// because it's since sold, so it reads as "money spent on stock overall" --
-// plus general costs (packaging, subscriptions) that aren't tied to any one
-// item. Those general costs reduce total profit but never touch a specific
-// item's own profit/potential-profit figure, since they can't be attributed
-// to one sale.
+// Lifetime totals, unaffected by any time-period filter. totalCost is the
+// cost of stock that's actually sold (+ general costs like packaging, a
+// Vinted subscription) -- not every item ever bought -- so totalSales minus
+// totalCost always equals totalProfit at a glance instead of silently
+// including unsold stock's cost in "Cost" while its revenue isn't in
+// "Sales" yet. Unsold stock's spend only shows up via potentialProfit,
+// against its target price, once it's set.
 export function deriveResaleSummary(items, generalCosts = []) {
   const sold = items.filter((i) => isSoldStatus(i.status))
   const active = items.filter((i) => !isSoldStatus(i.status))
 
   const generalCostsTotal = generalCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
-  const totalCost = items.reduce((t, i) => t + itemAllInCost(i), 0) + generalCostsTotal
+  const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
+  const totalCost = soldCost + generalCostsTotal
   const totalSales = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
-  const totalProfit = sold.reduce((t, i) => t + itemProfit(i), 0) - generalCostsTotal
+  const totalProfit = totalSales - totalCost
   const potentialProfit = active
     .filter((i) => i.target_price != null)
     .reduce((t, i) => t + itemPotentialProfit(i), 0)
@@ -49,7 +50,14 @@ export function deriveResaleSummary(items, generalCosts = []) {
 // Away Shirt L" -- the team name is whatever word repeats across sold
 // items once the kit-type words and size letters are stripped out. Numbers
 // (season years, "23/24") are dropped too since they're never a team name.
-const KIT_STOPWORDS = new Set(['home', 'away', 'third', 'fourth', 'kit', 'shirt', 'jersey'])
+// Kit-type/size words and the brands that print on almost every shirt --
+// without these, "Adidas" or "Nike" out-repeats any actual team name, same
+// problem "size" had.
+const KIT_STOPWORDS = new Set([
+  'home', 'away', 'third', 'fourth', 'kit', 'shirt', 'jersey', 'size',
+  'adidas', 'nike', 'puma', 'new', 'balance', 'castore', 'umbro', 'hummel',
+  'diadora', 'macron', 'reebok',
+])
 const SIZE_TOKENS = new Set(['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', '2xl', '3xl'])
 
 function mostSoldTeam(sold) {
