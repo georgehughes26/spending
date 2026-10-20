@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { useResaleItems } from '../hooks/useResaleItems'
 import { useResaleGeneralCosts } from '../hooks/useResaleGeneralCosts'
 import { deriveResaleLogistics, deriveResaleSummary, deriveResaleTimeSeries } from '../data/deriveResale'
+import { exportResaleToExcel } from '../utils/resaleExport'
 import { formatGBP } from '../utils/format'
 
 const inputClass =
@@ -370,11 +371,22 @@ export default function ResalePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-6">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Reselling</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Track stock from purchase through to payout, and see how you're performing.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Reselling</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Track stock from purchase through to payout, and see how you're performing.
+          </p>
+        </div>
+        <motion.button
+          {...tapScale}
+          type="button"
+          onClick={() => exportResaleToExcel(items, generalCosts)}
+          disabled={items.length === 0 && generalCosts.length === 0}
+          className="min-h-11 cursor-pointer rounded-lg border border-zinc-300 dark:border-white/15 px-4 text-sm font-medium text-zinc-700 dark:text-zinc-300 disabled:opacity-50"
+        >
+          Export to Excel
+        </motion.button>
       </div>
 
       {error && (
