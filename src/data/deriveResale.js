@@ -1,9 +1,10 @@
-// "Sold" and "Completed" are both past the sale -- Completed just means the
-// payout/shipping side is fully wrapped up too, so anywhere profit or sales
-// totals are calculated, both statuses count the same.
-const SOLD_STATUSES = new Set(['sold', 'completed'])
-export function isSoldStatus(status) {
-  return SOLD_STATUSES.has(status)
+// A sale only counts once it's actually Completed, not just marked Sold --
+// "Sold" means a price was agreed but the payout/shipping side isn't
+// confirmed yet, so it stays out of profit/sales totals (and sold_date,
+// which is really "completed date", isn't set yet either) until it's moved
+// into Completed.
+export function isRealizedSale(status) {
+  return status === 'completed'
 }
 
 export function itemAllInCost(item) {
@@ -11,12 +12,16 @@ export function itemAllInCost(item) {
 }
 
 export function itemProfit(item) {
-  if (!isSoldStatus(item.status)) return null
+  if (!isRealizedSale(item.status)) return null
   return (Number(item.sold_price) || 0) - itemAllInCost(item)
 }
 
+// Only Purchased/Listed stock is still "for sale" against a target price --
+// once it's Sold (even pending Completion) it already has a real sold_price,
+// so a leftover target_price shouldn't also count it as potential profit.
 export function itemPotentialProfit(item) {
-  if (isSoldStatus(item.status) || item.target_price == null) return null
+  if (item.status !== 'purchased' && item.status !== 'listed') return null
+  if (item.target_price == null) return null
   return Number(item.target_price) - itemAllInCost(item)
 }
 
@@ -26,18 +31,19 @@ export function itemPotentialProfit(item) {
 // totalCost always equals totalProfit at a glance instead of silently
 // including unsold stock's cost in "Cost" while its revenue isn't in
 // "Sales" yet. Unsold stock's spend only shows up via potentialProfit,
-// against its target price, once it's set.
+// against its target price, once it's set. "Sold but not yet Completed"
+// stock counts as active too, same as Purchased/Listed -- it's not a done
+// deal until it's Completed.
 export function deriveResaleSummary(items, generalCosts = []) {
-  const sold = items.filter((i) => isSoldStatus(i.status))
-  const active = items.filter((i) => !isSoldStatus(i.status))
+  const sold = items.filter((i) => isRealizedSale(i.status))
 
   const generalCostsTotal = generalCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
   const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
   const totalCost = soldCost + generalCostsTotal
   const totalSales = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
   const totalProfit = totalSales - totalCost
-  const potentialProfit = active
-    .filter((i) => i.target_price != null)
+  const potentialProfit = items
+    .filter((i) => itemPotentialProfit(i) != null)
     .reduce((t, i) => t + itemPotentialProfit(i), 0)
 
   const stageCounts = { purchased: 0, listed: 0, sold: 0, completed: 0 }
@@ -60,35 +66,77 @@ const KIT_STOPWORDS = new Set([
 ])
 const SIZE_TOKENS = new Set(['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', '2xl', '3xl'])
 
+function significantWords(name) {
+  const out = []
+  for (const word of name.split(/[^a-zA-Z]+/).filter(Boolean)) {
+    const lower = word.toLowerCase()
+    if (lower.length < 3 || KIT_STOPWORDS.has(lower) || SIZE_TOKENS.has(lower)) continue
+    out.push({ lower, original: word })
+  }
+  return out
+}
+
 function mostSoldTeam(sold) {
   const counts = new Map()
+  const perItemWords = []
   for (const item of sold) {
-    if (!item.name) continue
-    const wordsInName = new Set()
-    for (const word of item.name.split(/[^a-zA-Z]+/).filter(Boolean)) {
-      const lower = word.toLowerCase()
-      if (lower.length < 3 || KIT_STOPWORDS.has(lower) || SIZE_TOKENS.has(lower)) continue
-      wordsInName.add(lower)
-    }
-    for (const lower of wordsInName) {
+    const words = item.name ? significantWords(item.name) : []
+    perItemWords.push(words)
+    const seen = new Set()
+    for (const { lower, original } of words) {
+      if (seen.has(lower)) continue
+      seen.add(lower)
       const entry = counts.get(lower)
       if (entry) entry.count += 1
-      else counts.set(lower, { count: 1, original: item.name.match(new RegExp(lower, 'i'))?.[0] ?? lower })
+      else counts.set(lower, { count: 1, original })
     }
   }
 
   let best = null
-  for (const entry of counts.values()) {
-    if (!best || entry.count > best.count) best = entry
+  for (const [lower, entry] of counts) {
+    if (!best || entry.count > best.count) best = { lower, ...entry }
   }
   // A count of 1 means nothing actually repeated -- not a "most sold team".
-  return best && best.count > 1 ? best : null
+  if (!best || best.count <= 1) return null
+
+  // Two-word club names ("Manchester United", "Aston Villa") lose to one of
+  // their two words winning alone -- if the winning word is consistently
+  // glued to the same neighbour, report the fuller phrase instead.
+  const neighbourCounts = (direction) => {
+    const out = new Map()
+    for (const words of perItemWords) {
+      const idx = words.findIndex((w) => w.lower === best.lower)
+      if (idx === -1) continue
+      const neighbour = direction === 'next' ? words[idx + 1] : words[idx - 1]
+      if (!neighbour) continue
+      const entry = out.get(neighbour.lower)
+      if (entry) entry.count += 1
+      else out.set(neighbour.lower, { count: 1, original: neighbour.original })
+    }
+    let top = null
+    for (const [lower, entry] of out) {
+      if (!top || entry.count > top.count) top = { lower, ...entry }
+    }
+    return top
+  }
+
+  const DOMINANCE = 0.6
+  const nextTop = neighbourCounts('next')
+  const prevTop = neighbourCounts('prev')
+  if (nextTop && nextTop.count / best.count >= DOMINANCE && (!prevTop || nextTop.count >= prevTop.count)) {
+    return { count: nextTop.count, original: `${best.original} ${nextTop.original}` }
+  }
+  if (prevTop && prevTop.count / best.count >= DOMINANCE) {
+    return { count: prevTop.count, original: `${prevTop.original} ${best.original}` }
+  }
+
+  return { count: best.count, original: best.original }
 }
 
 // How profitable a typical sale is, which team's shirts move the most, and
 // which courier carries most of the outgoing parcels.
 export function deriveResaleLogistics(items) {
-  const sold = items.filter((i) => isSoldStatus(i.status))
+  const sold = items.filter((i) => isRealizedSale(i.status))
 
   const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
   const soldProfit = sold.reduce((t, i) => t + itemProfit(i), 0)
@@ -193,7 +241,7 @@ export function deriveResaleTimeSeries(items, granularity) {
 
   for (const item of items) {
     if (item.purchased_date) addTo(periodKey(item.purchased_date, granularity), 'totalCost', itemAllInCost(item))
-    if (isSoldStatus(item.status) && item.sold_date) addTo(periodKey(item.sold_date, granularity), 'totalSales', Number(item.sold_price) || 0)
+    if (isRealizedSale(item.status) && item.sold_date) addTo(periodKey(item.sold_date, granularity), 'totalSales', Number(item.sold_price) || 0)
   }
 
   const activityDates = items.flatMap((i) => [i.purchased_date, i.sold_date]).filter(Boolean).sort()
