@@ -12,7 +12,6 @@ const COURIER_INITIAL = { Evri: 'E', InPost: 'I', 'Royal Mail': 'R' }
 // shipped counts as done (darkest, faded out).
 export const STAGE_META = {
   purchased: { label: 'Purchased', box: 'bg-zinc-300 dark:bg-zinc-600', border: 'border-l-zinc-300 dark:border-l-zinc-600' },
-  arrived: { label: 'Arrived', box: 'bg-sky-300 dark:bg-sky-500', border: 'border-l-sky-400 dark:border-l-sky-500' },
   listed: { label: 'Listed', box: 'bg-amber-400 dark:bg-amber-500', border: 'border-l-amber-400 dark:border-l-amber-500' },
   sold: { label: 'Sold', box: 'bg-emerald-300 dark:bg-emerald-500/60', border: 'border-l-emerald-300 dark:border-l-emerald-500/60' },
   shipped: { label: 'Shipped', box: 'bg-emerald-500 dark:bg-emerald-500', border: 'border-l-emerald-500 dark:border-l-emerald-500' },

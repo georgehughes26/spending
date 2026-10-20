@@ -47,15 +47,13 @@ export function useResaleItems(userId) {
     await refresh()
   }, [refresh])
 
-  const markArrived = useCallback((id) => updateItem(id, { status: 'arrived' }), [updateItem])
-
   const markListed = useCallback(
     (id) => updateItem(id, { status: 'listed', listed_date: new Date().toISOString().slice(0, 10) }),
     [updateItem],
   )
 
   const markSold = useCallback(
-    (id, soldPrice, soldDate, shippingOut) =>
+    (id, soldPrice, soldDate, shippingOut, soldOn) =>
       updateItem(id, {
         status: 'sold',
         payment_status: 'awaiting_payment',
@@ -63,6 +61,7 @@ export function useResaleItems(userId) {
         sold_price: soldPrice,
         sold_date: soldDate || new Date().toISOString().slice(0, 10),
         shipping_out: shippingOut || null,
+        sold_on: soldOn || null,
       }),
     [updateItem],
   )
@@ -78,7 +77,6 @@ export function useResaleItems(userId) {
     addItem,
     updateItem,
     deleteItem,
-    markArrived,
     markListed,
     markSold,
     markPaid,

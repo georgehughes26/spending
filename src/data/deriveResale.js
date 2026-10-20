@@ -31,7 +31,7 @@ export function deriveResaleSummary(items, generalCosts = []) {
     .filter((i) => i.target_price != null)
     .reduce((t, i) => t + itemPotentialProfit(i), 0)
 
-  const stageCounts = { purchased: 0, arrived: 0, listed: 0, sold: 0 }
+  const stageCounts = { purchased: 0, listed: 0, sold: 0 }
   for (const item of items) stageCounts[item.status] = (stageCounts[item.status] ?? 0) + 1
 
   return { totalCost, totalSales, totalProfit, potentialProfit, stageCounts, itemCount: items.length, generalCostsTotal }

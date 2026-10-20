@@ -7,12 +7,13 @@ import { formatDDMM, formatGBP, formatMonthYear } from '../utils/format'
 
 const STATUS_STYLES = {
   purchased: 'bg-zinc-100 text-zinc-700 dark:bg-white/10 dark:text-zinc-300',
-  arrived: 'bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400',
   listed: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
   sold: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
 }
-const STATUS_LABELS = { purchased: 'Purchased', arrived: 'Arrived', listed: 'Listed', sold: 'Sold' }
+const STATUS_LABELS = { purchased: 'Purchased', listed: 'Listed', sold: 'Sold' }
 const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
+const BOUGHT_FROM_OPTIONS = ['Vinted', 'eBay', 'Other']
+const SOLD_ON_OPTIONS = ['Vinted', 'eBay', 'Website', 'Other']
 
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
@@ -23,11 +24,13 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
   const [sku, setSku] = useState(item.sku ?? '')
   const [shippingIn, setShippingIn] = useState(item.shipping_in ?? '')
   const [shippingOut, setShippingOut] = useState(item.shipping_out ?? '')
+  const [boughtFrom, setBoughtFrom] = useState(item.bought_from ?? '')
   const [costPrice, setCostPrice] = useState(item.cost_price)
   const [targetPrice, setTargetPrice] = useState(item.target_price ?? '')
   const [notes, setNotes] = useState(item.notes ?? '')
   const [soldPrice, setSoldPrice] = useState(item.sold_price ?? '')
   const [soldDate, setSoldDate] = useState(item.sold_date ?? '')
+  const [soldOn, setSoldOn] = useState(item.sold_on ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -53,11 +56,12 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
         name,
         sku: sku.trim() || null,
         shipping_in: shippingIn || null,
+        bought_from: boughtFrom || null,
         cost_price: Number(costPrice) || 0,
         target_price: targetPrice === '' ? null : Number(targetPrice),
         notes: notes.trim() || null,
         ...(item.status === 'sold'
-          ? { sold_price: Number(soldPrice) || 0, sold_date: soldDate || null, shipping_out: shippingOut || null }
+          ? { sold_price: Number(soldPrice) || 0, sold_date: soldDate || null, shipping_out: shippingOut || null, sold_on: soldOn || null }
           : {}),
       })
       setEditing(false)
@@ -133,6 +137,13 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                     {SHIPPING_COMPANIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </label>
+                <label className="text-sm">
+                  <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Bought from</span>
+                  <select value={boughtFrom} onChange={(e) => setBoughtFrom(e.target.value)} className={inputClass}>
+                    <option value="">—</option>
+                    {BOUGHT_FROM_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </label>
                 {item.status === 'sold' && (
                   <>
                     <label className="text-sm">
@@ -142,6 +153,13 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                     <label className="text-sm">
                       <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold date</span>
                       <input type="date" value={soldDate} onChange={(e) => setSoldDate(e.target.value)} className={inputClass} />
+                    </label>
+                    <label className="text-sm">
+                      <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold on</span>
+                      <select value={soldOn} onChange={(e) => setSoldOn(e.target.value)} className={inputClass}>
+                        <option value="">—</option>
+                        {SOLD_ON_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                      </select>
                     </label>
                     <label className="text-sm">
                       <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping out</span>
@@ -187,6 +205,18 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                 <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">All-in cost</div>
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(allInCost, { pence: true })}</div>
               </div>
+              {item.bought_from && (
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Bought from</div>
+                  <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.bought_from}</div>
+                </div>
+              )}
+              {item.sold_on && (
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Sold on</div>
+                  <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.sold_on}</div>
+                </div>
+              )}
               {item.shipping_in && (
                 <div>
                   <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Shipping in</div>

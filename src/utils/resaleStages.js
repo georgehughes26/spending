@@ -2,28 +2,23 @@ import confetti from 'canvas-confetti'
 
 export const COLUMNS = [
   { status: 'purchased', label: 'Purchased' },
-  { status: 'arrived', label: 'Arrived' },
   { status: 'listed', label: 'Listed' },
   { status: 'sold', label: 'Sold' },
-  { status: 'completed', label: 'Completed' },
 ]
 
-// "Completed" isn't a real status in the database -- it's sold items that
-// are also paid and shipped, i.e. nothing left to do. Splitting it out as
-// its own column (rather than a faded row inside Sold) makes "fully done"
-// visually obvious.
+// The board only has these three columns -- whether a sold item is also
+// paid/shipped is still tracked (payment_status/shipping_status, "Mark
+// paid"/"Mark shipped") and shown per-card (see cardStage in ResaleCard.jsx),
+// it just no longer splits Sold into separate board columns.
 export function itemColumn(item) {
-  if (item.status === 'sold' && item.payment_status === 'paid' && item.shipping_status === 'shipped') return 'completed'
   return item.status
 }
 
 // Newest first within a column, by whichever date is relevant to that
 // column -- purchase date while stock is still moving through the shop
-// floor, sale date once it's sold (both Sold and Completed use it, so a
-// completed sale doesn't jump to the top just because it was marked
-// paid+shipped moments ago).
+// floor, sale date once it's sold.
 export function sortForColumn(items, column) {
-  const dateField = column === 'sold' || column === 'completed' ? 'sold_date' : 'purchased_date'
+  const dateField = column === 'sold' ? 'sold_date' : 'purchased_date'
   return [...items].sort((a, b) => (b[dateField] ?? '').localeCompare(a[dateField] ?? ''))
 }
 
@@ -48,21 +43,15 @@ export function resolveMove(item, toColumn) {
   if (fromColumn === toColumn) return null
 
   if (toColumn === 'sold') {
-    if (fromColumn === 'completed') {
-      return { type: 'update', fields: { payment_status: 'awaiting_payment', shipping_status: 'not_shipped' } }
-    }
-    return { type: 'needs-sale' } // need a price before it can count as sold
+    return { type: 'needs-sale' } // need a price (and sold-on/date) before it can count as sold
   }
 
-  if (toColumn === 'completed') {
-    if (fromColumn !== 'sold') return { type: 'needs-sale' } // not sold yet -- capture the sale first
-    return { type: 'update', fields: { payment_status: 'paid', shipping_status: 'shipped' }, celebrate: true }
-  }
-
-  // purchased / arrived / listed -- both directions go through here.
-  // listed_date is stamped the moment a card lands in Listed and cleared
-  // if it moves back out, since that's the only place it's set -- it's
-  // what "average days to sell" is measured from.
+  // purchased / listed -- both directions go through here. listed_date is
+  // stamped the moment a card lands in Listed and cleared if it moves back
+  // out, since that's the only place it's set -- it's what "average days to
+  // sell" is measured from. Moving a sold item backward also clears its
+  // sale-only fields and any paid/shipped progress, since those no longer
+  // apply once it's not marked sold.
   return {
     type: 'update',
     fields: {
@@ -70,6 +59,7 @@ export function resolveMove(item, toColumn) {
       listed_date: toColumn === 'listed' ? new Date().toISOString().slice(0, 10) : null,
       sold_price: null,
       sold_date: null,
+      sold_on: null,
       payment_status: null,
       shipping_status: null,
       shipping_out: null,

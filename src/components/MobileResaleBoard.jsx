@@ -55,8 +55,8 @@ export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSol
     setOpenItem(null)
   }
 
-  const confirmSale = async (price, date, shippingOut) => {
-    await onMarkSold(pendingSale.id, price, date, shippingOut)
+  const confirmSale = async (price, date, shippingOut, soldOn) => {
+    await onMarkSold(pendingSale.id, price, date, shippingOut, soldOn)
     setPendingSale(null)
     fireConfetti()
   }

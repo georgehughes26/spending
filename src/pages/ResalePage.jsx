@@ -16,9 +16,10 @@ const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
 const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
+const BOUGHT_FROM_OPTIONS = ['Vinted', 'eBay', 'Other']
 
 function emptyForm() {
-  return { name: '', shippingIn: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
+  return { name: '', shippingIn: '', boughtFrom: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
 }
 
 // Parcel numbers are auto-generated, not typed in -- the next one is always
@@ -50,6 +51,7 @@ function AddItemForm({ items, onAdd, onClose }) {
         name: form.name.trim(),
         sku: String(parcelNumber),
         shipping_in: form.shippingIn || null,
+        bought_from: form.boughtFrom || null,
         cost_price: Number(form.costPrice) || 0,
         target_price: form.targetPrice === '' ? null : Number(form.targetPrice),
         purchased_date: form.purchasedDate,
@@ -72,6 +74,13 @@ function AddItemForm({ items, onAdd, onClose }) {
         <label className="text-sm">
           <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Purchased date</span>
           <input type="date" value={form.purchasedDate} onChange={set('purchasedDate')} className={inputClass} />
+        </label>
+        <label className="text-sm">
+          <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Bought from (optional)</span>
+          <select value={form.boughtFrom} onChange={set('boughtFrom')} className={inputClass}>
+            <option value="">—</option>
+            {BOUGHT_FROM_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
         </label>
         <label className="text-sm">
           <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping in (optional)</span>
@@ -114,13 +123,14 @@ function AddItemForm({ items, onAdd, onClose }) {
 }
 
 // Costs that aren't tied to any one item -- packaging, a Vinted
-// subscription, printer ink. Lives inside the same "Add Stock" flow as a
-// second tab, rather than its own permanent card on the page, since adding
-// one is just as quick and one-off as adding an item.
-function AddGeneralCostForm({ costs, onAdd, onDelete }) {
+// subscription, printer ink. Its own visible card on the page, under the
+// stock list, rather than tucked inside the Add Stock flow -- it's part of
+// the real cost picture, not a one-off aside.
+function GeneralCostsCard({ costs, onAdd, onDelete }) {
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [boughtFrom, setBoughtFrom] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -132,9 +142,10 @@ function AddGeneralCostForm({ costs, onAdd, onDelete }) {
     setSaving(true)
     setError(null)
     try {
-      await onAdd(label.trim(), Number(amount) || 0, date)
+      await onAdd(label.trim(), Number(amount) || 0, date, boughtFrom.trim() || null)
       setLabel('')
       setAmount('')
+      setBoughtFrom('')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -143,16 +154,23 @@ function AddGeneralCostForm({ costs, onAdd, onDelete }) {
   }
 
   return (
-    <div>
+    <Card title="General Costs">
       <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
         Costs that aren't tied to one item -- packaging, subscriptions, postage supplies. Counted in Total Cost and Total Profit.
       </p>
-      <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <input
           type="text"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder="e.g. Parcel tape"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
+        />
+        <input
+          type="text"
+          value={boughtFrom}
+          onChange={(e) => setBoughtFrom(e.target.value)}
+          placeholder="Bought from (optional)"
           className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
         <input
@@ -176,7 +194,9 @@ function AddGeneralCostForm({ costs, onAdd, onDelete }) {
         <ul className="flex max-h-48 flex-col divide-y divide-zinc-200 overflow-y-auto dark:divide-white/10">
           {costs.map((cost) => (
             <li key={cost.id} className="flex items-center justify-between py-2 text-sm">
-              <span className="text-zinc-700 dark:text-zinc-300">{cost.label} <span className="text-xs text-zinc-500 dark:text-zinc-400">· {cost.cost_date}</span></span>
+              <span className="text-zinc-700 dark:text-zinc-300">
+                {cost.label} <span className="text-xs text-zinc-500 dark:text-zinc-400">· {cost.cost_date}{cost.bought_from ? ` · ${cost.bought_from}` : ''}</span>
+              </span>
               <span className="flex items-center gap-3">
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount, { pence: true })}</span>
                 <button type="button" onClick={() => onDelete(cost.id)} className="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400 hover:underline">
@@ -195,18 +215,11 @@ function AddGeneralCostForm({ costs, onAdd, onDelete }) {
           <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(total, { pence: true })}</span>
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 
-const ADD_TABS = [
-  { value: 'item', label: 'Item' },
-  { value: 'cost', label: 'General cost' },
-]
-
-function AddItemModal({ items, onAdd, onClose, generalCosts, onAddCost, onDeleteCost }) {
-  const [tab, setTab] = useState('item')
-
+function AddItemModal({ items, onAdd, onClose }) {
   return (
     <motion.div
       className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6"
@@ -223,28 +236,8 @@ function AddItemModal({ items, onAdd, onClose, generalCosts, onAddCost, onDelete
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-white/5">
-          {ADD_TABS.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              onClick={() => setTab(t.value)}
-              className={`min-h-9 flex-1 cursor-pointer rounded-md text-sm font-medium transition-colors duration-150 ${
-                tab === t.value
-                  ? 'bg-white text-zinc-900 shadow-sm dark:bg-white/10 dark:text-zinc-100'
-                  : 'text-zinc-500 dark:text-zinc-400'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {tab === 'item' ? (
-          <AddItemForm items={items} onAdd={onAdd} onClose={onClose} />
-        ) : (
-          <AddGeneralCostForm costs={generalCosts} onAdd={onAddCost} onDelete={onDeleteCost} />
-        )}
+        <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">Add stock</h3>
+        <AddItemForm items={items} onAdd={onAdd} onClose={onClose} />
       </motion.div>
     </motion.div>
   )
@@ -363,6 +356,10 @@ export default function ResalePage() {
               </div>
             </>
           )}
+
+          <div className="mt-5">
+            <GeneralCostsCard costs={generalCosts} onAdd={addGeneralCost} onDelete={deleteGeneralCost} />
+          </div>
         </>
       )}
 
@@ -379,14 +376,7 @@ export default function ResalePage() {
 
       <AnimatePresence>
         {addingItem && (
-          <AddItemModal
-            items={items}
-            onAdd={addItem}
-            onClose={() => setAddingItem(false)}
-            generalCosts={generalCosts}
-            onAddCost={addGeneralCost}
-            onDeleteCost={deleteGeneralCost}
-          />
+          <AddItemModal items={items} onAdd={addItem} onClose={() => setAddingItem(false)} />
         )}
       </AnimatePresence>
     </div>

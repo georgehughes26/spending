@@ -3,10 +3,12 @@ import { motion } from 'framer-motion'
 import { tapScale } from './motion'
 
 const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
+const SOLD_ON_OPTIONS = ['Vinted', 'eBay', 'Website', 'Other']
 
 export default function SoldCaptureModal({ item, onCancel, onConfirm }) {
   const [soldPrice, setSoldPrice] = useState(item.target_price ?? item.cost_price ?? '')
   const [soldDate, setSoldDate] = useState(new Date().toISOString().slice(0, 10))
+  const [soldOn, setSoldOn] = useState('')
   const [shippingOut, setShippingOut] = useState('')
 
   return (
@@ -47,6 +49,17 @@ export default function SoldCaptureModal({ item, onCancel, onConfirm }) {
             className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
           />
         </label>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold on (optional)</span>
+          <select
+            value={soldOn}
+            onChange={(e) => setSoldOn(e.target.value)}
+            className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
+          >
+            <option value="">—</option>
+            {SOLD_ON_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </label>
         <label className="mb-4 block text-sm">
           <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping out (optional)</span>
           <select
@@ -62,7 +75,7 @@ export default function SoldCaptureModal({ item, onCancel, onConfirm }) {
           <motion.button
             {...tapScale}
             type="button"
-            onClick={() => onConfirm(Number(soldPrice) || 0, soldDate, shippingOut)}
+            onClick={() => onConfirm(Number(soldPrice) || 0, soldDate, shippingOut, soldOn)}
             className="min-h-11 flex-1 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 text-sm font-medium text-white dark:text-zinc-950"
           >
             Confirm sale

@@ -32,10 +32,10 @@ export function useResaleGeneralCosts(userId) {
     refresh()
   }, [refresh])
 
-  const addCost = useCallback(async (label, amount, costDate) => {
+  const addCost = useCallback(async (label, amount, costDate, boughtFrom) => {
     const { error: insertError } = await supabase
       .from('resale_general_costs')
-      .insert({ user_id: userId, label, amount, cost_date: costDate || new Date().toISOString().slice(0, 10) })
+      .insert({ user_id: userId, label, amount, cost_date: costDate || new Date().toISOString().slice(0, 10), bought_from: boughtFrom || null })
     if (insertError) throw new Error(insertError.message)
     await refresh()
   }, [userId, refresh])

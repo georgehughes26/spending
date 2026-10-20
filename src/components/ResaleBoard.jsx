@@ -79,8 +79,8 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
     setOpenItem(null)
   }
 
-  const confirmSale = async (price, date, shippingOut) => {
-    await onMarkSold(pendingSale.id, price, date, shippingOut)
+  const confirmSale = async (price, date, shippingOut, soldOn) => {
+    await onMarkSold(pendingSale.id, price, date, shippingOut, soldOn)
     setPendingSale(null)
     fireConfetti()
   }
