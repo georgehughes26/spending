@@ -338,8 +338,8 @@ function PerformanceHero({ summary }) {
             <div className="text-lg font-semibold text-white">{formatGBP(summary.totalSales, { pence: true })}</div>
           </div>
           <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Potential</div>
-            <div className="text-lg font-semibold text-white">{formatGBP(summary.potentialProfit, { pence: true, showSign: true })}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Pending</div>
+            <div className="text-lg font-semibold text-white">{formatGBP(summary.pendingProfit, { pence: true, showSign: true })}</div>
           </div>
         </div>
       </div>

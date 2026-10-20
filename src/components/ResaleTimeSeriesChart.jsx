@@ -66,7 +66,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
   return (
     <Card title="Performance Over Time">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Costs land when you bought, sales land when you sold.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">A sale's cost and revenue land together once it's completed.</p>
         <div className="flex gap-2">
           {GRANULARITIES.map((g) => (
             <motion.button {...tapScale}

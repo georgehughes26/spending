@@ -19,21 +19,26 @@ export function itemProfit(item) {
 // Only Purchased/Listed stock is still "for sale" against a target price --
 // once it's Sold (even pending Completion) it already has a real sold_price,
 // so a leftover target_price shouldn't also count it as potential profit.
+// Used per-card (ResaleCard's "est. £X" badge), not in the headline totals.
 export function itemPotentialProfit(item) {
   if (item.status !== 'purchased' && item.status !== 'listed') return null
   if (item.target_price == null) return null
   return Number(item.target_price) - itemAllInCost(item)
 }
 
+// A Sold item already has a real agreed price -- not an estimate -- it's
+// just waiting on the payout/shipping side before it counts as a done deal.
+export function itemPendingProfit(item) {
+  if (item.status !== 'sold') return null
+  return (Number(item.sold_price) || 0) - itemAllInCost(item)
+}
+
 // Lifetime totals, unaffected by any time-period filter. totalCost is the
 // cost of stock that's actually sold (+ general costs like packaging, a
 // Vinted subscription) -- not every item ever bought -- so totalSales minus
-// totalCost always equals totalProfit at a glance instead of silently
-// including unsold stock's cost in "Cost" while its revenue isn't in
-// "Sales" yet. Unsold stock's spend only shows up via potentialProfit,
-// against its target price, once it's set. "Sold but not yet Completed"
-// stock counts as active too, same as Purchased/Listed -- it's not a done
-// deal until it's Completed.
+// totalCost always equals totalProfit at a glance. pendingProfit is the
+// flip side: items already marked Sold (a real price agreed) but not yet
+// Completed, so they're not in totalProfit yet either.
 export function deriveResaleSummary(items, generalCosts = []) {
   const sold = items.filter((i) => isRealizedSale(i.status))
 
@@ -42,14 +47,14 @@ export function deriveResaleSummary(items, generalCosts = []) {
   const totalCost = soldCost + generalCostsTotal
   const totalSales = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
   const totalProfit = totalSales - totalCost
-  const potentialProfit = items
-    .filter((i) => itemPotentialProfit(i) != null)
-    .reduce((t, i) => t + itemPotentialProfit(i), 0)
+  const pendingProfit = items
+    .filter((i) => itemPendingProfit(i) != null)
+    .reduce((t, i) => t + itemPendingProfit(i), 0)
 
   const stageCounts = { purchased: 0, listed: 0, sold: 0, completed: 0 }
   for (const item of items) stageCounts[item.status] = (stageCounts[item.status] ?? 0) + 1
 
-  return { totalCost, totalSales, totalProfit, potentialProfit, stageCounts, itemCount: items.length, generalCostsTotal }
+  return { totalCost, totalSales, totalProfit, pendingProfit, stageCounts, itemCount: items.length, generalCostsTotal }
 }
 
 // Item names are shirt listings like "Liverpool Home 23/24" or "Man Utd
@@ -222,15 +227,15 @@ function enumeratePeriods(startKey, endKey, granularity) {
   return keys
 }
 
-// A proper cash-flow timeline: a cost lands in the period an item was
-// bought, a sale lands in the period it was sold -- the same item can
-// contribute to two different bars if those periods differ. Unsold items
-// still show up as a cost in their purchase period. Spans every period from
-// the earliest activity through today, filling zero bars for gaps so the
+// A completed-sale timeline: a deal's cost and revenue both land in the
+// period it was Completed in, same as the headline totals above -- a sale
+// still pending completion doesn't show up yet. Spans every period from the
+// earliest completion through today, filling zero bars for gaps so the
 // timeline reads continuously. Separate from deriveResaleSummary's lifetime
 // totals, which stay item-matched rather than date-split.
 export function deriveResaleTimeSeries(items, granularity) {
-  if (items.length === 0) return []
+  const completed = items.filter((i) => isRealizedSale(i.status) && i.sold_date)
+  if (completed.length === 0) return []
 
   const totals = new Map()
   const addTo = (key, field, amount) => {
@@ -239,13 +244,13 @@ export function deriveResaleTimeSeries(items, granularity) {
     totals.set(key, bucket)
   }
 
-  for (const item of items) {
-    if (item.purchased_date) addTo(periodKey(item.purchased_date, granularity), 'totalCost', itemAllInCost(item))
-    if (isRealizedSale(item.status) && item.sold_date) addTo(periodKey(item.sold_date, granularity), 'totalSales', Number(item.sold_price) || 0)
+  for (const item of completed) {
+    const key = periodKey(item.sold_date, granularity)
+    addTo(key, 'totalCost', itemAllInCost(item))
+    addTo(key, 'totalSales', Number(item.sold_price) || 0)
   }
 
-  const activityDates = items.flatMap((i) => [i.purchased_date, i.sold_date]).filter(Boolean).sort()
-  if (activityDates.length === 0) return []
+  const activityDates = completed.map((i) => i.sold_date).sort()
   const startKey = periodKey(activityDates[0], granularity)
   const latestActivityKey = periodKey(activityDates[activityDates.length - 1], granularity)
   const todayKey = periodKey(new Date().toISOString().slice(0, 10), granularity)
