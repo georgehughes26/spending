@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
+import { motion } from 'framer-motion'
 import ResaleCard, { ResaleCardVisual, STAGE_META } from './ResaleCard'
 import ResaleDetailModal from './ResaleDetailModal'
 import SoldCaptureModal from './SoldCaptureModal'
 import CompleteCaptureModal from './CompleteCaptureModal'
+import { tapScale } from './motion'
 import { itemAllInCost } from '../data/deriveResale'
 import { COLUMNS, fireConfetti, itemColumn, resolveMove, sortForColumn } from '../utils/resaleStages'
 import { formatGBP } from '../utils/format'
@@ -39,7 +41,7 @@ function Column({ status, label, items, onOpen, itemCount }) {
   )
 }
 
-export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped }) {
+export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped, hideCompleted, onToggleHideCompleted }) {
   const [openItem, setOpenItem] = useState(null)
   const [pendingSale, setPendingSale] = useState(null)
   const [pendingComplete, setPendingComplete] = useState(null)
@@ -97,17 +99,34 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
     fireConfetti()
   }
 
-  const totalValue = items.reduce((t, i) => t + itemAllInCost(i), 0)
+  // "Tied up" is money spent on stock that hasn't come back out as a
+  // completed sale yet -- Completed items are a done deal, their cost has
+  // already been recovered, so they don't belong in this figure.
+  const activeItems = items.filter((i) => i.status !== 'completed')
+  const totalValue = activeItems.reduce((t, i) => t + itemAllInCost(i), 0)
+  const visibleColumns = hideCompleted ? COLUMNS.filter((c) => c.status !== 'completed') : COLUMNS
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between px-1 text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1 text-sm text-zinc-500 dark:text-zinc-400">
         <span>Drag a card either way to move it through the pipeline</span>
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">{items.length} items · {formatGBP(totalValue, { pence: true })} tied up</span>
+        <div className="flex items-center gap-3">
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+            {activeItems.length} in progress · {formatGBP(totalValue, { pence: true })} tied up
+          </span>
+          <motion.button
+            {...tapScale}
+            type="button"
+            onClick={onToggleHideCompleted}
+            className="min-h-9 cursor-pointer rounded-lg border border-zinc-300 dark:border-white/15 px-3 text-xs font-medium text-zinc-600 dark:text-zinc-300"
+          >
+            {hideCompleted ? 'Show completed' : 'Hide completed'}
+          </motion.button>
+        </div>
       </div>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-3 overflow-x-auto pb-2 sm:overflow-visible">
-          {COLUMNS.map((col) => {
+          {visibleColumns.map((col) => {
             const colItems = sortForColumn(items.filter((i) => itemColumn(i) === col.status), col.status)
             return (
               <Column

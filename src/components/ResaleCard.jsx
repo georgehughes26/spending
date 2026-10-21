@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { itemAllInCost, itemProfit, itemPotentialProfit } from '../data/deriveResale'
+import { itemAllInCost, itemProfit, itemPendingProfit, itemPotentialProfit } from '../data/deriveResale'
 import { formatDDMM, formatGBP } from '../utils/format'
 
 const COURIER_INITIAL = { Evri: 'E', InPost: 'I', 'Royal Mail': 'R' }
@@ -27,11 +27,12 @@ export function cardStage(item) {
 // column and the DragOverlay clone that follows the cursor while dragging.
 export function ResaleCardVisual({ item, dragging = false }) {
   const profit = itemProfit(item)
+  const pendingProfit = itemPendingProfit(item)
   const potentialProfit = itemPotentialProfit(item)
   const allInCost = itemAllInCost(item)
   const stage = cardStage(item)
   const completed = stage === 'completed'
-  const dateLabel = { purchased: item.purchased_date, listed: item.listed_date, sold: item.sold_date, completed: item.sold_date }[item.status]
+  const dateLabel = { purchased: item.purchased_date, listed: item.listed_date, completed: item.sold_date }[item.status]
 
   const stageBorder = STAGE_META[stage]?.border ?? STAGE_META.purchased.border
 
@@ -51,7 +52,9 @@ export function ResaleCardVisual({ item, dragging = false }) {
       </div>
 
       <div className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-        {dateLabel ? formatDDMM(dateLabel) : null}
+        {item.status === 'sold' && item.sold_price != null
+          ? `Sold for ${formatGBP(item.sold_price, { pence: true })} · awaiting completion`
+          : dateLabel ? formatDDMM(dateLabel) : null}
         {(item.status === 'purchased' || item.status === 'listed') && item.target_price != null && ` · target ${formatGBP(item.target_price, { pence: true })}`}
       </div>
 
@@ -64,9 +67,9 @@ export function ResaleCardVisual({ item, dragging = false }) {
             {formatGBP(profit, { pence: true, showSign: true })}
           </span>
         )}
-        {profit == null && potentialProfit != null && (
+        {profit == null && (pendingProfit ?? potentialProfit) != null && (
           <span className="text-xs font-medium text-pink-600 dark:text-emerald-400">
-            est. {formatGBP(potentialProfit, { pence: true, showSign: true })}
+            est. {formatGBP(pendingProfit ?? potentialProfit, { pence: true, showSign: true })}
           </span>
         )}
       </div>

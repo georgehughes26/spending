@@ -143,12 +143,15 @@ function mostSoldTeam(sold) {
 export function deriveResaleLogistics(items) {
   const sold = items.filter((i) => isRealizedSale(i.status))
 
-  const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
   const soldProfit = sold.reduce((t, i) => t + itemProfit(i), 0)
   const avgProfitPerItem = sold.length > 0 ? soldProfit / sold.length : null
   const avgSalePrice = sold.length > 0 ? sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0) / sold.length : null
-  const roiPercent = soldCost > 0 ? Math.round((soldProfit / soldCost) * 100) : null
   const totalItemsSold = sold.length
+
+  const daysToSell = sold
+    .filter((i) => i.purchased_date && i.sold_date)
+    .map((i) => Math.round((new Date(i.sold_date) - new Date(i.purchased_date)) / 86400000))
+  const avgDaysToSell = daysToSell.length > 0 ? Math.round(daysToSell.reduce((t, d) => t + d, 0) / daysToSell.length) : null
 
   const highestProfitItem = sold.reduce((best, item) => {
     const profit = itemProfit(item)
@@ -168,7 +171,7 @@ export function deriveResaleLogistics(items) {
   return {
     avgProfitPerItem,
     avgSalePrice,
-    roiPercent,
+    avgDaysToSell,
     totalItemsSold,
     highestProfitItem,
     topTeam,
@@ -229,13 +232,18 @@ function enumeratePeriods(startKey, endKey, granularity) {
 
 // A completed-sale timeline: a deal's cost and revenue both land in the
 // period it was Completed in, same as the headline totals above -- a sale
-// still pending completion doesn't show up yet. Spans every period from the
-// earliest completion through today, filling zero bars for gaps so the
+// still pending completion doesn't show up yet. General costs land in the
+// period they were actually incurred (their own cost_date), same as
+// deriveResaleSummary folds them into totalCost -- so summing every bar's
+// totalProfit matches the lifetime Total profit figure, as long as all the
+// activity falls inside the trailing window below. Spans every period from
+// the earliest activity through today, filling zero bars for gaps so the
 // timeline reads continuously. Separate from deriveResaleSummary's lifetime
 // totals, which stay item-matched rather than date-split.
-export function deriveResaleTimeSeries(items, granularity) {
+export function deriveResaleTimeSeries(items, generalCosts, granularity) {
   const completed = items.filter((i) => isRealizedSale(i.status) && i.sold_date)
-  if (completed.length === 0) return []
+  const dateCosts = generalCosts.filter((c) => c.cost_date)
+  if (completed.length === 0 && dateCosts.length === 0) return []
 
   const totals = new Map()
   const addTo = (key, field, amount) => {
@@ -249,8 +257,11 @@ export function deriveResaleTimeSeries(items, granularity) {
     addTo(key, 'totalCost', itemAllInCost(item))
     addTo(key, 'totalSales', Number(item.sold_price) || 0)
   }
+  for (const cost of dateCosts) {
+    addTo(periodKey(cost.cost_date, granularity), 'totalCost', Number(cost.amount) || 0)
+  }
 
-  const activityDates = completed.map((i) => i.sold_date).sort()
+  const activityDates = [...completed.map((i) => i.sold_date), ...dateCosts.map((c) => c.cost_date)].sort()
   const startKey = periodKey(activityDates[0], granularity)
   const latestActivityKey = periodKey(activityDates[activityDates.length - 1], granularity)
   const todayKey = periodKey(new Date().toISOString().slice(0, 10), granularity)

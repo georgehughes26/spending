@@ -363,9 +363,27 @@ export default function ResalePage() {
   const { costs: generalCosts, addCost: addGeneralCost, updateCost: updateGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
   const [granularity, setGranularity] = useState('week')
   const [addingItem, setAddingItem] = useState(false)
+  // Per-device display preference, not real data -- fine to lose on a
+  // cleared browser, so localStorage (not a DB column) is enough.
+  const [hideCompleted, setHideCompleted] = useState(() => {
+    try {
+      return localStorage.getItem('resale_hide_completed') === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleHideCompleted = () => {
+    setHideCompleted((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem('resale_hide_completed', next ? '1' : '0')
+      } catch {}
+      return next
+    })
+  }
 
   const summary = useMemo(() => deriveResaleSummary(items, generalCosts), [items, generalCosts])
-  const timeSeries = useMemo(() => deriveResaleTimeSeries(items, granularity), [items, granularity])
+  const timeSeries = useMemo(() => deriveResaleTimeSeries(items, generalCosts, granularity), [items, generalCosts, granularity])
   const logistics = useMemo(() => deriveResaleLogistics(items), [items])
   const initialLoading = loading && items.length === 0
 
@@ -426,6 +444,8 @@ export default function ResalePage() {
                   onMarkSold={markSold}
                   onMarkPaid={markPaid}
                   onMarkShipped={markShipped}
+                  hideCompleted={hideCompleted}
+                  onToggleHideCompleted={toggleHideCompleted}
                 />
               </div>
               <div className="lg:hidden">
@@ -436,6 +456,8 @@ export default function ResalePage() {
                   onMarkSold={markSold}
                   onMarkPaid={markPaid}
                   onMarkShipped={markShipped}
+                  hideCompleted={hideCompleted}
+                  onToggleHideCompleted={toggleHideCompleted}
                 />
               </div>
             </>

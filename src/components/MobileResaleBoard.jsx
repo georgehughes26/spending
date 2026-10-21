@@ -35,7 +35,7 @@ function StageTab({ status, label, count, active, onClick }) {
 // this is a tap-to-open, button-to-move alternative for mobile: pick a
 // stage tab to filter the list, tap a card, then use the "Move to" buttons
 // in the detail modal instead of dragging.
-export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped }) {
+export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped, hideCompleted, onToggleHideCompleted }) {
   const [activeStage, setActiveStage] = useState('purchased')
   const [openItem, setOpenItem] = useState(null)
   const [pendingSale, setPendingSale] = useState(null)
@@ -73,28 +73,46 @@ export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSol
     fireConfetti()
   }
 
-  const totalValue = items.reduce((t, i) => t + itemAllInCost(i), 0)
+  // "Tied up" is money spent on stock that hasn't come back out as a
+  // completed sale yet -- Completed items are a done deal, their cost has
+  // already been recovered, so they don't belong in this figure.
+  const activeItems = items.filter((i) => i.status !== 'completed')
+  const totalValue = activeItems.reduce((t, i) => t + itemAllInCost(i), 0)
+  const visibleColumns = hideCompleted ? COLUMNS.filter((c) => c.status !== 'completed') : COLUMNS
+  const effectiveStage = visibleColumns.some((c) => c.status === activeStage) ? activeStage : visibleColumns[0]?.status
 
   const counts = Object.fromEntries(COLUMNS.map((c) => [c.status, 0]))
   for (const item of items) counts[itemColumn(item)] = (counts[itemColumn(item)] ?? 0) + 1
 
-  const visibleItems = sortForColumn(items.filter((i) => itemColumn(i) === activeStage), activeStage)
+  const visibleItems = sortForColumn(items.filter((i) => itemColumn(i) === effectiveStage), effectiveStage)
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between px-1 text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1 text-sm text-zinc-500 dark:text-zinc-400">
         <span>Tap a card to move it</span>
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">{items.length} items · {formatGBP(totalValue, { pence: true })} tied up</span>
+        <div className="flex items-center gap-3">
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+            {activeItems.length} in progress · {formatGBP(totalValue, { pence: true })} tied up
+          </span>
+          <motion.button
+            {...tapScale}
+            type="button"
+            onClick={onToggleHideCompleted}
+            className="min-h-9 cursor-pointer rounded-lg border border-zinc-300 dark:border-white/15 px-3 text-xs font-medium text-zinc-600 dark:text-zinc-300"
+          >
+            {hideCompleted ? 'Show completed' : 'Hide completed'}
+          </motion.button>
+        </div>
       </div>
 
       <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
-        {COLUMNS.map((col) => (
+        {visibleColumns.map((col) => (
           <StageTab
             key={col.status}
             status={col.status}
             label={col.label}
             count={counts[col.status]}
-            active={activeStage === col.status}
+            active={effectiveStage === col.status}
             onClick={() => setActiveStage(col.status)}
           />
         ))}

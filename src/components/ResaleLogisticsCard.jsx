@@ -8,11 +8,10 @@ const ICONS = {
       <path d="M12 6h4v4" />
     </svg>
   ),
-  roi: (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-      <circle cx="6.5" cy="6.5" r="1.6" />
-      <circle cx="13.5" cy="13.5" r="1.6" />
-      <path d="M14.5 5.5l-9 9" />
+  clock: (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="10" r="7" />
+      <path d="M10 6v4l3 2" />
     </svg>
   ),
   price: (
@@ -75,7 +74,7 @@ function RectStat({ icon, label, value, caption }) {
 }
 
 export default function ResaleLogisticsCard({ logistics }) {
-  const { avgProfitPerItem, avgSalePrice, roiPercent, totalItemsSold, highestProfitItem, topTeam } = logistics
+  const { avgProfitPerItem, avgSalePrice, avgDaysToSell, totalItemsSold, highestProfitItem, topTeam } = logistics
 
   return (
     <Card title="Stats" className="flex flex-col lg:h-full">
@@ -94,10 +93,10 @@ export default function ResaleLogisticsCard({ logistics }) {
             caption="Avg. profit per item -- profit ÷ items sold"
           />
           <SquareStat
-            icon={ICONS.roi}
-            label="ROI"
-            value={roiPercent != null ? `${roiPercent}%` : '—'}
-            caption="Profit ÷ cost of sold stock"
+            icon={ICONS.clock}
+            label="Avg days to sell"
+            value={avgDaysToSell != null ? avgDaysToSell : '—'}
+            caption="Avg. days from purchase to completed sale"
           />
           <SquareStat
             icon={ICONS.price}

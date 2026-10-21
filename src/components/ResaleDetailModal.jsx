@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { tapScale } from './motion'
-import { itemAllInCost, itemPotentialProfit, itemProfit } from '../data/deriveResale'
+import { itemAllInCost, itemPendingProfit, itemPotentialProfit, itemProfit } from '../data/deriveResale'
 import { COLUMNS, itemColumn } from '../utils/resaleStages'
 import { formatDDMM, formatGBP, formatMonthYear } from '../utils/format'
 
@@ -38,7 +38,9 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
 
   const allInCost = itemAllInCost(item)
   const profit = itemProfit(item)
+  const pendingProfit = itemPendingProfit(item)
   const potentialProfit = itemPotentialProfit(item)
+  const estimatedProfit = pendingProfit ?? potentialProfit
 
   const run = async (fn) => {
     setSaving(true)
@@ -241,11 +243,11 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                   <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.shipping_out}</div>
                 </div>
               )}
-              {(profit != null || potentialProfit != null) && (
+              {(profit != null || estimatedProfit != null) && (
                 <div>
                   <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{profit != null ? 'Profit' : 'Est. profit'}</div>
-                  <div className={`font-medium ${(profit ?? potentialProfit) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {formatGBP(profit ?? potentialProfit, { pence: true, showSign: true })}
+                  <div className={`font-medium ${(profit ?? estimatedProfit) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {formatGBP(profit ?? estimatedProfit, { pence: true, showSign: true })}
                   </div>
                 </div>
               )}
