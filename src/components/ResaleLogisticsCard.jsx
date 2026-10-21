@@ -8,10 +8,10 @@ const ICONS = {
       <path d="M12 6h4v4" />
     </svg>
   ),
-  clock: (
+  calendar: (
     <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="10" r="7" />
-      <path d="M10 6v4l3 2" />
+      <rect x="3.5" y="4.5" width="13" height="12" rx="1.5" />
+      <path d="M3.5 8h13M7 3v3M13 3v3" />
     </svg>
   ),
   price: (
@@ -74,7 +74,7 @@ function RectStat({ icon, label, value, caption }) {
 }
 
 export default function ResaleLogisticsCard({ logistics }) {
-  const { avgProfitPerItem, avgSalePrice, avgDaysToSell, totalItemsSold, highestProfitItem, topTeam } = logistics
+  const { avgProfitPerItem, avgSalePrice, soldThisMonth, totalItemsSold, highestProfitItem, topTeam } = logistics
 
   return (
     <Card title="Stats" className="flex flex-col lg:h-full">
@@ -93,10 +93,10 @@ export default function ResaleLogisticsCard({ logistics }) {
             caption="Avg. profit per item -- profit ÷ items sold"
           />
           <SquareStat
-            icon={ICONS.clock}
-            label="Avg days to sell"
-            value={avgDaysToSell != null ? avgDaysToSell : '—'}
-            caption="Avg. days from purchase to completed sale"
+            icon={ICONS.calendar}
+            label="Sold this month"
+            value={soldThisMonth}
+            caption="Items completed so far this calendar month"
           />
           <SquareStat
             icon={ICONS.price}

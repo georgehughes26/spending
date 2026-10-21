@@ -148,10 +148,8 @@ export function deriveResaleLogistics(items) {
   const avgSalePrice = sold.length > 0 ? sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0) / sold.length : null
   const totalItemsSold = sold.length
 
-  const daysToSell = sold
-    .filter((i) => i.purchased_date && i.sold_date)
-    .map((i) => Math.round((new Date(i.sold_date) - new Date(i.purchased_date)) / 86400000))
-  const avgDaysToSell = daysToSell.length > 0 ? Math.round(daysToSell.reduce((t, d) => t + d, 0) / daysToSell.length) : null
+  const currentMonthKey = new Date().toISOString().slice(0, 7)
+  const soldThisMonth = sold.filter((i) => i.sold_date?.slice(0, 7) === currentMonthKey).length
 
   const highestProfitItem = sold.reduce((best, item) => {
     const profit = itemProfit(item)
@@ -171,7 +169,7 @@ export function deriveResaleLogistics(items) {
   return {
     avgProfitPerItem,
     avgSalePrice,
-    avgDaysToSell,
+    soldThisMonth,
     totalItemsSold,
     highestProfitItem,
     topTeam,

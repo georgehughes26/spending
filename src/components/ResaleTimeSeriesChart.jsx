@@ -55,6 +55,21 @@ function ChartTooltip({ active, payload }) {
   )
 }
 
+// A lone small loss next to a big win would otherwise get squeezed into a
+// sliver right at the zero line -- its value label (drawn below the bar)
+// would then collide with the week/month labels underneath the chart. The
+// negative side of the domain is floored to a fixed share of the positive
+// side so a negative bar always has real height to draw its label under,
+// regardless of how it compares to the other bars.
+function profitDomain(data) {
+  const profits = data.map((d) => d.totalProfit)
+  const maxProfit = Math.max(0, ...profits)
+  const minProfit = Math.min(0, ...profits)
+  const domainMax = maxProfit > 0 ? maxProfit * 1.15 : 1
+  const domainMin = minProfit < 0 ? -Math.max(Math.abs(minProfit) * 1.3, domainMax * 0.2) : 0
+  return [domainMin, domainMax]
+}
+
 export default function ResaleTimeSeriesChart({ data, granularity, onGranularityChange }) {
   const { theme } = useAuth()
   const isDark = theme === 'dark'
@@ -62,6 +77,7 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : '#e4e4e7'
   const profitPositiveColor = isDark ? '#34d399' : '#db2777'
   const profitNegativeColor = isDark ? '#f87171' : '#dc2626'
+  const yDomain = profitDomain(data)
 
   return (
     <Card title="Performance Over Time">
@@ -90,13 +106,10 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
       ) : (
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 24, right: 8, bottom: 8, left: 8 }}>
+            <BarChart data={data} margin={{ top: 24, right: 8, bottom: 16, left: 8 }}>
               <CartesianGrid stroke={gridColor} vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 12, fontWeight: 500, fill: axisColor }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-              <YAxis
-                hide
-                domain={[(dataMin) => Math.min(dataMin * 1.3, 0), (dataMax) => Math.max(dataMax * 1.3, 0)]}
-              />
+              <YAxis hide domain={yDomain} />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }} />
               <Bar dataKey="totalProfit" name="Total Profit" radius={[8, 8, 8, 8]} maxBarSize={data.length <= 4 ? 88 : 56}>
                 {data.map((d) => (
