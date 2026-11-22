@@ -8,6 +8,7 @@ import { useSpendingCategories } from '../hooks/useSpendingCategories'
 import { useFixedCosts } from '../hooks/useFixedCosts'
 import { motion } from 'framer-motion'
 import { tapScale } from '../components/motion'
+import { exportSpendingToExcel } from '../utils/spendingExport'
 
 function AppearanceCard() {
   const { theme, setTheme } = useAuth()
@@ -191,6 +192,44 @@ function CategoriesCard() {
   )
 }
 
+function ExportCard() {
+  const { user } = useAuth()
+  const [exporting, setExporting] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleExport = async () => {
+    setExporting(true)
+    setError(null)
+    try {
+      await exportSpendingToExcel(user.id)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  return (
+    <Card title="Your Data" className="mb-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Download all your spending data as an Excel file: every month, every logged week, fixed costs, and savings pots.
+        </p>
+        <motion.button
+          {...tapScale}
+          type="button"
+          onClick={handleExport}
+          disabled={exporting || !user}
+          className="min-h-11 shrink-0 cursor-pointer rounded-lg border border-zinc-300 dark:border-white/15 px-4 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {exporting ? 'Exporting…' : 'Export to Excel'}
+        </motion.button>
+      </div>
+      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+    </Card>
+  )
+}
+
 // The sidebar's own sign-out button is desktop-only (it lives in a
 // lg:block-only footer), so this is the only way to sign out on mobile --
 // it needs to exist here regardless of screen size.
@@ -244,6 +283,7 @@ export default function SettingsPage() {
         description="Costs still applying each month. New ones start from this month onward. Deleting here removes a cost completely, including past months, so use it only to fix a mistake."
         emptyLabel="No ongoing fixed costs."
       />
+      <ExportCard />
       <AccountCard />
     </div>
   )

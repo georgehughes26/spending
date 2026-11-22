@@ -1,11 +1,5 @@
 import * as XLSX from 'xlsx'
-
-function ddmmyyyy(dateString) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  if (Number.isNaN(date.getTime())) return ''
-  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(date)
-}
+import { formatDDMMYYYY as ddmmyyyy } from './format'
 
 // Two sheets: stock items (one row per item, bought/sold dates and prices,
 // blank where an item hasn't sold yet) and general costs (not tied to a
