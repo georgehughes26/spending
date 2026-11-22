@@ -31,5 +31,5 @@ export function exportResaleToExcel(items, generalCosts) {
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(costRows), 'General Costs')
 
   const today = new Date().toISOString().slice(0, 10)
-  XLSX.writeFile(workbook, `layla-reselling-${today}.xlsx`)
+  XLSX.writeFile(workbook, `george-reselling-${today}.xlsx`)
 }

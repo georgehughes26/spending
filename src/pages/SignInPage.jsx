@@ -31,7 +31,7 @@ export default function SignInPage() {
     <div className="flex min-h-svh items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <h1 className="mb-1 text-center text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 dark:from-emerald-400 to-rose-600 dark:to-teal-300">
-          Layla
+          George
         </h1>
         <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">Smart Spending Management</p>
         <p className="mb-8 text-center text-sm text-zinc-500 dark:text-zinc-400">

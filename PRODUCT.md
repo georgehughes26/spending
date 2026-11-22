@@ -12,7 +12,7 @@ Solo user: the app owner, tracking their own personal finances and a resale side
 
 ## Product Purpose
 
-Layla is a personal finance tracker with two equally core surfaces:
+George is a personal finance tracker with two equally core surfaces:
 
 1. **Spending & savings tracking** — monthly income vs. spending (entered progressively week-by-week, not just at month-end), fixed recurring costs, savings pots tracked against real closing balances, net worth over time, and named goals (e.g. a house deposit, a LISA, milestone targets).
 2. **Reselling** — a resale side-business inventory tracker: items move through purchased → arrived → listed → sold, with cost/profit tracking down to the penny, parcel numbering for physical stock, and shipping-courier + payment/shipping-status tracking per item.
@@ -41,7 +41,7 @@ Not a market-facing product — built solely for the owner's own use, never mark
 
 ## Brand Commitments
 
-- Name: **Layla**. Tagline: "Smart Spending Management."
+- Name: **George**. Tagline: "Smart Spending Management."
 - Wordmark: gradient text — pink→rose in light theme, emerald→teal in dark theme.
 - Primary accent color: pink-600 (light theme) / emerald-400 (dark theme).
 - Visual direction (2026-08-26, revised): after trying a pure "refine, don't replace" pass and two literal metaphor-world concepts (postal/sorting-office, exercise-book) that the user rejected as too gimmicky, the locked direction is a genuinely bolder but non-metaphorical modern look: two distinct-but-related color identities in one app — Spending/Savings keeps pink (light) / emerald (dark), Reselling gets its own accent (amber/orange) — reflecting that these are "really two separate products." Color strategy moves from Restrained to Committed on headline moments (solid-color hero treatment behind top numbers, bigger/bolder display type) while staying data-dense and scannable elsewhere. Craft bar: Monzo/Cash App/Copilot Money tier. User explicitly invited new analytical tiles/graphs for both Spending and Reselling if they'd be useful — functionality is additive here, not fixed.

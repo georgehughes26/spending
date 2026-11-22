@@ -19,7 +19,7 @@
           "src/App.jsx"
         ],
         "createdAt": "2026-08-26T08:19:36.995Z",
-        "reason": "pre-existing 'Layla' wordmark brand asset, recorded as a confirmed brand commitment in PRODUCT.md before this redesign began; not new AI-slop, evidence-based not explicitly re-confirmed by the user this turn"
+        "reason": "pre-existing 'George' wordmark brand asset, recorded as a confirmed brand commitment in PRODUCT.md before this redesign began; not new AI-slop, evidence-based not explicitly re-confirmed by the user this turn"
       },
       {
         "rule": "gray-on-color",
@@ -154,7 +154,7 @@
           "src/App.jsx"
         ],
         "createdAt": "2026-08-26T12:56:13.337Z",
-        "reason": "pre-existing 'Layla' wordmark, used identically on both the desktop sidebar and the new mobile header added this session -- confirmed brand commitment recorded in PRODUCT.md before this redesign began, not new AI-slop. (Note: an earlier specific-value ignore-value entry for this rule in this file was a no-op -- gradient-text has no extractable match value in the detector's matching logic, so only a wildcard entry actually suppresses it.)"
+        "reason": "pre-existing 'George' wordmark, used identically on both the desktop sidebar and the new mobile header added this session -- confirmed brand commitment recorded in PRODUCT.md before this redesign began, not new AI-slop. (Note: an earlier specific-value ignore-value entry for this rule in this file was a no-op -- gradient-text has no extractable match value in the detector's matching logic, so only a wildcard entry actually suppresses it.)"
       },
       {
         "rule": "gray-on-color",
@@ -186,71 +186,8 @@
       {
         "rule": "gray-on-color",
         "value": "text-zinc-950 on bg-pink-600",
-        "files": [
-          "src/components/training/HabitTickRow.jsx"
-        ],
-        "createdAt": "2026-10-11T20:31:14.357Z",
-        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same ternary branch; they never render together"
-      },
-      {
-        "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
-        "files": [
-          "src/components/training/CheckInExportButton.jsx"
-        ],
-        "createdAt": "2026-10-11T20:33:05.569Z",
-        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same class string; they never render together"
-      },
-      {
-        "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
         "createdAt": "2026-10-11T20:33:19.964Z",
         "reason": "Project-wide pattern: dark:text-zinc-950 always pairs with dark:bg-emerald-400 in the same ternary/class string, never with the light-theme bg-pink-600 -- the two never render together. Recurred across many files this session as a false positive."
-      },
-      {
-        "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
-        "files": [
-          "src/components/training/WeekPlanImportModal.jsx"
-        ],
-        "createdAt": "2026-10-11T20:34:09.318Z",
-        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same class string; they never render together"
-      },
-      {
-        "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
-        "files": [
-          "src/pages/TrainingDayPage.jsx"
-        ],
-        "createdAt": "2026-10-11T20:35:17.081Z",
-        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same class string; they never render together"
-      },
-      {
-        "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
-        "files": [
-          "src/pages/TrainingSettingsPage.jsx"
-        ],
-        "createdAt": "2026-10-11T20:36:41.033Z",
-        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same class string; they never render together"
-      },
-      {
-        "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
-        "files": [
-          "src/components/training/TrainingSubNav.jsx"
-        ],
-        "createdAt": "2026-10-11T20:37:00.035Z",
-        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same ternary; they never render together"
-      },
-      {
-        "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
-        "files": [
-          "src/components/training/LiftLogCard.jsx"
-        ],
-        "createdAt": "2026-10-19T13:02:20.523Z",
-        "reason": "dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same class string; they never render together"
       },
       {
         "rule": "gray-on-color",

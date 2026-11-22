@@ -7,9 +7,6 @@ import SettingsPage from './pages/SettingsPage'
 import SignInPage from './pages/SignInPage'
 import OnboardingPage from './pages/OnboardingPage'
 import ResalePage from './pages/ResalePage'
-import TrainingDayPage from './pages/TrainingDayPage'
-import TrainingWeekPage from './pages/TrainingWeekPage'
-import TrainingSettingsPage from './pages/TrainingSettingsPage'
 import BankPage from './pages/BankPage'
 import BankCallbackPage from './pages/BankCallbackPage'
 import { PageTransition, tapScale } from './components/motion'
@@ -41,12 +38,6 @@ const icons = {
     <svg {...iconProps}>
       <path d="M3 3h6l8 8-6 6-8-8z" />
       <circle cx="7" cy="7" r="1.1" fill="currentColor" stroke="none" />
-    </svg>
-  ),
-  training: (
-    <svg {...iconProps}>
-      <circle cx="10" cy="10" r="7.5" />
-      <path d="M7 10.2l2 2 4-4.4" />
     </svg>
   ),
   signOut: (
@@ -91,18 +82,6 @@ function RequireResaleAccess({ children }) {
   return children
 }
 
-// Gates the Training area (the daily habit tracker) -- still driven by the
-// running_access flag from the old Running/Strength feature it replaced,
-// rather than a new column, since it's the same single-user gate.
-function RequireTrainingAccess({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
-  if (!user) return <Navigate to="/signin" replace />
-  if (!user.onboarded) return <Navigate to="/onboarding" replace />
-  if (!user.running_access) return <Navigate to="/" replace />
-  return children
-}
-
 function RequireSignedIn({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <p className="mx-auto max-w-7xl px-6 py-6 text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
@@ -132,11 +111,6 @@ function Shell({ children }) {
           {icons.resale} Reselling
         </NavLink>
       )}
-      {user?.running_access && (
-        <NavLink to="/training" className={navItemClass}>
-          {icons.training} Training
-        </NavLink>
-      )}
     </>
   )
 
@@ -147,7 +121,7 @@ function Shell({ children }) {
       <aside className="sticky top-0 z-10 hidden flex-shrink-0 bg-zinc-950 lg:flex lg:h-svh lg:w-64 lg:flex-col lg:justify-between">
         <div className="px-6 py-6">
           <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400">
-            Layla
+            George
           </h1>
           <p className="mt-0.5 text-xs text-zinc-500">Smart Spending Management</p>
         </div>
@@ -169,7 +143,7 @@ function Shell({ children }) {
           bar so it doesn't compete for the same row. */}
       <header className="sticky top-0 z-10 bg-zinc-950 px-5 py-4 lg:hidden">
         <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400">
-          Layla
+          George
         </h1>
       </header>
 
@@ -194,12 +168,6 @@ function Shell({ children }) {
           <NavLink to="/resale" className={mobileTabItemClass}>
             {icons.resale}
             Reselling
-          </NavLink>
-        )}
-        {user?.running_access && (
-          <NavLink to="/training" className={mobileTabItemClass}>
-            {icons.training}
-            Training
           </NavLink>
         )}
       </nav>
@@ -260,56 +228,6 @@ function AppRoutes() {
               <RequireResaleAccess>
                 <Shell><ResalePage /></Shell>
               </RequireResaleAccess>
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/training"
-          element={
-            <PageTransition>
-              <RequireTrainingAccess>
-                <Shell><TrainingDayPage /></Shell>
-              </RequireTrainingAccess>
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/training/day/:date"
-          element={
-            <PageTransition>
-              <RequireTrainingAccess>
-                <Shell><TrainingDayPage /></Shell>
-              </RequireTrainingAccess>
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/training/week"
-          element={
-            <PageTransition>
-              <RequireTrainingAccess>
-                <Shell><TrainingWeekPage /></Shell>
-              </RequireTrainingAccess>
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/training/week/:weekStart"
-          element={
-            <PageTransition>
-              <RequireTrainingAccess>
-                <Shell><TrainingWeekPage /></Shell>
-              </RequireTrainingAccess>
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/training/settings"
-          element={
-            <PageTransition>
-              <RequireTrainingAccess>
-                <Shell><TrainingSettingsPage /></Shell>
-              </RequireTrainingAccess>
             </PageTransition>
           }
         />
