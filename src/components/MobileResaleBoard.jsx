@@ -35,7 +35,7 @@ function StageTab({ status, label, count, active, onClick }) {
 // this is a tap-to-open, button-to-move alternative for mobile: pick a
 // stage tab to filter the list, tap a card, then use the "Move to" buttons
 // in the detail modal instead of dragging.
-export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped, hideCompleted, onToggleHideCompleted }) {
+export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSold, hideCompleted, onToggleHideCompleted }) {
   const [activeStage, setActiveStage] = useState('purchased')
   const [openItem, setOpenItem] = useState(null)
   const [pendingSale, setPendingSale] = useState(null)
@@ -137,8 +137,6 @@ export default function MobileResaleBoard({ items, onUpdate, onDelete, onMarkSol
           onClose={() => setOpenItem(null)}
           onUpdate={onUpdate}
           onDelete={onDelete}
-          onMarkPaid={onMarkPaid}
-          onMarkShipped={onMarkShipped}
           onMoveToStage={handleMoveToStage}
         />
       )}

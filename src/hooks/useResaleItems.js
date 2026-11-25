@@ -56,18 +56,12 @@ export function useResaleItems(userId) {
     (id, soldPrice, shippingOut, soldOn) =>
       updateItem(id, {
         status: 'sold',
-        payment_status: 'awaiting_payment',
-        shipping_status: 'not_shipped',
         sold_price: soldPrice,
         shipping_out: shippingOut || null,
         sold_on: soldOn || null,
       }),
     [updateItem],
   )
-
-  const markPaid = useCallback((id) => updateItem(id, { payment_status: 'paid' }), [updateItem])
-
-  const markShipped = useCallback((id) => updateItem(id, { shipping_status: 'shipped' }), [updateItem])
 
   return {
     items,
@@ -78,8 +72,6 @@ export function useResaleItems(userId) {
     deleteItem,
     markListed,
     markSold,
-    markPaid,
-    markShipped,
     refresh,
   }
 }

@@ -19,7 +19,7 @@ const SOLD_ON_OPTIONS = ['Vinted', 'eBay', 'Website', 'Other']
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
-export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, onMarkPaid, onMarkShipped, onMoveToStage }) {
+export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, onMoveToStage }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
   const [sku, setSku] = useState(item.sku ?? '')
@@ -256,16 +256,6 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
           )}
 
           <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 dark:border-white/10 pt-3">
-            {isSoldOrCompleted && item.payment_status !== 'paid' && (
-              <motion.button {...tapScale} type="button" onClick={() => run(() => onMarkPaid(item.id))} disabled={saving} className="min-h-11 cursor-pointer rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 disabled:opacity-50">
-                Mark paid
-              </motion.button>
-            )}
-            {isSoldOrCompleted && item.shipping_status !== 'shipped' && (
-              <motion.button {...tapScale} type="button" onClick={() => run(() => onMarkShipped(item.id))} disabled={saving} className="min-h-11 cursor-pointer rounded-lg border border-pink-300 dark:border-emerald-500/40 px-4 text-sm font-medium text-pink-700 dark:text-emerald-400 disabled:opacity-50">
-                Mark shipped
-              </motion.button>
-            )}
             {item.status === 'completed' && (
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 Completed {item.sold_date ? formatMonthYear(item.sold_date) : ''}

@@ -5,22 +5,12 @@ import { formatDDMM, formatGBP } from '../utils/format'
 
 const COURIER_INITIAL = { Evri: 'E', InPost: 'I', 'Royal Mail': 'R' }
 
-// One colour-coded stage per item. "Completed" is a real board column now,
-// not derived -- "shipped" is still a lighter sub-badge shown on a Sold
-// item that's part-way there (paid/shipped tracked independently via
-// payment_status/shipping_status, "Mark paid"/"Mark shipped").
+// One colour-coded stage per item, matching its board column.
 export const STAGE_META = {
   purchased: { label: 'Purchased', box: 'bg-zinc-300 dark:bg-zinc-600', border: 'border-l-zinc-300 dark:border-l-zinc-600' },
   listed: { label: 'Listed', box: 'bg-amber-400 dark:bg-amber-500', border: 'border-l-amber-400 dark:border-l-amber-500' },
   sold: { label: 'Sold', box: 'bg-emerald-300 dark:bg-emerald-500/60', border: 'border-l-emerald-300 dark:border-l-emerald-500/60' },
-  shipped: { label: 'Shipped', box: 'bg-emerald-500 dark:bg-emerald-500', border: 'border-l-emerald-500 dark:border-l-emerald-500' },
   completed: { label: 'Completed', box: 'bg-emerald-800 opacity-50 dark:bg-emerald-700 dark:opacity-60', border: 'border-l-emerald-800/50 dark:border-l-emerald-700/60' },
-}
-
-export function cardStage(item) {
-  if (item.status !== 'sold') return item.status
-  if (item.shipping_status === 'shipped') return 'shipped'
-  return 'sold'
 }
 
 // Pure presentation, no drag hooks -- shared by the draggable card in the
@@ -30,7 +20,7 @@ export function ResaleCardVisual({ item, dragging = false }) {
   const pendingProfit = itemPendingProfit(item)
   const potentialProfit = itemPotentialProfit(item)
   const allInCost = itemAllInCost(item)
-  const stage = cardStage(item)
+  const stage = item.status
   const completed = stage === 'completed'
   const dateLabel = { purchased: item.purchased_date, listed: item.listed_date, completed: item.sold_date }[item.status]
 

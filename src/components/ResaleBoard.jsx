@@ -41,7 +41,7 @@ function Column({ status, label, items, onOpen, itemCount }) {
   )
 }
 
-export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onMarkPaid, onMarkShipped, hideCompleted, onToggleHideCompleted }) {
+export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, hideCompleted, onToggleHideCompleted }) {
   const [openItem, setOpenItem] = useState(null)
   const [pendingSale, setPendingSale] = useState(null)
   const [pendingComplete, setPendingComplete] = useState(null)
@@ -151,8 +151,6 @@ export default function ResaleBoard({ items, onUpdate, onDelete, onMarkSold, onM
           onClose={() => setOpenItem(null)}
           onUpdate={onUpdate}
           onDelete={onDelete}
-          onMarkPaid={onMarkPaid}
-          onMarkShipped={onMarkShipped}
           onMoveToStage={handleMoveToStage}
         />
       )}

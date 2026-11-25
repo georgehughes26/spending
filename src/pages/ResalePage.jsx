@@ -357,8 +357,6 @@ export default function ResalePage() {
     updateItem,
     deleteItem,
     markSold,
-    markPaid,
-    markShipped,
   } = useResaleItems(user?.id)
   const { costs: generalCosts, addCost: addGeneralCost, updateCost: updateGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
   const [granularity, setGranularity] = useState('week')
@@ -442,8 +440,6 @@ export default function ResalePage() {
                   onUpdate={updateItem}
                   onDelete={deleteItem}
                   onMarkSold={markSold}
-                  onMarkPaid={markPaid}
-                  onMarkShipped={markShipped}
                   hideCompleted={hideCompleted}
                   onToggleHideCompleted={toggleHideCompleted}
                 />
@@ -454,8 +450,6 @@ export default function ResalePage() {
                   onUpdate={updateItem}
                   onDelete={deleteItem}
                   onMarkSold={markSold}
-                  onMarkPaid={markPaid}
-                  onMarkShipped={markShipped}
                   hideCompleted={hideCompleted}
                   onToggleHideCompleted={toggleHideCompleted}
                 />
