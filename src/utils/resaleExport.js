@@ -51,8 +51,13 @@ export function exportResaleToExcel({ items, directCosts, overheads, mileage, ho
     { Figure: 'Net profit', Value: summary.netProfit, Notes: 'Gross profit - total overheads' },
     { Figure: 'Pending sales', Value: summary.pendingSales, Notes: 'Marked Sold, not yet Completed -- added to gross profit when they complete' },
     { Figure: 'Items sold', Value: totalItemsSold, Notes: 'Completed' },
-    { Figure: 'Avg profit per item', Value: avgProfitPerItem ?? '', Notes: 'Gross profit / items sold' },
+    { Figure: 'Avg profit per item', Value: avgProfitPerItem ?? '', Notes: 'Per item sold, for judging pricing: (sales - cost of the items sold - direct costs) / items sold' },
     { Figure: 'Tax pot', Value: taxPotDue(items), Notes: `20% of completed sales above the £${TRADING_ALLOWANCE.toLocaleString('en-GB')} trading allowance (per tax year)` },
+    {
+      Figure: 'Total costs (all)',
+      Value: summary.totalCost + summary.totalExpenses,
+      Notes: `Total costs + total overheads. Switch from allowance to actual costs once this passes £${TRADING_ALLOWANCE.toLocaleString('en-GB')}`,
+    },
     { Figure: 'Hours worked', Value: round2(totalHours), Notes: 'Hours, not £' },
   ].map((row) => ({ ...row, Value: row.Value === '' ? '' : round2(row.Value) }))
 

@@ -210,16 +210,18 @@ function mostSoldTeam(sold) {
 }
 
 // How profitable a typical sale is, which team's shirts move the most, and
-// which courier carries most of the outgoing parcels. Average profit is
-// Gross Profit (all stock bought + Direct Costs taken off) per item sold,
-// matching the Gross Profit figure at the top of the page.
+// which courier carries most of the outgoing parcels. Average profit is a
+// per-shirt margin for judging pricing: sales minus the stock cost of the
+// items actually sold (unsold stock left out) and Direct Costs, per item
+// sold. The Gross Profit at the top counts every shirt bought instead --
+// that's the figure for tax.
 export function deriveResaleLogistics(items, generalCosts = []) {
   const sold = items.filter((i) => isRealizedSale(i.status))
 
   const salesTotal = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
-  const stockCost = items.reduce((t, i) => t + itemAllInCost(i), 0)
+  const soldStockCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
   const directCostsTotal = generalCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
-  const avgProfitPerItem = sold.length > 0 ? (salesTotal - stockCost - directCostsTotal) / sold.length : null
+  const avgProfitPerItem = sold.length > 0 ? (salesTotal - soldStockCost - directCostsTotal) / sold.length : null
   const avgSalePrice = sold.length > 0 ? sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0) / sold.length : null
   const totalItemsSold = sold.length
 

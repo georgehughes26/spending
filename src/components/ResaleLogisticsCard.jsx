@@ -90,7 +90,7 @@ export default function ResaleLogisticsCard({ logistics }) {
             icon={ICONS.profit}
             label="Avg profit"
             value={avgProfitPerItem != null ? formatGBP(avgProfitPerItem, { pence: true, showSign: true }) : '—'}
-            caption="Avg. gross profit per item -- gross profit ÷ items sold"
+            caption="Avg. profit per item sold -- sales minus those items' cost and direct costs, ÷ items sold"
           />
           <SquareStat
             icon={ICONS.calendar}
