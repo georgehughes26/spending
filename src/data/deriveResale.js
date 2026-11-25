@@ -7,6 +7,15 @@ export function isRealizedSale(status) {
   return status === 'completed'
 }
 
+// Set aside for tax on every sale -- a flat 20% of the gross sale price for
+// now, deliberately not profit-based (that comes later). Rounded to the
+// penny since it's an amount you actually transfer.
+export const TAX_POT_RATE = 0.2
+
+export function taxPotAmount(salePrice) {
+  return Math.round((Number(salePrice) || 0) * TAX_POT_RATE * 100) / 100
+}
+
 export function itemAllInCost(item) {
   return Number(item.cost_price) || 0
 }

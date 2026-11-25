@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { tapScale } from './motion'
+import { TAX_POT_RATE, taxPotAmount } from '../data/deriveResale'
+import { formatGBP } from '../utils/format'
 
 // Captures the date an item actually completed (paid + shipped, fully
 // wrapped up) -- stored in sold_date, which now means "completed date"
 // rather than "the day it was marked sold".
 export default function CompleteCaptureModal({ item, onCancel, onConfirm }) {
   const [completedDate, setCompletedDate] = useState(item.sold_date || new Date().toISOString().slice(0, 10))
+  const salePrice = Number(item.sold_price) || 0
 
   return (
     <motion.div
@@ -25,7 +28,7 @@ export default function CompleteCaptureModal({ item, onCancel, onConfirm }) {
       >
         <h3 className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">All done!</h3>
         <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">{item.name} — when did it complete?</p>
-        <label className="mb-4 block text-sm">
+        <label className={`${salePrice > 0 ? 'mb-2' : 'mb-4'} block text-sm`}>
           <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Completed date</span>
           <input
             type="date"
@@ -35,6 +38,12 @@ export default function CompleteCaptureModal({ item, onCancel, onConfirm }) {
             className="min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
           />
         </label>
+        {salePrice > 0 && (
+          <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
+            Put <span className="font-semibold text-zinc-700 dark:text-zinc-200">{formatGBP(taxPotAmount(salePrice), { pence: true })}</span> in your
+            tax pot when the money hits your bank ({TAX_POT_RATE * 100}% of the {formatGBP(salePrice, { pence: true })} sale).
+          </p>
+        )}
         <div className="flex items-center gap-3">
           <motion.button
             {...tapScale}

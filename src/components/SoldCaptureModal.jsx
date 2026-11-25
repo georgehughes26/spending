@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { tapScale } from './motion'
+import { TAX_POT_RATE, taxPotAmount } from '../data/deriveResale'
+import { formatGBP } from '../utils/format'
 
 const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
 const SOLD_ON_OPTIONS = ['Vinted', 'eBay', 'Website', 'Other']
@@ -27,7 +29,7 @@ export default function SoldCaptureModal({ item, onCancel, onConfirm }) {
       >
         <h3 className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">Sold it! 🎉</h3>
         <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">{item.name} — how much for?</p>
-        <div className="mb-3 flex h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3">
+        <div className={`${Number(soldPrice) > 0 ? 'mb-2' : 'mb-3'} flex h-11 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3`}>
           <span className="text-zinc-500 dark:text-zinc-400">£</span>
           <input
             type="number"
@@ -39,6 +41,12 @@ export default function SoldCaptureModal({ item, onCancel, onConfirm }) {
             className="w-full bg-transparent px-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
           />
         </div>
+        {Number(soldPrice) > 0 && (
+          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+            Put <span className="font-semibold text-zinc-700 dark:text-zinc-200">{formatGBP(taxPotAmount(soldPrice), { pence: true })}</span> in your
+            tax pot when the money hits your bank ({TAX_POT_RATE * 100}% of the sale).
+          </p>
+        )}
         <label className="mb-3 block text-sm">
           <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Sold on (optional)</span>
           <select
