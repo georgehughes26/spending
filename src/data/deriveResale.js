@@ -16,6 +16,31 @@ export function taxPotAmount(salePrice) {
   return Math.round((Number(salePrice) || 0) * TAX_POT_RATE * 100) / 100
 }
 
+// The first £1,000 of sales each UK tax year (6 April to 5 April) is
+// covered by the trading allowance, so the total pot owed is 20% of
+// completed sales above that, worked out per tax year. (The per-sale
+// "put £X in your tax pot" note is a flat 20%, which is right once a tax
+// year's sales are past £1,000.)
+export const TRADING_ALLOWANCE = 1000
+
+function taxYearStart(dateString) {
+  const year = Number(dateString.slice(0, 4))
+  return dateString.slice(5, 10) >= '04-06' ? year : year - 1
+}
+
+export function taxPotDue(items) {
+  const today = new Date().toISOString().slice(0, 10)
+  const salesByTaxYear = new Map()
+  for (const item of items) {
+    if (!isRealizedSale(item.status)) continue
+    const year = taxYearStart(item.sold_date || today)
+    salesByTaxYear.set(year, (salesByTaxYear.get(year) ?? 0) + (Number(item.sold_price) || 0))
+  }
+  let total = 0
+  for (const sales of salesByTaxYear.values()) total += Math.max(0, sales - TRADING_ALLOWANCE) * TAX_POT_RATE
+  return Math.round(total * 100) / 100
+}
+
 // Business mileage is claimed at a flat 55p a mile. It's added to the
 // Overheads figure in the profit totals, not listed as Overheads entries.
 // Each trip is rounded to the penny, and totals are the sum of those, so
@@ -57,13 +82,15 @@ export function itemPendingProfit(item) {
 }
 
 // Lifetime totals, unaffected by any time-period filter.
-//   totalCost     = cost of stock actually sold (not every item ever bought)
-//                   + Direct Costs (namesets, mailing bags)
-//   grossProfit   = totalSales - totalCost
+//   totalCost     = cost of every item bought (a shirt is a cost the moment
+//                   it's bought, sold or not) + Direct Costs (namesets,
+//                   mailing bags)
+//   grossProfit   = totalSales (Completed only) - totalCost
 //   totalExpenses = Overheads entries (subscriptions, ads) + mileage at 55p
 //   netProfit     = grossProfit - totalExpenses
-// pendingProfit is the flip side: items already marked Sold (a real price
-// agreed) but not yet Completed, so they're not in either profit figure yet.
+// pendingSales is what's still to come in: the agreed price of items marked
+// Sold but not yet Completed. Their cost is already counted, so Gross
+// Profit goes up by exactly this much once they complete.
 export function deriveResaleSummary(items, generalCosts = [], generalExpenses = [], mileage = []) {
   const sold = items.filter((i) => isRealizedSale(i.status))
 
@@ -72,20 +99,20 @@ export function deriveResaleSummary(items, generalCosts = [], generalExpenses = 
   const totalMiles = mileage.reduce((t, e) => t + (Number(e.miles) || 0), 0)
   const mileageTotal = mileageEntriesCost(mileage)
   const totalExpenses = overheadsTotal + mileageTotal
-  const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
-  const totalCost = soldCost + generalCostsTotal
+  const stockCost = items.reduce((t, i) => t + itemAllInCost(i), 0)
+  const totalCost = stockCost + generalCostsTotal
   const totalSales = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
   const grossProfit = totalSales - totalCost
   const netProfit = grossProfit - totalExpenses
-  const pendingProfit = items
-    .filter((i) => itemPendingProfit(i) != null)
-    .reduce((t, i) => t + itemPendingProfit(i), 0)
+  const pendingSales = items
+    .filter((i) => i.status === 'sold')
+    .reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
 
   const stageCounts = { purchased: 0, listed: 0, sold: 0, completed: 0 }
   for (const item of items) stageCounts[item.status] = (stageCounts[item.status] ?? 0) + 1
 
   return {
-    soldCost,
+    stockCost,
     generalCostsTotal,
     totalCost,
     totalSales,
@@ -95,7 +122,7 @@ export function deriveResaleSummary(items, generalCosts = [], generalExpenses = 
     mileageTotal,
     totalExpenses,
     netProfit,
-    pendingProfit,
+    pendingSales,
     stageCounts,
     itemCount: items.length,
   }
@@ -184,14 +211,15 @@ function mostSoldTeam(sold) {
 
 // How profitable a typical sale is, which team's shirts move the most, and
 // which courier carries most of the outgoing parcels. Average profit is
-// Gross Profit (so Direct Costs included) per item sold, matching the
-// Gross Profit figure at the top of the page.
+// Gross Profit (all stock bought + Direct Costs taken off) per item sold,
+// matching the Gross Profit figure at the top of the page.
 export function deriveResaleLogistics(items, generalCosts = []) {
   const sold = items.filter((i) => isRealizedSale(i.status))
 
-  const soldProfit = sold.reduce((t, i) => t + itemProfit(i), 0)
+  const salesTotal = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
+  const stockCost = items.reduce((t, i) => t + itemAllInCost(i), 0)
   const directCostsTotal = generalCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
-  const avgProfitPerItem = sold.length > 0 ? (soldProfit - directCostsTotal) / sold.length : null
+  const avgProfitPerItem = sold.length > 0 ? (salesTotal - stockCost - directCostsTotal) / sold.length : null
   const avgSalePrice = sold.length > 0 ? sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0) / sold.length : null
   const totalItemsSold = sold.length
 
@@ -275,20 +303,20 @@ function enumeratePeriods(startKey, endKey, granularity) {
   return keys
 }
 
-// A completed-sale timeline: a deal's cost and revenue both land in the
-// period it was Completed in, same as the headline totals above -- a sale
-// still pending completion doesn't show up yet. Direct costs land in the
-// period they were actually incurred (their own cost_date) -- so summing
-// every bar's grossProfit matches the lifetime Gross Profit figure, as long
-// as all the activity falls inside the trailing window below. Overheads
-// and mileage aren't charted, only counted in Net Profit. Spans every period from
-// the earliest activity through today, filling zero bars for gaps so the
-// timeline reads continuously. Separate from deriveResaleSummary's lifetime
-// totals, which stay item-matched rather than date-split.
+// Gross profit over time, same rules as the headline totals: a shirt's
+// cost lands in the period it was bought (purchased_date), its sale in the
+// period it was Completed (a sale still pending completion doesn't show up
+// yet), and Direct Costs in the period they were incurred (cost_date) --
+// so summing every bar's grossProfit matches the lifetime Gross Profit
+// figure, as long as all the activity falls inside the trailing window
+// below. Overheads and mileage aren't charted, only counted in Net Profit.
+// Spans every period from the earliest activity through today, filling
+// zero bars for gaps so the timeline reads continuously.
 export function deriveResaleTimeSeries(items, generalCosts, granularity) {
   const completed = items.filter((i) => isRealizedSale(i.status) && i.sold_date)
+  const bought = items.filter((i) => i.purchased_date)
   const dateCosts = generalCosts.filter((c) => c.cost_date)
-  if (completed.length === 0 && dateCosts.length === 0) return []
+  if (completed.length === 0 && bought.length === 0 && dateCosts.length === 0) return []
 
   const emptyBucket = () => ({ totalCost: 0, totalSales: 0 })
   const totals = new Map()
@@ -298,16 +326,21 @@ export function deriveResaleTimeSeries(items, generalCosts, granularity) {
     totals.set(key, bucket)
   }
 
+  for (const item of bought) {
+    addTo(periodKey(item.purchased_date, granularity), 'totalCost', itemAllInCost(item))
+  }
   for (const item of completed) {
-    const key = periodKey(item.sold_date, granularity)
-    addTo(key, 'totalCost', itemAllInCost(item))
-    addTo(key, 'totalSales', Number(item.sold_price) || 0)
+    addTo(periodKey(item.sold_date, granularity), 'totalSales', Number(item.sold_price) || 0)
   }
   for (const cost of dateCosts) {
     addTo(periodKey(cost.cost_date, granularity), 'totalCost', Number(cost.amount) || 0)
   }
 
-  const activityDates = [...completed.map((i) => i.sold_date), ...dateCosts.map((c) => c.cost_date)].sort()
+  const activityDates = [
+    ...bought.map((i) => i.purchased_date),
+    ...completed.map((i) => i.sold_date),
+    ...dateCosts.map((c) => c.cost_date),
+  ].sort()
   const startKey = periodKey(activityDates[0], granularity)
   const latestActivityKey = periodKey(activityDates[activityDates.length - 1], granularity)
   const todayKey = periodKey(new Date().toISOString().slice(0, 10), granularity)

@@ -6,10 +6,11 @@ import {
   MILEAGE_RATE,
   deriveResaleLogistics,
   deriveResaleSummary,
-  isRealizedSale,
+  TRADING_ALLOWANCE,
   itemProfit,
   mileageCost,
   taxPotAmount,
+  taxPotDue,
 } from '../data/deriveResale'
 
 const STATUS_LABELS = Object.fromEntries(COLUMNS.map((c) => [c.status, c.label]))
@@ -36,14 +37,11 @@ export function exportResaleToExcel({ items, directCosts, overheads, mileage, ho
   const summary = deriveResaleSummary(items, directCosts, overheads, mileage)
   const { avgProfitPerItem, totalItemsSold } = deriveResaleLogistics(items, directCosts)
   const totalHours = hours.reduce((t, h) => t + (Number(h.hours) || 0), 0)
-  const completedTaxPot = round2(
-    items.filter((i) => isRealizedSale(i.status)).reduce((t, i) => t + taxPotAmount(i.sold_price), 0),
-  )
   const ratePence = Math.round(MILEAGE_RATE * 100)
 
   const summaryRows = [
     { Figure: 'Sales', Value: summary.totalSales, Notes: 'Completed sales only' },
-    { Figure: 'Stock cost', Value: summary.soldCost, Notes: 'Cost price of the items sold' },
+    { Figure: 'Stock cost', Value: summary.stockCost, Notes: 'Cost price of every item bought, sold or not' },
     { Figure: 'Direct costs', Value: summary.generalCostsTotal, Notes: '' },
     { Figure: 'Total costs', Value: summary.totalCost, Notes: 'Stock cost + direct costs' },
     { Figure: 'Gross profit', Value: summary.grossProfit, Notes: 'Sales - total costs' },
@@ -51,10 +49,10 @@ export function exportResaleToExcel({ items, directCosts, overheads, mileage, ho
     { Figure: 'Mileage', Value: summary.mileageTotal, Notes: `${round2(summary.totalMiles)} miles at ${ratePence}p a mile` },
     { Figure: 'Total overheads', Value: summary.totalExpenses, Notes: 'Overheads + mileage' },
     { Figure: 'Net profit', Value: summary.netProfit, Notes: 'Gross profit - total overheads' },
-    { Figure: 'Pending profit', Value: summary.pendingProfit, Notes: 'Marked Sold, not yet Completed' },
+    { Figure: 'Pending sales', Value: summary.pendingSales, Notes: 'Marked Sold, not yet Completed -- added to gross profit when they complete' },
     { Figure: 'Items sold', Value: totalItemsSold, Notes: 'Completed' },
     { Figure: 'Avg profit per item', Value: avgProfitPerItem ?? '', Notes: 'Gross profit / items sold' },
-    { Figure: 'Tax pot', Value: completedTaxPot, Notes: '20% of completed sales' },
+    { Figure: 'Tax pot', Value: taxPotDue(items), Notes: `20% of completed sales above the £${TRADING_ALLOWANCE.toLocaleString('en-GB')} trading allowance (per tax year)` },
     { Figure: 'Hours worked', Value: round2(totalHours), Notes: 'Hours, not £' },
   ].map((row) => ({ ...row, Value: row.Value === '' ? '' : round2(row.Value) }))
 
