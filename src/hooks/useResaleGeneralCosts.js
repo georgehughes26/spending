@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// General resale-business costs that aren't tied to one item. Each row is
-// either a General Cost (kind 'cost': namesets, mailing bags) or a General
-// Expense (kind 'expense': subscriptions, ads) -- one table, split on the
-// page. Rows from before the split have no kind and count as costs.
+// Resale-business costs that aren't tied to one item. Each row is either a
+// Direct Cost (kind 'cost': namesets, mailing bags) or an Overhead (kind
+// 'expense': subscriptions, ads) -- one table, split on the page. Rows from
+// before the split have no kind and count as direct costs.
 export function useResaleGeneralCosts(userId) {
   const [costs, setCosts] = useState([])
   const [loading, setLoading] = useState(true)

@@ -44,9 +44,9 @@ export function itemPendingProfit(item) {
 
 // Lifetime totals, unaffected by any time-period filter.
 //   totalCost    = cost of stock actually sold (not every item ever bought)
-//                  + General Costs (namesets, mailing bags)
+//                  + Direct Costs (namesets, mailing bags)
 //   grossProfit  = totalSales - totalCost
-//   netProfit    = grossProfit - General Expenses (subscriptions, ads)
+//   netProfit    = grossProfit - Overheads (subscriptions, ads)
 // pendingProfit is the flip side: items already marked Sold (a real price
 // agreed) but not yet Completed, so they're not in either profit figure yet.
 export function deriveResaleSummary(items, generalCosts = [], generalExpenses = []) {
@@ -242,7 +242,7 @@ function enumeratePeriods(startKey, endKey, granularity) {
 
 // A completed-sale timeline: a deal's cost and revenue both land in the
 // period it was Completed in, same as the headline totals above -- a sale
-// still pending completion doesn't show up yet. General costs and expenses
+// still pending completion doesn't show up yet. Direct costs and overheads
 // land in the period they were actually incurred (their own cost_date) --
 // so summing every bar's netProfit matches the lifetime Net Profit figure,
 // as long as all the

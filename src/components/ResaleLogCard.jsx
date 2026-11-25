@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Card from './Card'
+import CardAddButton from './CardAddButton'
 import { tapScale } from './motion'
 import { useResaleLog } from '../hooks/useResaleLog'
 
@@ -186,7 +187,7 @@ function EntryRow({ config, entry, onUpdate, onDelete }) {
 }
 
 // Mileage / hours-worked log: a + button opens a small add popup, and the
-// history underneath works like General Costs (edit inline, remove). Just a
+// history underneath works like Direct Costs (edit inline, remove). Just a
 // record for now -- nothing here feeds into profit or totals elsewhere.
 export default function ResaleLogCard({ config, userId }) {
   const { entries, loading, error, addEntry, updateEntry, deleteEntry } = useResaleLog(userId, config.table, config.dateField)
@@ -198,18 +199,7 @@ export default function ResaleLogCard({ config, userId }) {
     <Card
       title={config.title}
       className="h-full"
-      action={
-        <motion.button
-          {...tapScale}
-          type="button"
-          onClick={() => setAdding(true)}
-          aria-label={config.addTitle}
-          title={config.addTitle}
-          className="-my-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-pink-100 text-pink-700 transition-colors duration-150 hover:bg-pink-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25"
-        >
-          <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 4v12M4 10h12" /></svg>
-        </motion.button>
-      }
+      action={<CardAddButton label={config.addTitle} onClick={() => setAdding(true)} />}
     >
       <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">{config.description}</p>
 

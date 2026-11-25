@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx'
 import { formatDDMMYYYY as ddmmyyyy } from './format'
 
 // Three sheets: stock items (one row per item, bought/sold dates and prices,
-// blank where an item hasn't sold yet), general costs and general expenses
+// blank where an item hasn't sold yet), direct costs and overheads
 // (neither tied to a specific item) -- matches how the reselling page
 // itself is split.
 function costRowsFor(costs) {
@@ -25,8 +25,8 @@ export function exportResaleToExcel(items, generalCosts, generalExpenses) {
 
   const workbook = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(itemRows), 'Items')
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(costRowsFor(generalCosts)), 'General Costs')
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(costRowsFor(generalExpenses)), 'General Expenses')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(costRowsFor(generalCosts)), 'Direct Costs')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(costRowsFor(generalExpenses)), 'Overheads')
 
   const today = new Date().toISOString().slice(0, 10)
   XLSX.writeFile(workbook, `george-reselling-${today}.xlsx`)

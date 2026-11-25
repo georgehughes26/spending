@@ -200,12 +200,21 @@
       },
       {
         "rule": "gray-on-color",
-        "value": "text-zinc-950 on bg-pink-600",
+        "value": "*",
         "files": [
           "src/components/ResaleLogCard.jsx"
         ],
-        "createdAt": "2026-11-25T22:35:59.031Z",
-        "reason": "Claude triage: dark:text-zinc-950 pairs with dark:bg-emerald-400, not the light-theme bg-pink-600 in the same class string (Add/Save buttons, same pattern as every other primary button in the app); they never render together"
+        "createdAt": "2026-11-25T23:03:31.174Z",
+        "reason": "Claude triage: only flagged pairs are the primary Add/Save buttons -- dark:text-zinc-950 pairs with dark:bg-emerald-400, never with light-theme bg-pink-600 in the same class string. File-wide because gray-on-color has no extractable match value, so value-specific ignores are no-ops"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "src/components/ResaleCostsCard.jsx"
+        ],
+        "createdAt": "2026-11-25T23:03:31.209Z",
+        "reason": "Claude triage: only flagged pairs are the primary Add/Save buttons -- dark:text-zinc-950 pairs with dark:bg-emerald-400, never with light-theme bg-pink-600 in the same class string. File-wide because gray-on-color has no extractable match value, so value-specific ignores are no-ops"
       }
     ]
   }

@@ -1,4 +1,4 @@
-// The two reselling logs shown under General Costs. Dropdown options are
+// The two reselling logs shown under Direct Costs / Overheads. Dropdown options are
 // stored as plain text, so adding one is just a new line in `options` --
 // no database change needed. `hint` is shown in the dropdown only; the
 // saved value is always `value`.

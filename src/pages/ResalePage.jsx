@@ -6,6 +6,7 @@ import MobileResaleBoard from '../components/MobileResaleBoard'
 import ResaleTimeSeriesChart from '../components/ResaleTimeSeriesChart'
 import ResaleLogisticsCard from '../components/ResaleLogisticsCard'
 import ResaleLogCard from '../components/ResaleLogCard'
+import ResaleCostsCard from '../components/ResaleCostsCard'
 import { AnimatedNumber, tapScale } from '../components/motion'
 import { useAuth } from '../context/AuthContext'
 import { useResaleItems } from '../hooks/useResaleItems'
@@ -116,204 +117,6 @@ function AddItemForm({ items, onAdd, onClose }) {
   )
 }
 
-// The two lists that share the resale_general_costs table, keyed by kind.
-const COST_LISTS = {
-  cost: {
-    title: 'General Costs',
-    description: "Costs of selling that aren't tied to one item, like namesets and mailing bags. Taken off sales, along with your stock costs, for Gross Profit.",
-    placeholder: 'e.g. Mailing bags',
-    emptyLabel: 'No general costs yet.',
-  },
-  expense: {
-    title: 'General Expenses',
-    description: 'Running costs of the business, like subscriptions, the web domain or ads. Taken off Gross Profit for Net Profit.',
-    placeholder: 'e.g. Claude Pro',
-    emptyLabel: 'No general expenses yet.',
-  },
-}
-
-function GeneralCostRow({ cost, onUpdate, onDelete, moveTo }) {
-  const [editing, setEditing] = useState(false)
-  const [label, setLabel] = useState(cost.label)
-  const [amount, setAmount] = useState(cost.amount)
-  const [date, setDate] = useState(cost.cost_date)
-  const [boughtFrom, setBoughtFrom] = useState(cost.bought_from ?? '')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleSave = async () => {
-    setSaving(true)
-    setError(null)
-    try {
-      await onUpdate(cost.id, { label, amount: Number(amount) || 0, cost_date: date, bought_from: boughtFrom.trim() || null })
-      setEditing(false)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleMove = async () => {
-    setSaving(true)
-    setError(null)
-    try {
-      await onUpdate(cost.id, { kind: moveTo })
-    } catch (err) {
-      setError(err.message)
-      setSaving(false)
-    }
-  }
-
-  if (editing) {
-    return (
-      <li className="flex flex-col gap-2 py-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <input
-            type="text"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            placeholder="Label"
-            className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
-          />
-          <input
-            type="text"
-            value={boughtFrom}
-            onChange={(e) => setBoughtFrom(e.target.value)}
-            placeholder="Bought from (optional)"
-            className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
-          />
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="min-h-11 shrink-0 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
-          />
-          <div className="flex h-11 w-24 shrink-0 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">£</span>
-            <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
-          </div>
-        </div>
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <div className="flex items-center gap-3">
-          <motion.button {...tapScale} type="button" onClick={handleSave} disabled={saving || !label.trim()} className="min-h-9 cursor-pointer whitespace-nowrap rounded-lg bg-pink-600 dark:bg-emerald-400 px-4 text-sm font-medium text-white dark:text-zinc-950 disabled:opacity-50">
-            Save
-          </motion.button>
-          <motion.button {...tapScale} type="button" onClick={() => setEditing(false)} className="min-h-9 cursor-pointer px-2 text-sm text-zinc-500 dark:text-zinc-400">
-            Cancel
-          </motion.button>
-          <button type="button" onClick={handleMove} disabled={saving} className="ml-auto min-h-9 cursor-pointer px-2 text-xs font-medium text-pink-700 dark:text-emerald-400 hover:underline disabled:opacity-50">
-            Move to {COST_LISTS[moveTo].title}
-          </button>
-        </div>
-      </li>
-    )
-  }
-
-  return (
-    <li className="flex items-center justify-between py-2 text-sm">
-      <span className="text-zinc-700 dark:text-zinc-300">
-        {cost.label} <span className="text-xs text-zinc-500 dark:text-zinc-400">· {cost.cost_date}{cost.bought_from ? ` · ${cost.bought_from}` : ''}</span>
-      </span>
-      <span className="flex items-center gap-3">
-        <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(cost.amount, { pence: true })}</span>
-        <button type="button" onClick={() => setEditing(true)} className="cursor-pointer text-xs font-medium text-pink-700 dark:text-emerald-400 hover:underline">
-          Edit
-        </button>
-        <button type="button" onClick={() => onDelete(cost.id)} className="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400 hover:underline">
-          Remove
-        </button>
-      </span>
-    </li>
-  )
-}
-
-// Costs or expenses that aren't tied to any one item -- one card per kind,
-// side by side under the stock list. Both work identically; they only
-// differ in which profit figure they come off.
-function GeneralCostsCard({ kind, costs, onAdd, onUpdate, onDelete }) {
-  const list = COST_LISTS[kind]
-  const otherKind = kind === 'cost' ? 'expense' : 'cost'
-  const [label, setLabel] = useState('')
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
-  const [boughtFrom, setBoughtFrom] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
-
-  const total = costs.reduce((t, c) => t + (Number(c.amount) || 0), 0)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!label.trim()) return
-    setSaving(true)
-    setError(null)
-    try {
-      await onAdd(label.trim(), Number(amount) || 0, date, boughtFrom.trim() || null, kind)
-      setLabel('')
-      setAmount('')
-      setBoughtFrom('')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Card title={list.title} className="h-full">
-      <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">{list.description}</p>
-      <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <input
-          type="text"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder={list.placeholder}
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
-        />
-        <input
-          type="text"
-          value={boughtFrom}
-          onChange={(e) => setBoughtFrom(e.target.value)}
-          placeholder="Bought from (optional)"
-          className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
-        />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="min-h-11 shrink-0 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
-        />
-        <div className="flex items-center gap-2">
-          <div className="flex h-11 w-24 shrink-0 items-center rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-2 text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">£</span>
-            <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" className="w-full bg-transparent px-1 text-zinc-900 dark:text-zinc-100 outline-none" />
-          </div>
-          <motion.button {...tapScale} type="submit" disabled={saving || !label.trim()} className="min-h-11 flex-1 cursor-pointer whitespace-nowrap rounded-lg border border-pink-300 dark:border-emerald-500/40 px-3 text-sm font-medium text-pink-700 dark:text-emerald-400 disabled:opacity-50 sm:flex-none">
-            Add
-          </motion.button>
-        </div>
-      </form>
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-      {costs.length > 0 ? (
-        <ul className="flex max-h-96 flex-col divide-y divide-zinc-200 overflow-y-auto dark:divide-white/10">
-          {costs.map((cost) => (
-            <GeneralCostRow key={cost.id} cost={cost} onUpdate={onUpdate} onDelete={onDelete} moveTo={otherKind} />
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{list.emptyLabel}</p>
-      )}
-      {costs.length > 0 && (
-        <div className="mt-3 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-3 text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Total</span>
-          <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatGBP(total, { pence: true })}</span>
-        </div>
-      )}
-    </Card>
-  )
-}
-
 function AddItemModal({ items, onAdd, onClose }) {
   return (
     <motion.div
@@ -366,7 +169,7 @@ function PerformanceHero({ summary }) {
             <div className="text-lg font-semibold text-white">{formatGBP(summary.totalCost, { pence: true })}</div>
           </div>
           <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Expenses</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Overheads</div>
             <div className="text-lg font-semibold text-white">{formatGBP(summary.totalExpenses, { pence: true })}</div>
           </div>
           <div>
@@ -495,8 +298,8 @@ export default function ResalePage() {
           )}
 
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <GeneralCostsCard kind="cost" costs={generalCosts} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
-            <GeneralCostsCard kind="expense" costs={generalExpenses} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
+            <ResaleCostsCard kind="cost" costs={generalCosts} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
+            <ResaleCostsCard kind="expense" costs={generalExpenses} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">

@@ -35,7 +35,7 @@ function ChartTooltip({ active, payload }) {
   const rows = [
     { label: 'Sales', value: point.totalSales, tone: 'text-zinc-900 dark:text-zinc-100' },
     { label: 'Costs', value: point.totalCost, tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Expenses', value: point.totalExpenses, tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Overheads', value: point.totalExpenses, tone: 'text-zinc-900 dark:text-zinc-100' },
     {
       label: 'Net Profit',
       value: point.netProfit,
