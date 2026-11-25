@@ -5,22 +5,23 @@ import ResaleBoard from '../components/ResaleBoard'
 import MobileResaleBoard from '../components/MobileResaleBoard'
 import ResaleTimeSeriesChart from '../components/ResaleTimeSeriesChart'
 import ResaleLogisticsCard from '../components/ResaleLogisticsCard'
+import ResaleLogCard from '../components/ResaleLogCard'
 import { AnimatedNumber, tapScale } from '../components/motion'
 import { useAuth } from '../context/AuthContext'
 import { useResaleItems } from '../hooks/useResaleItems'
 import { useResaleGeneralCosts } from '../hooks/useResaleGeneralCosts'
 import { deriveResaleLogistics, deriveResaleSummary, deriveResaleTimeSeries } from '../data/deriveResale'
 import { exportResaleToExcel } from '../utils/resaleExport'
+import { HOURS_LOG, MILEAGE_LOG } from '../utils/resaleLogs'
 import { formatGBP } from '../utils/format'
 
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
 
-const SHIPPING_COMPANIES = ['Evri', 'InPost', 'Royal Mail']
 const BOUGHT_FROM_OPTIONS = ['Vinted', 'eBay', 'Other']
 
 function emptyForm() {
-  return { name: '', shippingIn: '', boughtFrom: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
+  return { name: '', boughtFrom: '', costPrice: '', targetPrice: '', purchasedDate: new Date().toISOString().slice(0, 10) }
 }
 
 // Parcel numbers are auto-generated, not typed in -- the next one is always
@@ -51,7 +52,6 @@ function AddItemForm({ items, onAdd, onClose }) {
       await onAdd({
         name: form.name.trim(),
         sku: String(parcelNumber),
-        shipping_in: form.shippingIn || null,
         bought_from: form.boughtFrom || null,
         cost_price: Number(form.costPrice) || 0,
         target_price: form.targetPrice === '' ? null : Number(form.targetPrice),
@@ -81,13 +81,6 @@ function AddItemForm({ items, onAdd, onClose }) {
           <select value={form.boughtFrom} onChange={set('boughtFrom')} className={inputClass}>
             <option value="">—</option>
             {BOUGHT_FROM_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping in (optional)</span>
-          <select value={form.shippingIn} onChange={set('shippingIn')} className={inputClass}>
-            <option value="">—</option>
-            {SHIPPING_COMPANIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
         <label className="text-sm">
@@ -459,6 +452,11 @@ export default function ResalePage() {
 
           <div className="mt-5">
             <GeneralCostsCard costs={generalCosts} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+            <ResaleLogCard config={MILEAGE_LOG} userId={user?.id} />
+            <ResaleLogCard config={HOURS_LOG} userId={user?.id} />
           </div>
         </>
       )}

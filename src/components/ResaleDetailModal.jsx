@@ -23,7 +23,6 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
   const [sku, setSku] = useState(item.sku ?? '')
-  const [shippingIn, setShippingIn] = useState(item.shipping_in ?? '')
   const [shippingOut, setShippingOut] = useState(item.shipping_out ?? '')
   const [boughtFrom, setBoughtFrom] = useState(item.bought_from ?? '')
   const [purchasedDate, setPurchasedDate] = useState(item.purchased_date ?? '')
@@ -61,7 +60,6 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
       await onUpdate(item.id, {
         name,
         sku: sku.trim() || null,
-        shipping_in: shippingIn || null,
         bought_from: boughtFrom || null,
         purchased_date: purchasedDate || null,
         cost_price: Number(costPrice) || 0,
@@ -137,13 +135,6 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                 <label className="text-sm">
                   <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Target sell price</span>
                   <input type="number" min="0" step="0.01" value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} className={inputClass} />
-                </label>
-                <label className="text-sm">
-                  <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Shipping in</span>
-                  <select value={shippingIn} onChange={(e) => setShippingIn(e.target.value)} className={inputClass}>
-                    <option value="">—</option>
-                    {SHIPPING_COMPANIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
                 </label>
                 <label className="text-sm">
                   <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Bought from</span>
@@ -229,12 +220,6 @@ export default function ResaleDetailModal({ item, onClose, onUpdate, onDelete, o
                 <div>
                   <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Sold on</div>
                   <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.sold_on}</div>
-                </div>
-              )}
-              {item.shipping_in && (
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Shipping in</div>
-                  <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.shipping_in}</div>
                 </div>
               )}
               {item.shipping_out && (
