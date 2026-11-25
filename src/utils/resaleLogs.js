@@ -1,13 +1,16 @@
 // The two reselling logs shown under Direct Costs / Overheads. Dropdown options are
 // stored as plain text, so adding one is just a new line in `options` --
 // no database change needed. `hint` is shown in the dropdown only; the
-// saved value is always `value`.
+// saved value is always `value`. `money` (mileage only) turns an entry's
+// value into the £ amount it counts for in the profit totals.
+
+import { MILEAGE_RATE, mileageCost } from '../data/deriveResale'
 
 const number = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
 
 export const MILEAGE_LOG = {
   title: 'Mileage',
-  description: 'Trips for the business, like driving to post parcels.',
+  description: `Trips for the business, like driving to post parcels. Claimed at ${Math.round(MILEAGE_RATE * 100)}p a mile and added to Overheads in the totals at the top.`,
   addTitle: 'Log a trip',
   emptyLabel: 'No trips logged yet.',
   table: 'resale_mileage',
@@ -20,6 +23,7 @@ export const MILEAGE_LOG = {
   unitSuffix: 'miles',
   step: '0.1',
   format: (n) => `${number.format(n)} ${n === 1 ? 'mile' : 'miles'}`,
+  money: mileageCost,
 }
 
 export const HOURS_LOG = {

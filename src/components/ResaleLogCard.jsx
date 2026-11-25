@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Card from './Card'
 import CardAddButton from './CardAddButton'
 import { tapScale } from './motion'
-import { useResaleLog } from '../hooks/useResaleLog'
+import { formatGBP } from '../utils/format'
 
 const inputClass =
   'min-h-11 w-full rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400'
@@ -174,7 +174,12 @@ function EntryRow({ config, entry, onUpdate, onDelete }) {
         {entry[config.typeField]} <span className="text-xs text-zinc-500 dark:text-zinc-400">· {entry[config.dateField]}</span>
       </span>
       <span className="flex shrink-0 items-center gap-3">
-        <span className="font-medium text-zinc-900 dark:text-zinc-100">{config.format(Number(entry[config.valueField]) || 0)}</span>
+        <span className="text-right">
+          <span className="block font-medium text-zinc-900 dark:text-zinc-100">{config.format(Number(entry[config.valueField]) || 0)}</span>
+          {config.money && (
+            <span className="block text-xs text-zinc-500 dark:text-zinc-400">{formatGBP(config.money(entry[config.valueField]), { pence: true })}</span>
+          )}
+        </span>
         <button type="button" onClick={() => setEditing(true)} className="cursor-pointer text-xs font-medium text-pink-700 dark:text-emerald-400 hover:underline">
           Edit
         </button>
@@ -187,13 +192,18 @@ function EntryRow({ config, entry, onUpdate, onDelete }) {
 }
 
 // Mileage / hours-worked log: a + button opens a small add popup, and the
-// history underneath works like Direct Costs (edit inline, remove). Just a
-// record for now -- nothing here feeds into profit or totals elsewhere.
-export default function ResaleLogCard({ config, userId }) {
-  const { entries, loading, error, addEntry, updateEntry, deleteEntry } = useResaleLog(userId, config.table, config.dateField)
+// history underneath works like Direct Costs (edit inline, remove). `log`
+// is the page's useResaleLog result -- loaded there rather than in here so
+// mileage can feed the profit totals and both can go in the export.
+// Mileage also shows its £ value (config.money); hours are a record only.
+export default function ResaleLogCard({ config, log }) {
+  const { entries, loading, error, addEntry, updateEntry, deleteEntry } = log
   const [adding, setAdding] = useState(false)
 
   const total = entries.reduce((t, e) => t + (Number(e[config.valueField]) || 0), 0)
+  const totalMoney = config.money
+    ? Math.round(entries.reduce((t, e) => t + config.money(e[config.valueField]), 0) * 100) / 100
+    : null
 
   return (
     <Card
@@ -223,7 +233,10 @@ export default function ResaleLogCard({ config, userId }) {
       {entries.length > 0 && (
         <div className="mt-3 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-3 text-sm">
           <span className="text-zinc-500 dark:text-zinc-400">Total</span>
-          <span className="font-medium text-zinc-900 dark:text-zinc-100">{config.format(total)}</span>
+          <span className="font-medium text-zinc-900 dark:text-zinc-100">
+            {config.format(total)}
+            {totalMoney != null && ` · ${formatGBP(totalMoney, { pence: true })}`}
+          </span>
         </div>
       )}
 

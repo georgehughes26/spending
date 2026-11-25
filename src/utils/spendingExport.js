@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabaseClient'
 import { deriveSavingsGoals } from '../data/derive'
 import { formatDDMMYYYY, formatMonthYear } from './format'
+import { sheetFromRows } from './sheet'
 
 // Matches the category DataEntryPage syncs the fixed-costs total into on
 // each monthly entry's spending.
@@ -27,16 +28,6 @@ function categoryColumns(categories, rows, extraFirst = []) {
     }
   }
   return columns
-}
-
-// Plain widths sized to the longest value in each column, so the sheet is
-// readable on open without dragging every column out by hand.
-function sheetFromRows(rows, headers) {
-  const sheet = XLSX.utils.json_to_sheet(rows, { header: headers })
-  sheet['!cols'] = headers.map((h) => ({
-    wch: Math.min(40, Math.max(h.length, ...rows.map((r) => String(r[h] ?? '').length)) + 2),
-  }))
-  return sheet
 }
 
 export async function exportSpendingToExcel(userId) {

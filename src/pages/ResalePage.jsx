@@ -11,6 +11,7 @@ import { AnimatedNumber, tapScale } from '../components/motion'
 import { useAuth } from '../context/AuthContext'
 import { useResaleItems } from '../hooks/useResaleItems'
 import { useResaleGeneralCosts } from '../hooks/useResaleGeneralCosts'
+import { useResaleLog } from '../hooks/useResaleLog'
 import { deriveResaleLogistics, deriveResaleSummary, deriveResaleTimeSeries } from '../data/deriveResale'
 import { exportResaleToExcel } from '../utils/resaleExport'
 import { HOURS_LOG, MILEAGE_LOG } from '../utils/resaleLogs'
@@ -196,6 +197,10 @@ export default function ResalePage() {
   const { costs: allGeneralCosts, addCost: addGeneralCost, updateCost: updateGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
   const generalCosts = useMemo(() => allGeneralCosts.filter((c) => c.kind !== 'expense'), [allGeneralCosts])
   const generalExpenses = useMemo(() => allGeneralCosts.filter((c) => c.kind === 'expense'), [allGeneralCosts])
+  const mileageLog = useResaleLog(user?.id, MILEAGE_LOG.table, MILEAGE_LOG.dateField)
+  const hoursLog = useResaleLog(user?.id, HOURS_LOG.table, HOURS_LOG.dateField)
+  const mileage = mileageLog.entries
+  const hours = hoursLog.entries
   const [granularity, setGranularity] = useState('week')
   const [addingItem, setAddingItem] = useState(false)
   // Per-device display preference, not real data -- fine to lose on a
@@ -217,12 +222,12 @@ export default function ResalePage() {
     })
   }
 
-  const summary = useMemo(() => deriveResaleSummary(items, generalCosts, generalExpenses), [items, generalCosts, generalExpenses])
-  const timeSeries = useMemo(
-    () => deriveResaleTimeSeries(items, generalCosts, generalExpenses, granularity),
-    [items, generalCosts, generalExpenses, granularity],
+  const summary = useMemo(
+    () => deriveResaleSummary(items, generalCosts, generalExpenses, mileage),
+    [items, generalCosts, generalExpenses, mileage],
   )
-  const logistics = useMemo(() => deriveResaleLogistics(items), [items])
+  const timeSeries = useMemo(() => deriveResaleTimeSeries(items, generalCosts, granularity), [items, generalCosts, granularity])
+  const logistics = useMemo(() => deriveResaleLogistics(items, generalCosts), [items, generalCosts])
   const initialLoading = loading && items.length === 0
 
   return (
@@ -237,8 +242,8 @@ export default function ResalePage() {
         <motion.button
           {...tapScale}
           type="button"
-          onClick={() => exportResaleToExcel(items, generalCosts, generalExpenses)}
-          disabled={items.length === 0 && allGeneralCosts.length === 0}
+          onClick={() => exportResaleToExcel({ items, directCosts: generalCosts, overheads: generalExpenses, mileage, hours })}
+          disabled={items.length === 0 && allGeneralCosts.length === 0 && mileage.length === 0 && hours.length === 0}
           className="min-h-11 cursor-pointer rounded-lg border border-zinc-300 dark:border-white/15 px-4 text-sm font-medium text-zinc-700 dark:text-zinc-300 disabled:opacity-50"
         >
           Export to Excel
@@ -303,8 +308,8 @@ export default function ResalePage() {
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-            <ResaleLogCard config={MILEAGE_LOG} userId={user?.id} />
-            <ResaleLogCard config={HOURS_LOG} userId={user?.id} />
+            <ResaleLogCard config={MILEAGE_LOG} log={mileageLog} />
+            <ResaleLogCard config={HOURS_LOG} log={hoursLog} />
           </div>
         </>
       )}
