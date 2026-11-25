@@ -42,20 +42,23 @@ export function itemPendingProfit(item) {
   return (Number(item.sold_price) || 0) - itemAllInCost(item)
 }
 
-// Lifetime totals, unaffected by any time-period filter. totalCost is the
-// cost of stock that's actually sold (+ general costs like packaging, a
-// Vinted subscription) -- not every item ever bought -- so totalSales minus
-// totalCost always equals totalProfit at a glance. pendingProfit is the
-// flip side: items already marked Sold (a real price agreed) but not yet
-// Completed, so they're not in totalProfit yet either.
-export function deriveResaleSummary(items, generalCosts = []) {
+// Lifetime totals, unaffected by any time-period filter.
+//   totalCost    = cost of stock actually sold (not every item ever bought)
+//                  + General Costs (namesets, mailing bags)
+//   grossProfit  = totalSales - totalCost
+//   netProfit    = grossProfit - General Expenses (subscriptions, ads)
+// pendingProfit is the flip side: items already marked Sold (a real price
+// agreed) but not yet Completed, so they're not in either profit figure yet.
+export function deriveResaleSummary(items, generalCosts = [], generalExpenses = []) {
   const sold = items.filter((i) => isRealizedSale(i.status))
 
   const generalCostsTotal = generalCosts.reduce((t, c) => t + (Number(c.amount) || 0), 0)
+  const totalExpenses = generalExpenses.reduce((t, c) => t + (Number(c.amount) || 0), 0)
   const soldCost = sold.reduce((t, i) => t + itemAllInCost(i), 0)
   const totalCost = soldCost + generalCostsTotal
   const totalSales = sold.reduce((t, i) => t + (Number(i.sold_price) || 0), 0)
-  const totalProfit = totalSales - totalCost
+  const grossProfit = totalSales - totalCost
+  const netProfit = grossProfit - totalExpenses
   const pendingProfit = items
     .filter((i) => itemPendingProfit(i) != null)
     .reduce((t, i) => t + itemPendingProfit(i), 0)
@@ -63,7 +66,7 @@ export function deriveResaleSummary(items, generalCosts = []) {
   const stageCounts = { purchased: 0, listed: 0, sold: 0, completed: 0 }
   for (const item of items) stageCounts[item.status] = (stageCounts[item.status] ?? 0) + 1
 
-  return { totalCost, totalSales, totalProfit, pendingProfit, stageCounts, itemCount: items.length, generalCostsTotal }
+  return { totalCost, totalExpenses, totalSales, grossProfit, netProfit, pendingProfit, stageCounts, itemCount: items.length, generalCostsTotal }
 }
 
 // Item names are shirt listings like "Liverpool Home 23/24" or "Man Utd
@@ -239,22 +242,24 @@ function enumeratePeriods(startKey, endKey, granularity) {
 
 // A completed-sale timeline: a deal's cost and revenue both land in the
 // period it was Completed in, same as the headline totals above -- a sale
-// still pending completion doesn't show up yet. General costs land in the
-// period they were actually incurred (their own cost_date), same as
-// deriveResaleSummary folds them into totalCost -- so summing every bar's
-// totalProfit matches the lifetime Total profit figure, as long as all the
+// still pending completion doesn't show up yet. General costs and expenses
+// land in the period they were actually incurred (their own cost_date) --
+// so summing every bar's netProfit matches the lifetime Net Profit figure,
+// as long as all the
 // activity falls inside the trailing window below. Spans every period from
 // the earliest activity through today, filling zero bars for gaps so the
 // timeline reads continuously. Separate from deriveResaleSummary's lifetime
 // totals, which stay item-matched rather than date-split.
-export function deriveResaleTimeSeries(items, generalCosts, granularity) {
+export function deriveResaleTimeSeries(items, generalCosts, generalExpenses, granularity) {
   const completed = items.filter((i) => isRealizedSale(i.status) && i.sold_date)
   const dateCosts = generalCosts.filter((c) => c.cost_date)
-  if (completed.length === 0 && dateCosts.length === 0) return []
+  const dateExpenses = generalExpenses.filter((c) => c.cost_date)
+  if (completed.length === 0 && dateCosts.length === 0 && dateExpenses.length === 0) return []
 
+  const emptyBucket = () => ({ totalCost: 0, totalExpenses: 0, totalSales: 0 })
   const totals = new Map()
   const addTo = (key, field, amount) => {
-    const bucket = totals.get(key) ?? { totalCost: 0, totalSales: 0 }
+    const bucket = totals.get(key) ?? emptyBucket()
     bucket[field] += amount
     totals.set(key, bucket)
   }
@@ -267,8 +272,15 @@ export function deriveResaleTimeSeries(items, generalCosts, granularity) {
   for (const cost of dateCosts) {
     addTo(periodKey(cost.cost_date, granularity), 'totalCost', Number(cost.amount) || 0)
   }
+  for (const expense of dateExpenses) {
+    addTo(periodKey(expense.cost_date, granularity), 'totalExpenses', Number(expense.amount) || 0)
+  }
 
-  const activityDates = [...completed.map((i) => i.sold_date), ...dateCosts.map((c) => c.cost_date)].sort()
+  const activityDates = [
+    ...completed.map((i) => i.sold_date),
+    ...dateCosts.map((c) => c.cost_date),
+    ...dateExpenses.map((c) => c.cost_date),
+  ].sort()
   const startKey = periodKey(activityDates[0], granularity)
   const latestActivityKey = periodKey(activityDates[activityDates.length - 1], granularity)
   const todayKey = periodKey(new Date().toISOString().slice(0, 10), granularity)
@@ -284,13 +296,16 @@ export function deriveResaleTimeSeries(items, generalCosts, granularity) {
   if (periods.length > cap) periods = periods.slice(-cap)
 
   return periods.map((key) => {
-    const bucket = totals.get(key) ?? { totalCost: 0, totalSales: 0 }
+    const bucket = totals.get(key) ?? emptyBucket()
+    const grossProfit = bucket.totalSales - bucket.totalCost
     return {
       key,
       label: periodLabel(key, granularity),
       totalCost: bucket.totalCost,
+      totalExpenses: bucket.totalExpenses,
       totalSales: bucket.totalSales,
-      totalProfit: bucket.totalSales - bucket.totalCost,
+      grossProfit,
+      netProfit: grossProfit - bucket.totalExpenses,
     }
   })
 }

@@ -33,12 +33,13 @@ function ChartTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
   const point = payload[0].payload
   const rows = [
-    { label: 'Total Cost', value: point.totalCost, tone: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Total Sales', value: point.totalSales, tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Sales', value: point.totalSales, tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Costs', value: point.totalCost, tone: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Expenses', value: point.totalExpenses, tone: 'text-zinc-900 dark:text-zinc-100' },
     {
-      label: 'Total Profit',
-      value: point.totalProfit,
-      tone: point.totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
+      label: 'Net Profit',
+      value: point.netProfit,
+      tone: point.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
       showSign: true,
     },
   ]
@@ -62,7 +63,7 @@ function ChartTooltip({ active, payload }) {
 // side so a negative bar always has real height to draw its label under,
 // regardless of how it compares to the other bars.
 function profitDomain(data) {
-  const profits = data.map((d) => d.totalProfit)
+  const profits = data.map((d) => d.netProfit)
   const maxProfit = Math.max(0, ...profits)
   const minProfit = Math.min(0, ...profits)
   const domainMax = maxProfit > 0 ? maxProfit * 1.15 : 1
@@ -111,11 +112,11 @@ export default function ResaleTimeSeriesChart({ data, granularity, onGranularity
               <XAxis dataKey="label" tick={{ fontSize: 12, fontWeight: 500, fill: axisColor }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis hide domain={yDomain} />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }} />
-              <Bar dataKey="totalProfit" name="Total Profit" radius={[8, 8, 8, 8]} maxBarSize={data.length <= 4 ? 88 : 56}>
+              <Bar dataKey="netProfit" name="Net Profit" radius={[8, 8, 8, 8]} maxBarSize={data.length <= 4 ? 88 : 56}>
                 {data.map((d) => (
-                  <Cell key={d.key} fill={d.totalProfit >= 0 ? profitPositiveColor : profitNegativeColor} />
+                  <Cell key={d.key} fill={d.netProfit >= 0 ? profitPositiveColor : profitNegativeColor} />
                 ))}
-                <LabelList dataKey="totalProfit" content={(props) => <BarValueLabel {...props} isDark={isDark} />} />
+                <LabelList dataKey="netProfit" content={(props) => <BarValueLabel {...props} isDark={isDark} />} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// General resale-business costs that aren't tied to one item -- packaging,
-// a Vinted subscription, printer ink. Added the same lightweight way as a
-// stock item, just without any purchase/sale lifecycle attached.
+// General resale-business costs that aren't tied to one item. Each row is
+// either a General Cost (kind 'cost': namesets, mailing bags) or a General
+// Expense (kind 'expense': subscriptions, ads) -- one table, split on the
+// page. Rows from before the split have no kind and count as costs.
 export function useResaleGeneralCosts(userId) {
   const [costs, setCosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,10 +33,19 @@ export function useResaleGeneralCosts(userId) {
     refresh()
   }, [refresh])
 
-  const addCost = useCallback(async (label, amount, costDate, boughtFrom) => {
+  const addCost = useCallback(async (label, amount, costDate, boughtFrom, kind = 'cost') => {
     const { error: insertError } = await supabase
       .from('resale_general_costs')
-      .insert({ user_id: userId, label, amount, cost_date: costDate || new Date().toISOString().slice(0, 10), bought_from: boughtFrom || null })
+      .insert({
+        user_id: userId,
+        label,
+        amount,
+        cost_date: costDate || new Date().toISOString().slice(0, 10),
+        bought_from: boughtFrom || null,
+        // 'cost' is the column default, so adding a cost keeps working even
+        // before migration_resale_general_expenses.sql has been run.
+        ...(kind === 'expense' ? { kind } : {}),
+      })
     if (insertError) throw new Error(insertError.message)
     await refresh()
   }, [userId, refresh])

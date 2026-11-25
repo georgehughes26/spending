@@ -116,7 +116,23 @@ function AddItemForm({ items, onAdd, onClose }) {
   )
 }
 
-function GeneralCostRow({ cost, onUpdate, onDelete }) {
+// The two lists that share the resale_general_costs table, keyed by kind.
+const COST_LISTS = {
+  cost: {
+    title: 'General Costs',
+    description: "Costs of selling that aren't tied to one item, like namesets and mailing bags. Taken off sales, along with your stock costs, for Gross Profit.",
+    placeholder: 'e.g. Mailing bags',
+    emptyLabel: 'No general costs yet.',
+  },
+  expense: {
+    title: 'General Expenses',
+    description: 'Running costs of the business, like subscriptions, the web domain or ads. Taken off Gross Profit for Net Profit.',
+    placeholder: 'e.g. Claude Pro',
+    emptyLabel: 'No general expenses yet.',
+  },
+}
+
+function GeneralCostRow({ cost, onUpdate, onDelete, moveTo }) {
   const [editing, setEditing] = useState(false)
   const [label, setLabel] = useState(cost.label)
   const [amount, setAmount] = useState(cost.amount)
@@ -134,6 +150,17 @@ function GeneralCostRow({ cost, onUpdate, onDelete }) {
     } catch (err) {
       setError(err.message)
     } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleMove = async () => {
+    setSaving(true)
+    setError(null)
+    try {
+      await onUpdate(cost.id, { kind: moveTo })
+    } catch (err) {
+      setError(err.message)
       setSaving(false)
     }
   }
@@ -175,6 +202,9 @@ function GeneralCostRow({ cost, onUpdate, onDelete }) {
           <motion.button {...tapScale} type="button" onClick={() => setEditing(false)} className="min-h-9 cursor-pointer px-2 text-sm text-zinc-500 dark:text-zinc-400">
             Cancel
           </motion.button>
+          <button type="button" onClick={handleMove} disabled={saving} className="ml-auto min-h-9 cursor-pointer px-2 text-xs font-medium text-pink-700 dark:text-emerald-400 hover:underline disabled:opacity-50">
+            Move to {COST_LISTS[moveTo].title}
+          </button>
         </div>
       </li>
     )
@@ -198,11 +228,12 @@ function GeneralCostRow({ cost, onUpdate, onDelete }) {
   )
 }
 
-// Costs that aren't tied to any one item -- packaging, a Vinted
-// subscription, printer ink. Its own visible card on the page, under the
-// stock list, rather than tucked inside the Add Stock flow -- it's part of
-// the real cost picture, not a one-off aside.
-function GeneralCostsCard({ costs, onAdd, onUpdate, onDelete }) {
+// Costs or expenses that aren't tied to any one item -- one card per kind,
+// side by side under the stock list. Both work identically; they only
+// differ in which profit figure they come off.
+function GeneralCostsCard({ kind, costs, onAdd, onUpdate, onDelete }) {
+  const list = COST_LISTS[kind]
+  const otherKind = kind === 'cost' ? 'expense' : 'cost'
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
@@ -218,7 +249,7 @@ function GeneralCostsCard({ costs, onAdd, onUpdate, onDelete }) {
     setSaving(true)
     setError(null)
     try {
-      await onAdd(label.trim(), Number(amount) || 0, date, boughtFrom.trim() || null)
+      await onAdd(label.trim(), Number(amount) || 0, date, boughtFrom.trim() || null, kind)
       setLabel('')
       setAmount('')
       setBoughtFrom('')
@@ -230,16 +261,14 @@ function GeneralCostsCard({ costs, onAdd, onUpdate, onDelete }) {
   }
 
   return (
-    <Card title="General Costs">
-      <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-        Costs that aren't tied to one item -- packaging, subscriptions, postage supplies. Counted in Total Cost and Total Profit.
-      </p>
+    <Card title={list.title} className="h-full">
+      <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">{list.description}</p>
       <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <input
           type="text"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder="e.g. Parcel tape"
+          placeholder={list.placeholder}
           className="min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-white/5 px-3 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-pink-600 dark:focus:border-emerald-400"
         />
         <input
@@ -269,11 +298,11 @@ function GeneralCostsCard({ costs, onAdd, onUpdate, onDelete }) {
       {costs.length > 0 ? (
         <ul className="flex max-h-96 flex-col divide-y divide-zinc-200 overflow-y-auto dark:divide-white/10">
           {costs.map((cost) => (
-            <GeneralCostRow key={cost.id} cost={cost} onUpdate={onUpdate} onDelete={onDelete} />
+            <GeneralCostRow key={cost.id} cost={cost} onUpdate={onUpdate} onDelete={onDelete} moveTo={otherKind} />
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No general costs yet.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{list.emptyLabel}</p>
       )}
       {costs.length > 0 && (
         <div className="mt-3 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 pt-3 text-sm">
@@ -316,19 +345,29 @@ function PerformanceHero({ summary }) {
       className="!border-0 bg-gradient-to-br from-pink-600 to-rose-600 dark:from-emerald-500 dark:to-teal-600 !shadow-[0_16px_40px_-12px_rgba(219,39,119,0.45)] dark:!shadow-[0_16px_40px_-12px_rgba(16,185,129,0.35)]"
       titleClassName="!text-pink-100 dark:!text-emerald-50"
     >
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="text-xs font-medium uppercase tracking-wide text-white/80">Total profit</div>
-          <AnimatedNumber value={summary.totalProfit} format="gbp" showSign className="block text-5xl font-bold tracking-tight tabular-nums text-white" />
-        </div>
-        <div className="flex gap-6 text-right">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
           <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Cost</div>
-            <div className="text-lg font-semibold text-white">{formatGBP(summary.totalCost, { pence: true })}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Gross profit</div>
+            <AnimatedNumber value={summary.grossProfit} format="gbp" showSign className="block text-4xl font-bold tracking-tight tabular-nums text-white sm:text-5xl" />
           </div>
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Net profit</div>
+            <AnimatedNumber value={summary.netProfit} format="gbp" showSign className="block text-4xl font-bold tracking-tight tabular-nums text-white sm:text-5xl" />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-3 text-right">
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-white/80">Sales</div>
             <div className="text-lg font-semibold text-white">{formatGBP(summary.totalSales, { pence: true })}</div>
+          </div>
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Costs</div>
+            <div className="text-lg font-semibold text-white">{formatGBP(summary.totalCost, { pence: true })}</div>
+          </div>
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white/80">Expenses</div>
+            <div className="text-lg font-semibold text-white">{formatGBP(summary.totalExpenses, { pence: true })}</div>
           </div>
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-white/80">Pending</div>
@@ -351,7 +390,9 @@ export default function ResalePage() {
     deleteItem,
     markSold,
   } = useResaleItems(user?.id)
-  const { costs: generalCosts, addCost: addGeneralCost, updateCost: updateGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
+  const { costs: allGeneralCosts, addCost: addGeneralCost, updateCost: updateGeneralCost, deleteCost: deleteGeneralCost } = useResaleGeneralCosts(user?.id)
+  const generalCosts = useMemo(() => allGeneralCosts.filter((c) => c.kind !== 'expense'), [allGeneralCosts])
+  const generalExpenses = useMemo(() => allGeneralCosts.filter((c) => c.kind === 'expense'), [allGeneralCosts])
   const [granularity, setGranularity] = useState('week')
   const [addingItem, setAddingItem] = useState(false)
   // Per-device display preference, not real data -- fine to lose on a
@@ -373,8 +414,11 @@ export default function ResalePage() {
     })
   }
 
-  const summary = useMemo(() => deriveResaleSummary(items, generalCosts), [items, generalCosts])
-  const timeSeries = useMemo(() => deriveResaleTimeSeries(items, generalCosts, granularity), [items, generalCosts, granularity])
+  const summary = useMemo(() => deriveResaleSummary(items, generalCosts, generalExpenses), [items, generalCosts, generalExpenses])
+  const timeSeries = useMemo(
+    () => deriveResaleTimeSeries(items, generalCosts, generalExpenses, granularity),
+    [items, generalCosts, generalExpenses, granularity],
+  )
   const logistics = useMemo(() => deriveResaleLogistics(items), [items])
   const initialLoading = loading && items.length === 0
 
@@ -390,8 +434,8 @@ export default function ResalePage() {
         <motion.button
           {...tapScale}
           type="button"
-          onClick={() => exportResaleToExcel(items, generalCosts)}
-          disabled={items.length === 0 && generalCosts.length === 0}
+          onClick={() => exportResaleToExcel(items, generalCosts, generalExpenses)}
+          disabled={items.length === 0 && allGeneralCosts.length === 0}
           className="min-h-11 cursor-pointer rounded-lg border border-zinc-300 dark:border-white/15 px-4 text-sm font-medium text-zinc-700 dark:text-zinc-300 disabled:opacity-50"
         >
           Export to Excel
@@ -450,8 +494,9 @@ export default function ResalePage() {
             </>
           )}
 
-          <div className="mt-5">
-            <GeneralCostsCard costs={generalCosts} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
+          <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <GeneralCostsCard kind="cost" costs={generalCosts} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
+            <GeneralCostsCard kind="expense" costs={generalExpenses} onAdd={addGeneralCost} onUpdate={updateGeneralCost} onDelete={deleteGeneralCost} />
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
